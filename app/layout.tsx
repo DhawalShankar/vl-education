@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
-
+import { AuthProvider } from "./context/AuthContext";
 export const metadata: Metadata = {
   title: "VartaLang | Premium Language Education Platform",
   description: "Master Indian languages through expert-led instruction, structured curriculum, and immersive practice. Professional certification available.",
@@ -14,7 +14,9 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className="antialiased">
+        <AuthProvider>
         {children}
+        </AuthProvider>
       </body>
     </html>
   );
