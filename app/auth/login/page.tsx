@@ -35,8 +35,11 @@ export default function AuthPage() {
     setLoading(true);
     setMessage(null);
     try {
+      const BASE = process.env.NEXT_PUBLIC_API_URL ?? "";
       const endpoint =
-        tab === "login" ? "/api/v1/auth/login" : "/api/v1/auth/register";
+          tab === "login"
+            ? `${BASE}/api/v1/auth/login`
+            : `${BASE}/api/v1/auth/register`;
       const body =
         tab === "login"
           ? { email: form.email, password: form.password }
