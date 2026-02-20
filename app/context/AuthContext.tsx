@@ -1,5 +1,4 @@
 "use client";
-
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 
 const BASE = `${process.env.NEXT_PUBLIC_API_URL}/api/v1`;
@@ -15,7 +14,7 @@ interface AuthContextType {
   user: User | null;
   loading: boolean;
   login: (email: string, password: string) => Promise<User>;
-  register: (name: string, email: string, password: string) => Promise<User>;
+  register: (name: string, email: string, password: string, role?: string) => Promise<User>;
   logout: () => Promise<void>;
   isGuest: boolean;
   isStudent: boolean;
@@ -33,9 +32,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     const token = localStorage.getItem("accessToken");
     if (!token) return setLoading(false);
-
     fetch(`${BASE}/auth/me`, {
-      headers: { Authorization: `Bearer ${token}` }
+      headers: { Authorization: `Bearer ${token}` },
     })
       .then((r) => r.json())
       .then((data) => {
@@ -46,11 +44,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       .finally(() => setLoading(false));
   }, []);
 
-  const login = async (email: string, password: string) => {
+  const login = async (email: string, password: string): Promise<User> => {
     const res = await fetch(`${BASE}/auth/login`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password })
+      body: JSON.stringify({ email, password }),
     });
     const data = await res.json();
     if (!res.ok) throw new Error(data.message);
@@ -60,11 +58,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return data.data.user;
   };
 
-  const register = async (name: string, email: string, password: string) => {
+  const register = async (
+    name: string,
+    email: string,
+    password: string,
+    role = "student"
+  ): Promise<User> => {
     const res = await fetch(`${BASE}/auth/register`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name, email, password })
+      body: JSON.stringify({ name, email, password, role }),
     });
     const data = await res.json();
     if (!res.ok) throw new Error(data.message);
@@ -78,13 +81,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const token = localStorage.getItem("accessToken");
     await fetch(`${BASE}/auth/logout`, {
       method: "POST",
-      headers: { Authorization: `Bearer ${token}` }
+      headers: { Authorization: `Bearer ${token}` },
     }).catch(() => {});
     localStorage.clear();
     setUser(null);
   };
 
-  // Role helpers
   const isGuest = !user;
   const isStudent = user?.role === "student";
   const isInstructor = user?.role === "instructor";
@@ -92,10 +94,20 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const isAuthenticated = !!user;
 
   return (
-    <AuthContext.Provider value={{
-      user, loading, login, register, logout,
-      isGuest, isStudent, isInstructor, isAdmin, isAuthenticated
-    }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        loading,
+        login,
+        register,
+        logout,
+        isGuest,
+        isStudent,
+        isInstructor,
+        isAdmin,
+        isAuthenticated,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );

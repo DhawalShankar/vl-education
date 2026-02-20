@@ -2,6 +2,7 @@
 
 import { useState, ChangeEvent, FormEvent } from "react";
 import { ArrowRight, Eye, EyeOff, BookOpen } from "lucide-react";
+import { useAuth } from "@/app/context/AuthContext";
 
 interface Message {
   type: "success" | "error";
@@ -11,6 +12,8 @@ interface Message {
 type Role = "student" | "instructor";
 
 export default function AuthPage() {
+  const auth = useAuth();
+
   const [tab, setTab] = useState<"login" | "register">("login");
   const [showPw, setShowPw] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -35,38 +38,26 @@ export default function AuthPage() {
     setLoading(true);
     setMessage(null);
     try {
-      const BASE = process.env.NEXT_PUBLIC_API_URL ?? "";
-      const endpoint =
-          tab === "login"
-            ? `${BASE}/api/v1/auth/login`
-            : `${BASE}/api/v1/auth/register`;
-      const body =
-        tab === "login"
-          ? { email: form.email, password: form.password }
-          : { name: form.name, email: form.email, password: form.password, role };
+      let user;
+      if (tab === "login") {
+        user = await auth!.login(form.email, form.password);
+      } else {
+        user = await auth!.register(form.name, form.email, form.password, role);
+      }
 
-      const res = await fetch(endpoint, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message || "Something went wrong.");
+      setMessage({ type: "success", text: `Welcome, ${user.name}! 🎓` });
 
-      localStorage.setItem("accessToken", data.data.accessToken);
-      localStorage.setItem("refreshToken", data.data.refreshToken);
-
-      setMessage({ type: "success", text: `Welcome, ${data.data.user.name}! 🎓` });
-
-      // Redirect based on role returned from backend
-      const userRole = data.data.user.role;
       setTimeout(() => {
-        window.location.href =
-          userRole === "instructor" ? "/dashboard/instructor" : "/dashboard";
+        if (user.role === "admin") window.location.href = "/dashboard/admin";
+        else if (user.role === "instructor") window.location.href = "/dashboard/instructor";
+        else window.location.href = "/dashboard";
       }, 1000);
+
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : "Something went wrong.";
-      setMessage({ type: "error", text: errorMessage });
+      setMessage({
+        type: "error",
+        text: err instanceof Error ? err.message : "Something went wrong.",
+      });
     } finally {
       setLoading(false);
     }
