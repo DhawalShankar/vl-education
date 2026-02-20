@@ -53,7 +53,7 @@ const levelColor = (level: string) => {
   return "text-emerald-400 bg-emerald-400/10 border-emerald-400/30";
 };
 
-// ── Icon SVGs ──────────────────────────────────────────────────────────────────
+// ── Icons ──────────────────────────────────────────────────────────────────────
 const Icon = {
   users: (
     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -98,7 +98,7 @@ function StatCard({ label, value, icon, accent }: {
   label: string; value: number | string; icon: React.ReactNode; accent: string;
 }) {
   return (
-    <div className={`relative overflow-hidden rounded-2xl bg-stone-900/60 border border-stone-700/50 p-6 backdrop-blur-sm`}>
+    <div className="relative overflow-hidden rounded-2xl bg-stone-900/60 border border-stone-700/50 p-6 backdrop-blur-sm">
       <div className={`absolute top-0 right-0 w-24 h-24 rounded-full blur-2xl opacity-20 ${accent}`} />
       <div className="relative">
         <div className={`inline-flex p-2.5 rounded-xl mb-4 ${accent} bg-opacity-10 border border-white/5`}>
@@ -120,6 +120,18 @@ function Badge({ label, colorClass }: { label: string; colorClass: string }) {
   );
 }
 
+// ── Loading Screen ─────────────────────────────────────────────────────────────
+function LoadingScreen() {
+  return (
+    <div className="min-h-screen bg-[#0a0908] flex items-center justify-center">
+      <div className="flex flex-col items-center gap-4">
+        <div className="w-12 h-12 rounded-2xl bg-linear-to-br from-amber-500 to-orange-600 animate-pulse" />
+        <p className="text-stone-500 text-sm">Loading dashboard…</p>
+      </div>
+    </div>
+  );
+}
+
 // ── Main Dashboard ─────────────────────────────────────────────────────────────
 export default function AdminDashboard() {
   const auth = useAuth();
@@ -129,21 +141,19 @@ export default function AdminDashboard() {
   const [users, setUsers] = useState<User[]>([]);
   const [courses, setCourses] = useState<Course[]>([]);
   const [stats, setStats] = useState<Stats>({});
-  const [loading, setLoading] = useState(true);
+  const [dataLoading, setDataLoading] = useState(false);
   const [search, setSearch] = useState("");
   const [toast, setToast] = useState<{ msg: string; ok: boolean } | null>(null);
 
-  // ── Auth guard ──
-  useEffect(() => {
-    if (!auth) return;
-    if (!auth.loading && (!auth.isAuthenticated || !auth.isAdmin)) {
-      router.replace("/auth/login");
-    }
-  }, [auth, router]);
+  // ── Toast ──────────────────────────────────────────────────────────────────
+  const showToast = (msg: string, ok: boolean) => {
+    setToast({ msg, ok });
+    setTimeout(() => setToast(null), 3000);
+  };
 
-  // ── Fetch data ──
+  // ── Fetch data ─────────────────────────────────────────────────────────────
   const loadData = useCallback(async () => {
-    setLoading(true);
+    setDataLoading(true);
     try {
       const [usersRes, coursesRes] = await Promise.all([
         adminAPI.getUsers(),
@@ -167,19 +177,27 @@ export default function AdminDashboard() {
     } catch {
       showToast("Failed to load data", false);
     } finally {
-      setLoading(false);
+      setDataLoading(false);
     }
   }, []);
 
-  useEffect(() => { loadData(); }, [loadData]);
+  // ── Auth guard — pehle auth settle hone do, tab hi aage badho ──────────────
+  useEffect(() => {
+    if (!auth || auth.loading) return; // auth abhi load ho raha hai — wait karo
 
-  // ── Toast ──
-  const showToast = (msg: string, ok: boolean) => {
-    setToast({ msg, ok });
-    setTimeout(() => setToast(null), 3000);
-  };
+    if (!auth.isAuthenticated || !auth.isAdmin) {
+      router.replace("/auth/login"); // admin nahi hai toh login pe bhejo
+      return;
+    }
 
-  // ── User actions ──
+    // Admin confirm — ab data load karo
+    loadData();
+  }, [auth?.loading, auth?.isAuthenticated, auth?.isAdmin]); // eslint-disable-line
+
+  // ── Show loading while auth is settling ───────────────────────────────────
+  if (!auth || auth.loading) return <LoadingScreen />;
+
+  // ── User actions ───────────────────────────────────────────────────────────
   const handleRoleChange = async (id: string, role: string) => {
     try {
       const res = await adminAPI.updateRole(id, role);
@@ -222,7 +240,7 @@ export default function AdminDashboard() {
     } catch { showToast("Failed to delete course", false); }
   };
 
-  // ── Filtered lists ──
+  // ── Filtered lists ─────────────────────────────────────────────────────────
   const filteredUsers = users.filter(
     (u) =>
       u.name.toLowerCase().includes(search.toLowerCase()) ||
@@ -235,17 +253,6 @@ export default function AdminDashboard() {
       c.language.toLowerCase().includes(search.toLowerCase())
   );
 
-  if (auth?.loading || loading) {
-    return (
-      <div className="min-h-screen bg-[#0a0908] flex items-center justify-center">
-        <div className="flex flex-col items-center gap-4">
-          <div className="w-12 h-12 rounded-2xl bg-linear-to-br from-amber-500 to-orange-600 animate-pulse" />
-          <p className="text-stone-500 text-sm">Loading dashboard…</p>
-        </div>
-      </div>
-    );
-  }
-
   const tabs: { id: Tab; label: string }[] = [
     { id: "overview", label: "Overview" },
     { id: "users", label: `Users (${users.length})` },
@@ -254,7 +261,7 @@ export default function AdminDashboard() {
 
   return (
     <div className="min-h-screen bg-[#0a0908] text-white">
-      {/* Background */}
+      {/* Background blobs */}
       <div className="fixed inset-0 pointer-events-none">
         <div className="absolute top-0 left-1/4 w-96 h-96 bg-amber-600/5 rounded-full blur-3xl" />
         <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-orange-600/5 rounded-full blur-3xl" />
@@ -262,11 +269,11 @@ export default function AdminDashboard() {
 
       {/* Toast */}
       {toast && (
-        <div className={`fixed top-6 right-6 z-50 px-5 py-3 rounded-xl text-sm font-medium shadow-2xl border transition-all
-          ${toast.ok
+        <div className={`fixed top-6 right-6 z-50 px-5 py-3 rounded-xl text-sm font-medium shadow-2xl border transition-all ${
+          toast.ok
             ? "bg-emerald-500/20 border-emerald-500/30 text-emerald-300"
             : "bg-red-500/20 border-red-500/30 text-red-300"
-          }`}>
+        }`}>
           {toast.msg}
         </div>
       )}
@@ -319,231 +326,231 @@ export default function AdminDashboard() {
           ))}
         </div>
 
-        {/* ── OVERVIEW ── */}
-        {tab === "overview" && (
-          <div className="space-y-8">
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-              <StatCard label="Total Users" value={stats.totalUsers ?? 0} icon={Icon.users} accent="text-amber-400 bg-amber-500" />
-              <StatCard label="Total Courses" value={stats.totalCourses ?? 0} icon={Icon.courses} accent="text-sky-400 bg-sky-500" />
-              <StatCard label="Students" value={stats.totalStudents ?? 0} icon={Icon.students} accent="text-emerald-400 bg-emerald-500" />
-              <StatCard label="Instructors" value={stats.totalInstructors ?? 0} icon={Icon.instructors} accent="text-purple-400 bg-purple-500" />
-            </div>
-
-            {/* Recent users */}
-            <div className="rounded-2xl bg-stone-900/60 border border-stone-700/50 overflow-hidden">
-              <div className="px-6 py-4 border-b border-stone-800/60 flex items-center justify-between">
-                <h2 className="font-semibold text-white">Recent Users</h2>
-                <button onClick={() => setTab("users")} className="text-xs text-amber-400 hover:text-amber-300 transition-colors">
-                  View all →
-                </button>
-              </div>
-              <div className="divide-y divide-stone-800/40">
-                {users.slice(0, 5).map((u) => (
-                  <div key={u._id} className="px-6 py-4 flex items-center justify-between hover:bg-white/2 transition-colors">
-                    <div className="flex items-center gap-3">
-                      <div className="w-9 h-9 rounded-full bg-linear-to-br from-amber-500/30 to-orange-600/30 border border-amber-500/20 flex items-center justify-center text-amber-300 font-bold text-sm">
-                        {u.name[0].toUpperCase()}
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium text-white">{u.name}</p>
-                        <p className="text-xs text-stone-500">{u.email}</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <Badge label={u.role} colorClass={roleColor(u.role)} />
-                      <span className="text-xs text-stone-600 hidden sm:block">{fmt(u.createdAt)}</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Recent courses */}
-            <div className="rounded-2xl bg-stone-900/60 border border-stone-700/50 overflow-hidden">
-              <div className="px-6 py-4 border-b border-stone-800/60 flex items-center justify-between">
-                <h2 className="font-semibold text-white">Recent Courses</h2>
-                <button onClick={() => setTab("courses")} className="text-xs text-amber-400 hover:text-amber-300 transition-colors">
-                  View all →
-                </button>
-              </div>
-              <div className="divide-y divide-stone-800/40">
-                {courses.slice(0, 5).map((c) => (
-                  <div key={c._id} className="px-6 py-4 flex items-center justify-between hover:bg-white/2 transition-colors">
-                    <div>
-                      <p className="text-sm font-medium text-white">{c.title}</p>
-                      <p className="text-xs text-stone-500 mt-0.5">{c.instructor?.name} · {c.language}</p>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <Badge label={c.level} colorClass={levelColor(c.level)} />
-                      <Badge
-                        label={c.isPublished ? "Published" : "Draft"}
-                        colorClass={c.isPublished
-                          ? "text-emerald-400 bg-emerald-400/10 border-emerald-400/30"
-                          : "text-stone-500 bg-stone-700/30 border-stone-600/30"
-                        }
-                      />
-                      <span className="text-xs text-stone-600 hidden sm:block">{c.enrolledCount} enrolled</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
+        {/* Data loading spinner inside main */}
+        {dataLoading ? (
+          <div className="flex items-center justify-center py-24">
+            <div className="w-8 h-8 rounded-xl bg-linear-to-br from-amber-500 to-orange-600 animate-pulse" />
           </div>
-        )}
+        ) : (
+          <>
+            {/* ── OVERVIEW ── */}
+            {tab === "overview" && (
+              <div className="space-y-8">
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                  <StatCard label="Total Users"   value={stats.totalUsers ?? 0}       icon={Icon.users}       accent="text-amber-400 bg-amber-500" />
+                  <StatCard label="Total Courses"  value={stats.totalCourses ?? 0}     icon={Icon.courses}     accent="text-sky-400 bg-sky-500" />
+                  <StatCard label="Students"       value={stats.totalStudents ?? 0}    icon={Icon.students}    accent="text-emerald-400 bg-emerald-500" />
+                  <StatCard label="Instructors"    value={stats.totalInstructors ?? 0} icon={Icon.instructors} accent="text-purple-400 bg-purple-500" />
+                </div>
 
-        {/* ── USERS ── */}
-        {tab === "users" && (
-          <div className="space-y-4">
-            <input
-              type="text"
-              placeholder="Search users by name or email…"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="w-full max-w-sm bg-stone-900/60 border border-stone-700/50 rounded-xl px-4 py-2.5 text-sm text-stone-100 placeholder-stone-600 outline-none focus:border-amber-500/50 focus:ring-2 focus:ring-amber-500/10 transition-all"
-            />
-
-            <div className="rounded-2xl bg-stone-900/60 border border-stone-700/50 overflow-hidden">
-              {/* Table header */}
-              <div className="hidden sm:grid grid-cols-12 px-6 py-3 text-xs font-semibold text-stone-500 uppercase tracking-wider border-b border-stone-800/60 bg-stone-950/30">
-                <span className="col-span-4">User</span>
-                <span className="col-span-2">Role</span>
-                <span className="col-span-2">Status</span>
-                <span className="col-span-2">Joined</span>
-                <span className="col-span-2 text-right">Actions</span>
-              </div>
-
-              <div className="divide-y divide-stone-800/40">
-                {filteredUsers.length === 0 ? (
-                  <p className="text-center py-12 text-stone-600 text-sm">No users found</p>
-                ) : (
-                  filteredUsers.map((u) => (
-                    <div key={u._id} className="grid grid-cols-12 items-center px-6 py-4 hover:bg-white/2 transition-colors gap-y-2">
-                      {/* Name/email */}
-                      <div className="col-span-12 sm:col-span-4 flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-full bg-linear-to-br from-amber-500/20 to-orange-600/20 border border-amber-500/15 flex items-center justify-center text-amber-300 font-bold text-sm shrink-0">
-                          {u.name[0].toUpperCase()}
+                {/* Recent users */}
+                <div className="rounded-2xl bg-stone-900/60 border border-stone-700/50 overflow-hidden">
+                  <div className="px-6 py-4 border-b border-stone-800/60 flex items-center justify-between">
+                    <h2 className="font-semibold text-white">Recent Users</h2>
+                    <button onClick={() => setTab("users")} className="text-xs text-amber-400 hover:text-amber-300 transition-colors">
+                      View all →
+                    </button>
+                  </div>
+                  <div className="divide-y divide-stone-800/40">
+                    {users.slice(0, 5).map((u) => (
+                      <div key={u._id} className="px-6 py-4 flex items-center justify-between hover:bg-white/2 transition-colors">
+                        <div className="flex items-center gap-3">
+                          <div className="w-9 h-9 rounded-full bg-linear-to-br from-amber-500/30 to-orange-600/30 border border-amber-500/20 flex items-center justify-center text-amber-300 font-bold text-sm">
+                            {u.name[0].toUpperCase()}
+                          </div>
+                          <div>
+                            <p className="text-sm font-medium text-white">{u.name}</p>
+                            <p className="text-xs text-stone-500">{u.email}</p>
+                          </div>
                         </div>
-                        <div className="min-w-0">
-                          <p className="text-sm font-medium text-white truncate">{u.name}</p>
-                          <p className="text-xs text-stone-500 truncate">{u.email}</p>
+                        <div className="flex items-center gap-3">
+                          <Badge label={u.role} colorClass={roleColor(u.role)} />
+                          <span className="text-xs text-stone-600 hidden sm:block">{fmt(u.createdAt)}</span>
                         </div>
                       </div>
+                    ))}
+                    {users.length === 0 && (
+                      <p className="text-center py-8 text-stone-600 text-sm">No users yet</p>
+                    )}
+                  </div>
+                </div>
 
-                      {/* Role selector */}
-                      <div className="col-span-4 sm:col-span-2">
-                        <select
-                          value={u.role}
-                          onChange={(e) => handleRoleChange(u._id, e.target.value)}
-                          className="bg-stone-800/60 border border-stone-700/50 text-xs text-stone-300 rounded-lg px-2 py-1.5 outline-none hover:border-amber-500/40 transition-colors cursor-pointer"
-                        >
-                          <option value="student">Student</option>
-                          <option value="instructor">Instructor</option>
-                          <option value="admin">Admin</option>
-                        </select>
+                {/* Recent courses */}
+                <div className="rounded-2xl bg-stone-900/60 border border-stone-700/50 overflow-hidden">
+                  <div className="px-6 py-4 border-b border-stone-800/60 flex items-center justify-between">
+                    <h2 className="font-semibold text-white">Recent Courses</h2>
+                    <button onClick={() => setTab("courses")} className="text-xs text-amber-400 hover:text-amber-300 transition-colors">
+                      View all →
+                    </button>
+                  </div>
+                  <div className="divide-y divide-stone-800/40">
+                    {courses.slice(0, 5).map((c) => (
+                      <div key={c._id} className="px-6 py-4 flex items-center justify-between hover:bg-white/2 transition-colors">
+                        <div>
+                          <p className="text-sm font-medium text-white">{c.title}</p>
+                          <p className="text-xs text-stone-500 mt-0.5">{c.instructor?.name} · {c.language}</p>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <Badge label={c.level} colorClass={levelColor(c.level)} />
+                          <Badge
+                            label={c.isPublished ? "Published" : "Draft"}
+                            colorClass={c.isPublished
+                              ? "text-emerald-400 bg-emerald-400/10 border-emerald-400/30"
+                              : "text-stone-500 bg-stone-700/30 border-stone-600/30"}
+                          />
+                          <span className="text-xs text-stone-600 hidden sm:block">{c.enrolledCount} enrolled</span>
+                        </div>
                       </div>
-
-                      {/* Active toggle */}
-                      <div className="col-span-4 sm:col-span-2">
-                        <button
-                          onClick={() => handleToggle(u._id)}
-                          className={`flex items-center gap-2 text-xs font-medium px-3 py-1.5 rounded-lg border transition-all ${
-                            u.isActive
-                              ? "text-emerald-400 bg-emerald-400/10 border-emerald-400/30 hover:bg-emerald-400/20"
-                              : "text-red-400 bg-red-400/10 border-red-400/30 hover:bg-red-400/20"
-                          }`}
-                        >
-                          <span className={`w-1.5 h-1.5 rounded-full ${u.isActive ? "bg-emerald-400" : "bg-red-400"}`} />
-                          {u.isActive ? "Active" : "Inactive"}
-                        </button>
-                      </div>
-
-                      {/* Joined */}
-                      <div className="col-span-4 sm:col-span-2 hidden sm:block">
-                        <span className="text-xs text-stone-500">{fmt(u.createdAt)}</span>
-                      </div>
-
-                      {/* Delete */}
-                      <div className="col-span-4 sm:col-span-2 flex justify-end">
-                        <button
-                          onClick={() => handleDeleteUser(u._id)}
-                          className="p-2 text-stone-600 hover:text-red-400 hover:bg-red-400/10 rounded-lg transition-all"
-                          title="Delete user"
-                        >
-                          {Icon.trash}
-                        </button>
-                      </div>
-                    </div>
-                  ))
-                )}
+                    ))}
+                    {courses.length === 0 && (
+                      <p className="text-center py-8 text-stone-600 text-sm">No courses yet</p>
+                    )}
+                  </div>
+                </div>
               </div>
-            </div>
-          </div>
-        )}
+            )}
 
-        {/* ── COURSES ── */}
-        {tab === "courses" && (
-          <div className="space-y-4">
-            <input
-              type="text"
-              placeholder="Search courses by title or language…"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="w-full max-w-sm bg-stone-900/60 border border-stone-700/50 rounded-xl px-4 py-2.5 text-sm text-stone-100 placeholder-stone-600 outline-none focus:border-amber-500/50 focus:ring-2 focus:ring-amber-500/10 transition-all"
-            />
+            {/* ── USERS ── */}
+            {tab === "users" && (
+              <div className="space-y-4">
+                <input
+                  type="text"
+                  placeholder="Search users by name or email…"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="w-full max-w-sm bg-stone-900/60 border border-stone-700/50 rounded-xl px-4 py-2.5 text-sm text-stone-100 placeholder-stone-600 outline-none focus:border-amber-500/50 focus:ring-2 focus:ring-amber-500/10 transition-all"
+                />
 
-            <div className="rounded-2xl bg-stone-900/60 border border-stone-700/50 overflow-hidden">
-              <div className="hidden sm:grid grid-cols-12 px-6 py-3 text-xs font-semibold text-stone-500 uppercase tracking-wider border-b border-stone-800/60 bg-stone-950/30">
-                <span className="col-span-4">Course</span>
-                <span className="col-span-2">Language</span>
-                <span className="col-span-2">Level</span>
-                <span className="col-span-2">Status</span>
-                <span className="col-span-1 text-center">Enrolled</span>
-                <span className="col-span-1 text-right">Del</span>
+                <div className="rounded-2xl bg-stone-900/60 border border-stone-700/50 overflow-hidden">
+                  <div className="hidden sm:grid grid-cols-12 px-6 py-3 text-xs font-semibold text-stone-500 uppercase tracking-wider border-b border-stone-800/60 bg-stone-950/30">
+                    <span className="col-span-4">User</span>
+                    <span className="col-span-2">Role</span>
+                    <span className="col-span-2">Status</span>
+                    <span className="col-span-2">Joined</span>
+                    <span className="col-span-2 text-right">Actions</span>
+                  </div>
+                  <div className="divide-y divide-stone-800/40">
+                    {filteredUsers.length === 0 ? (
+                      <p className="text-center py-12 text-stone-600 text-sm">No users found</p>
+                    ) : (
+                      filteredUsers.map((u) => (
+                        <div key={u._id} className="grid grid-cols-12 items-center px-6 py-4 hover:bg-white/2 transition-colors gap-y-2">
+                          <div className="col-span-12 sm:col-span-4 flex items-center gap-3">
+                            <div className="w-9 h-9 rounded-full bg-linear-to-br from-amber-500/20 to-orange-600/20 border border-amber-500/15 flex items-center justify-center text-amber-300 font-bold text-sm shrink-0">
+                              {u.name[0].toUpperCase()}
+                            </div>
+                            <div className="min-w-0">
+                              <p className="text-sm font-medium text-white truncate">{u.name}</p>
+                              <p className="text-xs text-stone-500 truncate">{u.email}</p>
+                            </div>
+                          </div>
+                          <div className="col-span-4 sm:col-span-2">
+                            <select
+                              value={u.role}
+                              onChange={(e) => handleRoleChange(u._id, e.target.value)}
+                              className="bg-stone-800/60 border border-stone-700/50 text-xs text-stone-300 rounded-lg px-2 py-1.5 outline-none hover:border-amber-500/40 transition-colors cursor-pointer"
+                            >
+                              <option value="student">Student</option>
+                              <option value="instructor">Instructor</option>
+                              <option value="admin">Admin</option>
+                            </select>
+                          </div>
+                          <div className="col-span-4 sm:col-span-2">
+                            <button
+                              onClick={() => handleToggle(u._id)}
+                              className={`flex items-center gap-2 text-xs font-medium px-3 py-1.5 rounded-lg border transition-all ${
+                                u.isActive
+                                  ? "text-emerald-400 bg-emerald-400/10 border-emerald-400/30 hover:bg-emerald-400/20"
+                                  : "text-red-400 bg-red-400/10 border-red-400/30 hover:bg-red-400/20"
+                              }`}
+                            >
+                              <span className={`w-1.5 h-1.5 rounded-full ${u.isActive ? "bg-emerald-400" : "bg-red-400"}`} />
+                              {u.isActive ? "Active" : "Inactive"}
+                            </button>
+                          </div>
+                          <div className="col-span-4 sm:col-span-2 hidden sm:block">
+                            <span className="text-xs text-stone-500">{fmt(u.createdAt)}</span>
+                          </div>
+                          <div className="col-span-4 sm:col-span-2 flex justify-end">
+                            <button
+                              onClick={() => handleDeleteUser(u._id)}
+                              className="p-2 text-stone-600 hover:text-red-400 hover:bg-red-400/10 rounded-lg transition-all"
+                              title="Delete user"
+                            >
+                              {Icon.trash}
+                            </button>
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
               </div>
+            )}
 
-              <div className="divide-y divide-stone-800/40">
-                {filteredCourses.length === 0 ? (
-                  <p className="text-center py-12 text-stone-600 text-sm">No courses found</p>
-                ) : (
-                  filteredCourses.map((c) => (
-                    <div key={c._id} className="grid grid-cols-12 items-center px-6 py-4 hover:bg-white/2 transition-colors gap-y-2">
-                      <div className="col-span-12 sm:col-span-4">
-                        <p className="text-sm font-medium text-white truncate">{c.title}</p>
-                        <p className="text-xs text-stone-500 mt-0.5 truncate">{c.instructor?.name}</p>
-                      </div>
-                      <div className="col-span-3 sm:col-span-2">
-                        <span className="text-xs text-stone-400">{c.language}</span>
-                      </div>
-                      <div className="col-span-3 sm:col-span-2">
-                        <Badge label={c.level} colorClass={levelColor(c.level)} />
-                      </div>
-                      <div className="col-span-3 sm:col-span-2">
-                        <Badge
-                          label={c.isPublished ? "Published" : "Draft"}
-                          colorClass={c.isPublished
-                            ? "text-emerald-400 bg-emerald-400/10 border-emerald-400/30"
-                            : "text-stone-500 bg-stone-700/30 border-stone-600/30"
-                          }
-                        />
-                      </div>
-                      <div className="col-span-2 sm:col-span-1 text-center">
-                        <span className="text-xs font-semibold text-amber-400">{c.enrolledCount}</span>
-                      </div>
-                      <div className="col-span-1 flex justify-end">
-                        <button
-                          onClick={() => handleDeleteCourse(c._id)}
-                          className="p-2 text-stone-600 hover:text-red-400 hover:bg-red-400/10 rounded-lg transition-all"
-                          title="Delete course"
-                        >
-                          {Icon.trash}
-                        </button>
-                      </div>
-                    </div>
-                  ))
-                )}
+            {/* ── COURSES ── */}
+            {tab === "courses" && (
+              <div className="space-y-4">
+                <input
+                  type="text"
+                  placeholder="Search courses by title or language…"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="w-full max-w-sm bg-stone-900/60 border border-stone-700/50 rounded-xl px-4 py-2.5 text-sm text-stone-100 placeholder-stone-600 outline-none focus:border-amber-500/50 focus:ring-2 focus:ring-amber-500/10 transition-all"
+                />
+                <div className="rounded-2xl bg-stone-900/60 border border-stone-700/50 overflow-hidden">
+                  <div className="hidden sm:grid grid-cols-12 px-6 py-3 text-xs font-semibold text-stone-500 uppercase tracking-wider border-b border-stone-800/60 bg-stone-950/30">
+                    <span className="col-span-4">Course</span>
+                    <span className="col-span-2">Language</span>
+                    <span className="col-span-2">Level</span>
+                    <span className="col-span-2">Status</span>
+                    <span className="col-span-1 text-center">Enrolled</span>
+                    <span className="col-span-1 text-right">Del</span>
+                  </div>
+                  <div className="divide-y divide-stone-800/40">
+                    {filteredCourses.length === 0 ? (
+                      <p className="text-center py-12 text-stone-600 text-sm">No courses found</p>
+                    ) : (
+                      filteredCourses.map((c) => (
+                        <div key={c._id} className="grid grid-cols-12 items-center px-6 py-4 hover:bg-white/2 transition-colors gap-y-2">
+                          <div className="col-span-12 sm:col-span-4">
+                            <p className="text-sm font-medium text-white truncate">{c.title}</p>
+                            <p className="text-xs text-stone-500 mt-0.5 truncate">{c.instructor?.name}</p>
+                          </div>
+                          <div className="col-span-3 sm:col-span-2">
+                            <span className="text-xs text-stone-400">{c.language}</span>
+                          </div>
+                          <div className="col-span-3 sm:col-span-2">
+                            <Badge label={c.level} colorClass={levelColor(c.level)} />
+                          </div>
+                          <div className="col-span-3 sm:col-span-2">
+                            <Badge
+                              label={c.isPublished ? "Published" : "Draft"}
+                              colorClass={c.isPublished
+                                ? "text-emerald-400 bg-emerald-400/10 border-emerald-400/30"
+                                : "text-stone-500 bg-stone-700/30 border-stone-600/30"}
+                            />
+                          </div>
+                          <div className="col-span-2 sm:col-span-1 text-center">
+                            <span className="text-xs font-semibold text-amber-400">{c.enrolledCount}</span>
+                          </div>
+                          <div className="col-span-1 flex justify-end">
+                            <button
+                              onClick={() => handleDeleteCourse(c._id)}
+                              className="p-2 text-stone-600 hover:text-red-400 hover:bg-red-400/10 rounded-lg transition-all"
+                              title="Delete course"
+                            >
+                              {Icon.trash}
+                            </button>
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
               </div>
-            </div>
-          </div>
+            )}
+          </>
         )}
       </main>
     </div>
