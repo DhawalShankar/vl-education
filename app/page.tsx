@@ -183,7 +183,7 @@ export default function LearnPage() {
             {/* Trust Indicators */}
             <div className="flex flex-wrap items-center justify-center gap-10">
               {[
-                { icon: Shield, text: 'ISO Certified Content' },
+                { icon: Shield, text: 'Certified Content' },
                 { icon: Star, text: 'Expert-Curated' },
                 { icon: Globe, text: '22 Languages' },
                 { icon: Award, text: 'Exam-Ready' }

@@ -59,24 +59,25 @@ export default function Footer() {
   ];
 
   return (
-    <footer className="relative bg-stone-950 border-t-2 border-amber-500/20">
-      {/* Blackboard Texture */}
-      <div 
-        className="absolute inset-0 opacity-20 pointer-events-none"
-        style={{
-          backgroundImage: `url('https://images.unsplash.com/photo-1580582932707-520aed937b7b?w=1920&q=80')`,
-          backgroundSize: 'cover',
-          backgroundPosition: 'center'
-        }}
-      ></div>
+    <footer className="relative bg-[#080706] border-t-2 border-amber-500/20 overflow-hidden">
 
-      {/* Noise Texture */}
-      <div 
-        className="absolute inset-0 opacity-[0.02] pointer-events-none mix-blend-overlay"
-        style={{
-          backgroundImage: `url("data:image/svg+xml,%3Csvg width='200' height='200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' /%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.5'/%3E%3C/svg%3E")`,
-        }}
-      ></div>
+      {/* Background — subtle radial amber glow from bottom, no photo */}
+      <div className="absolute inset-0 pointer-events-none">
+        {/* Deep radial glow bottom-left */}
+        <div className="absolute -bottom-32 -left-32 w-150 h-150 rounded-full bg-amber-600/10 blur-[120px]" />
+        {/* Softer glow bottom-right */}
+        <div className="absolute -bottom-24 -right-24 w-100 h-100 rounded-full bg-orange-600/8 blur-[100px]" />
+        {/* Very subtle top fade from page bg */}
+        <div className="absolute top-0 inset-x-0 h-32 bg-linear-to-b from-[#0a0908] to-transparent" />
+        {/* Fine dot grid */}
+        <div
+          className="absolute inset-0 opacity-[0.04]"
+          style={{
+            backgroundImage: `radial-gradient(circle, #d97706 1px, transparent 1px)`,
+            backgroundSize: '32px 32px'
+          }}
+        />
+      </div>
 
       <div className="relative z-10">
         {/* Main Footer Content */}
@@ -106,7 +107,7 @@ export default function Footer() {
               <div className="flex flex-wrap gap-4 mb-8">
                 <div className="flex items-center gap-2 px-3 py-2 bg-stone-900/60 border border-stone-700/50 rounded-lg">
                   <Shield className="w-4 h-4 text-amber-400" />
-                  <span className="text-xs text-stone-300 font-semibold">ISO Certified</span>
+                  <span className="text-xs text-stone-300 font-semibold">Certified</span>
                 </div>
                 <div className="flex items-center gap-2 px-3 py-2 bg-stone-900/60 border border-stone-700/50 rounded-lg">
                   <Award className="w-4 h-4 text-amber-400" />
@@ -248,14 +249,12 @@ export default function Footer() {
           <div className="border-t border-stone-800/50 pt-8">
             <div className="flex flex-col md:flex-row justify-between items-center gap-6">
               
-              {/* Copyright */}
               <div className="flex items-center gap-2 text-stone-500 text-sm">
                 <span>© 2026 VartaLang. Made with</span>
                 <Heart className="w-4 h-4 text-red-500 fill-red-500" />
                 <span>in India</span>
               </div>
 
-              {/* Legal Links */}
               <div className="flex flex-wrap items-center gap-6">
                 {legal.map((link, index) => (
                   <a
@@ -268,7 +267,6 @@ export default function Footer() {
                 ))}
               </div>
 
-              {/* Language Selector */}
               <div className="flex items-center gap-2">
                 <Globe className="w-4 h-4 text-stone-500" />
                 <select className="bg-transparent border border-stone-700/50 rounded-lg px-3 py-1.5 text-stone-400 text-sm focus:outline-none focus:border-amber-500/50 transition-colors cursor-pointer">
@@ -282,7 +280,6 @@ export default function Footer() {
             </div>
           </div>
 
-          {/* Tagline */}
           <div className="mt-8 text-center">
             <p className="text-xs text-stone-600 font-kalam italic">
               "Preserving India's Linguistic Heritage Through Modern Education"

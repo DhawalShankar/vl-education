@@ -117,12 +117,14 @@ export default function Navbar() {
                 </div>
               ))}
               
-              {/* Mobile Contact Button */}
+              {/* Mobile Sign Up Button — 1/3 */}
               <div className="pt-4">
-                <button className="w-full px-6 py-3.5 bg-linear-to-r from-orange-500 to-orange-600 text-white font-bold rounded-full shadow-lg flex items-center justify-center space-x-2 font-kalam text-base">
-                  <span>Contact</span>
-                  <ArrowRight className="w-4 h-4" />
-                </button>
+                <a href="/auth/login">
+                  <button className="w-full px-6 py-3.5 bg-linear-to-r from-orange-500 to-orange-600 text-white font-bold rounded-full shadow-lg flex items-center justify-center space-x-2 font-kalam text-base">
+                    <span>Sign Up</span>
+                    <ArrowRight className="w-4 h-4" />
+                  </button>
+                </a>
               </div>
             </div>
           </div>
@@ -157,7 +159,7 @@ export default function Navbar() {
             </div>
           </div>
 
-          {/* Contact Button - Transitions from center to right */}
+          {/* Sign Up Button (scrolled, top-right) — 2/3 */}
           <div 
             className={`fixed transition-all duration-700 ease-out ${
               isScrolled 
@@ -165,13 +167,15 @@ export default function Navbar() {
                 : 'right-1/2 top-6 opacity-0 translate-x-1/2 pointer-events-none'
             }`}
           >
-            <button className="group relative px-8 py-3 bg-linear-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-bold rounded-full transition-all duration-300 shadow-[0_4px_16px_rgba(249,115,22,0.4)] hover:shadow-[0_6px_24px_rgba(249,115,22,0.5)] hover:scale-[1.02] flex items-center space-x-2 font-kalam text-base">
-              <span>Contact</span>
-              <ArrowRight className="w-5 h-5 group-hover:translate-x-0.5 transition-transform" />
-            </button>
+            <a href="/auth/login">
+              <button className="group relative px-8 py-3 bg-linear-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-bold rounded-full transition-all duration-300 shadow-[0_4px_16px_rgba(249,115,22,0.4)] hover:shadow-[0_6px_24px_rgba(249,115,22,0.5)] hover:scale-[1.02] flex items-center space-x-2 font-kalam text-base">
+                <span>Sign Up</span>
+                <ArrowRight className="w-5 h-5 group-hover:translate-x-0.5 transition-transform" />
+              </button>
+            </a>
           </div>
 
-          {/* Center Pill - Contains logo, nav, and contact button */}
+          {/* Center Pill */}
           <div className="flex justify-center">
             <div className={`relative transition-all duration-500 ease-out backdrop-blur-md shadow-[0_4px_24px_rgba(0,0,0,0.2)] rounded-full border border-white/10 ${
               isScrolled ? 'bg-black/40' : 'bg-white/10'
@@ -245,7 +249,7 @@ export default function Navbar() {
                   ))}
                 </div>
 
-                {/* Contact Button - Visible when NOT scrolled */}
+                {/* Sign Up Button (pill, not scrolled) — 3/3 */}
                 <div 
                   className={`transition-all duration-700 ease-out ${
                     isScrolled 
@@ -253,10 +257,12 @@ export default function Navbar() {
                       : 'opacity-100 w-auto'
                   }`}
                 >
-                  <button className="group relative px-8 py-3 bg-linear-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-bold rounded-full transition-all duration-300 shadow-[0_4px_16px_rgba(249,115,22,0.4)] hover:shadow-[0_6px_24px_rgba(249,115,22,0.5)] hover:scale-[1.02] flex items-center space-x-2 font-kalam text-base whitespace-nowrap">
-                    <span>Contact</span>
-                    <ArrowRight className="w-5 h-5 group-hover:translate-x-0.5 transition-transform" />
-                  </button>
+                  <a href="/auth/login">
+                    <button className="group relative px-8 py-3 bg-linear-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-bold rounded-full transition-all duration-300 shadow-[0_4px_16px_rgba(249,115,22,0.4)] hover:shadow-[0_6px_24px_rgba(249,115,22,0.5)] hover:scale-[1.02] flex items-center space-x-2 font-kalam text-base whitespace-nowrap">
+                      <span>Sign Up</span>
+                      <ArrowRight className="w-5 h-5 group-hover:translate-x-0.5 transition-transform" />
+                    </button>
+                  </a>
                 </div>
               </div>
             </div>
@@ -264,7 +270,7 @@ export default function Navbar() {
         </div>
       </nav>
 
-      {/* Spacer to prevent content from going under navbar */}
+      {/* Spacer */}
       <div className="h-16 lg:h-32"></div>
     </>
   );
