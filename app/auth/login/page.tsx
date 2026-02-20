@@ -2,10 +2,13 @@
 
 import { useState } from "react";
 import { ArrowRight, Eye, EyeOff, BookOpen } from "lucide-react";
-
+import { useAuth } from "@/app/context/AuthContext";
 type Message = { type: "success" | "error"; text: string } | null;
 
 export default function AuthPage() {
+    const auth = useAuth();
+    const login = auth!.login;
+    const register = auth!.register;
   const [tab, setTab] = useState("login");
   const [showPw, setShowPw] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -23,38 +26,28 @@ export default function AuthPage() {
     setForm({ name: "", email: "", password: "" });
   };
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    setLoading(true);
-    setMessage(null);
-    try {
-      const endpoint =
-        tab === "login" ? "/api/v1/auth/login" : "/api/v1/auth/register";
-      const body =
-        tab === "login"
-          ? { email: form.email, password: form.password }
-          : { name: form.name, email: form.email, password: form.password };
+// auth/page.tsx mein handleSubmit update kar:
 
-      const res = await fetch(endpoint, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message || "Something went wrong.");
-
-      localStorage.setItem("accessToken", data.data.accessToken);
-      localStorage.setItem("refreshToken", data.data.refreshToken);
-
-      setMessage({ type: "success", text: `Welcome, ${data.data.user.name}! 🎓` });
-      setTimeout(() => (window.location.href = "/dashboard"), 1000);
-    } catch (err) {
-      const error = err as Error;
-      setMessage({ type: "error", text: error.message });
-    } finally {
-      setLoading(false);
+const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  e.preventDefault();
+  setLoading(true);
+  setMessage(null);
+  try {
+    if (tab === "login") {
+      const user = await login(form.email, form.password);  // ✅ AuthContext use karo
+      setMessage({ type: "success", text: `Welcome, ${user.name}! 🎓` });
+    } else {
+      const user = await register(form.name, form.email, form.password);  // ✅
+      setMessage({ type: "success", text: `Welcome, ${user.name}! 🎓` });
     }
-  };
+    setTimeout(() => (window.location.href = "/dashboard"), 1000);
+  } catch (err) {
+    const error = err as Error;
+    setMessage({ type: "error", text: error.message });
+  } finally {
+    setLoading(false);
+  }
+};
 
   return (
     <div className="min-h-screen bg-[#0a0908] relative overflow-hidden flex items-center justify-center px-4">
