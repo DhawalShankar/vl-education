@@ -38,9 +38,9 @@ export default function Navbar() {
         { label: 'Mastery Path', icon: '🎓' }
       ]
     },
-    { label: 'Practice Labs', href: '#labs' },
-    { label: 'Exam Prep', href: '#exams' },
-    { label: 'About', href: '#about' }
+    { label: 'Learn', href: '/learn' },
+    { label: 'Practice', href: '/practice' },
+    { label: 'Dashboard', href: '/dashboard' }
   ];
 
   return (
@@ -117,7 +117,7 @@ export default function Navbar() {
                 </div>
               ))}
               
-              {/* Mobile Sign Up Button — 1/3 */}
+              {/* Mobile Sign Up Button */}
               <div className="pt-4">
                 <a href="/auth/login">
                   <button className="w-full px-6 py-3.5 bg-linear-to-r from-orange-500 to-orange-600 text-white font-bold rounded-full shadow-lg flex items-center justify-center space-x-2 font-kalam text-base">
@@ -159,7 +159,7 @@ export default function Navbar() {
             </div>
           </div>
 
-          {/* Sign Up Button (scrolled, top-right) — 2/3 */}
+          {/* Sign Up Button (scrolled, top-right) */}
           <div 
             className={`fixed transition-all duration-700 ease-out ${
               isScrolled 
@@ -249,7 +249,7 @@ export default function Navbar() {
                   ))}
                 </div>
 
-                {/* Sign Up Button (pill, not scrolled) — 3/3 */}
+                {/* Sign Up Button (pill, not scrolled) */}
                 <div 
                   className={`transition-all duration-700 ease-out ${
                     isScrolled 

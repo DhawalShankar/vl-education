@@ -1,58 +1,78 @@
 "use client";
 
-import { useState } from "react";
+import { useState, ChangeEvent, FormEvent } from "react";
 import { ArrowRight, Eye, EyeOff, BookOpen } from "lucide-react";
-import { useAuth } from "@/app/context/AuthContext";
-type Message = { type: "success" | "error"; text: string } | null;
+
+interface Message {
+  type: "success" | "error";
+  text: string;
+}
+
+type Role = "student" | "instructor";
 
 export default function AuthPage() {
-    const auth = useAuth();
-    const login = auth!.login;
-    const register = auth!.register;
-  const [tab, setTab] = useState("login");
+  const [tab, setTab] = useState<"login" | "register">("login");
   const [showPw, setShowPw] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState<Message>(null);
+  const [message, setMessage] = useState<Message | null>(null);
+  const [role, setRole] = useState<Role>("student");
   const [form, setForm] = useState({ name: "", email: "", password: "" });
 
-  const handle = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handle = (e: ChangeEvent<HTMLInputElement>) => {
     setForm((f) => ({ ...f, [e.target.name]: e.target.value }));
     setMessage(null);
   };
 
-  const switchTab = (t: string) => {
+  const switchTab = (t: "login" | "register") => {
     setTab(t);
     setMessage(null);
+    setRole("student");
     setForm({ name: "", email: "", password: "" });
   };
 
-// auth/page.tsx mein handleSubmit update kar:
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setLoading(true);
+    setMessage(null);
+    try {
+      const endpoint =
+        tab === "login" ? "/api/v1/auth/login" : "/api/v1/auth/register";
+      const body =
+        tab === "login"
+          ? { email: form.email, password: form.password }
+          : { name: form.name, email: form.email, password: form.password, role };
 
-const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-  e.preventDefault();
-  setLoading(true);
-  setMessage(null);
-  try {
-    if (tab === "login") {
-      const user = await login(form.email, form.password);  // ✅ AuthContext use karo
-      setMessage({ type: "success", text: `Welcome, ${user.name}! 🎓` });
-    } else {
-      const user = await register(form.name, form.email, form.password);  // ✅
-      setMessage({ type: "success", text: `Welcome, ${user.name}! 🎓` });
+      const res = await fetch(endpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || "Something went wrong.");
+
+      localStorage.setItem("accessToken", data.data.accessToken);
+      localStorage.setItem("refreshToken", data.data.refreshToken);
+
+      setMessage({ type: "success", text: `Welcome, ${data.data.user.name}! 🎓` });
+
+      // Redirect based on role returned from backend
+      const userRole = data.data.user.role;
+      setTimeout(() => {
+        window.location.href =
+          userRole === "instructor" ? "/dashboard/instructor" : "/dashboard";
+      }, 1000);
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : "Something went wrong.";
+      setMessage({ type: "error", text: errorMessage });
+    } finally {
+      setLoading(false);
     }
-    setTimeout(() => (window.location.href = "/dashboard"), 1000);
-  } catch (err) {
-    const error = err as Error;
-    setMessage({ type: "error", text: error.message });
-  } finally {
-    setLoading(false);
-  }
-};
+  };
 
   return (
     <div className="min-h-screen bg-[#0a0908] relative overflow-hidden flex items-center justify-center px-4">
 
-      {/* Background — same as LearnPage */}
+      {/* Background */}
       <div
         className="fixed inset-0 opacity-20 pointer-events-none"
         style={{
@@ -77,7 +97,7 @@ const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
 
           {/* Tab switcher */}
           <div className="flex bg-black/30 rounded-xl p-1 mb-8 border border-white/5">
-            {["login", "register"].map((t) => (
+            {(["login", "register"] as const).map((t) => (
               <button
                 key={t}
                 onClick={() => switchTab(t)}
@@ -107,6 +127,31 @@ const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
 
           {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-5">
+
+            {/* Role Selector — only on Register */}
+            {tab === "register" && (
+              <div>
+                <label className="block text-sm text-stone-400 mb-3">I am a...</label>
+                <div className="grid grid-cols-2 gap-3">
+                  {(["student", "instructor"] as Role[]).map((r) => (
+                    <button
+                      key={r}
+                      type="button"
+                      onClick={() => setRole(r)}
+                      className={`flex flex-col items-center gap-2 py-4 rounded-xl border-2 transition-all duration-200 font-kalam font-bold text-sm ${
+                        role === r
+                          ? "border-amber-500 bg-amber-500/10 text-amber-300"
+                          : "border-stone-700/50 bg-white/5 text-stone-400 hover:border-stone-500 hover:text-white"
+                      }`}
+                    >
+                      <span className="text-2xl">{r === "student" ? "🎓" : "📖"}</span>
+                      <span className="capitalize">{r}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {tab === "register" && (
               <div>
                 <label className="block text-sm text-stone-400 mb-2">Full Name</label>
@@ -115,7 +160,7 @@ const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
                   name="name"
                   value={form.name}
                   onChange={handle}
-                  placeholder="Dhawal Shukla"
+                  placeholder="Arjun Sharma"
                   required
                   className="w-full bg-white/5 border border-stone-700/50 rounded-xl px-4 py-3.5 text-stone-100 placeholder-stone-600 text-sm outline-none transition-all focus:border-amber-500/50 focus:bg-white/8 focus:ring-2 focus:ring-amber-500/10"
                 />
