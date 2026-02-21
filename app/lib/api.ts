@@ -8,11 +8,11 @@ const authFetch = async (url: string, options: RequestInit = {}) => {
     headers: {
       "Content-Type": "application/json",
       Authorization: `Bearer ${token}`,
-      ...options.headers
-    }
+      ...options.headers,
+    },
   });
 
-  // Auto refresh if token expired
+  // Auto-refresh if access token expired
   if (res.status === 401) {
     const refreshToken = localStorage.getItem("refreshToken");
     if (!refreshToken) {
@@ -20,16 +20,19 @@ const authFetch = async (url: string, options: RequestInit = {}) => {
       window.location.href = "/auth/login";
       return;
     }
+
     const refreshRes = await fetch(`${BASE}/auth/refresh`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ refreshToken })
+      body: JSON.stringify({ refreshToken }),
     });
+
     if (!refreshRes.ok) {
       localStorage.clear();
       window.location.href = "/auth/login";
       return;
     }
+
     const { data } = await refreshRes.json();
     localStorage.setItem("accessToken", data.accessToken);
     localStorage.setItem("refreshToken", data.refreshToken);
@@ -40,8 +43,8 @@ const authFetch = async (url: string, options: RequestInit = {}) => {
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${data.accessToken}`,
-        ...options.headers
-      }
+        ...options.headers,
+      },
     });
   }
 
@@ -49,13 +52,28 @@ const authFetch = async (url: string, options: RequestInit = {}) => {
 };
 
 export const courseAPI = {
+  // Public — published courses only (student browse + admin overview)
   getAll: (params = "") => authFetch(`/courses?${params}`),
+
   getOne: (id: string) => authFetch(`/courses/${id}`),
-  create: (body: object) => authFetch("/courses", { method: "POST", body: JSON.stringify(body) }),
-  update: (id: string, body: object) => authFetch(`/courses/${id}`, { method: "PUT", body: JSON.stringify(body) }),
-  delete: (id: string) => authFetch(`/courses/${id}`, { method: "DELETE" }),
-  enroll: (id: string) => authFetch(`/courses/${id}/enroll`, { method: "POST" }),
+
+  // ✅ NEW — instructor ke saare courses (drafts bhi), backend se filtered
+  getInstructorCourses: () => authFetch("/courses/instructor/mine"),
+
+  // Student — apne enrolled courses
   getMyCourses: () => authFetch("/courses/user/enrolled"),
+
+  enroll: (id: string) =>
+    authFetch(`/courses/${id}/enroll`, { method: "POST" }),
+
+  create: (body: object) =>
+    authFetch("/courses", { method: "POST", body: JSON.stringify(body) }),
+
+  update: (id: string, body: object) =>
+    authFetch(`/courses/${id}`, { method: "PUT", body: JSON.stringify(body) }),
+
+  delete: (id: string) =>
+    authFetch(`/courses/${id}`, { method: "DELETE" }),
 };
 
 export const adminAPI = {
@@ -65,7 +83,8 @@ export const adminAPI = {
     authFetch(`/admin/users/${id}/role`, { method: "PATCH", body: JSON.stringify({ role }) }),
   toggleStatus: (id: string) =>
     authFetch(`/admin/users/${id}/status`, { method: "PATCH" }),
-  deleteUser: (id: string) => authFetch(`/admin/users/${id}`, { method: "DELETE" }),
+  deleteUser: (id: string) =>
+    authFetch(`/admin/users/${id}`, { method: "DELETE" }),
 };
 
 export default authFetch;
