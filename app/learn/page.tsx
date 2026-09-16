@@ -35,7 +35,7 @@ export default function LearnPage() {
     {
       name: 'Hindi',
       nativeName: 'हिंदी',
-      slug: 'language',
+      slug: 'hindi',
       icon: '📚',
       learners: '150+',
       difficulty: 'Beginner',
@@ -47,7 +47,7 @@ export default function LearnPage() {
     {
       name: 'Tamil',
       nativeName: 'தமிழ்',
-      slug: 'language',
+      slug: 'tamil',
       icon: '🌴',
       learners: '120+',
       difficulty: 'Intermediate',
@@ -59,7 +59,7 @@ export default function LearnPage() {
     {
       name: 'Telugu',
       nativeName: 'తెలుగు',
-      slug: 'language',
+      slug: 'telugu',
       icon: '🎭',
       learners: '95+',
       difficulty: 'Intermediate',
@@ -71,7 +71,7 @@ export default function LearnPage() {
     {
       name: 'Bengali',
       nativeName: 'বাংলা',
-      slug: 'language',
+      slug: 'bengali',
       icon: '📝',
       learners: '110+',
       difficulty: 'Beginner',
@@ -83,7 +83,7 @@ export default function LearnPage() {
     {
       name: 'Marathi',
       nativeName: 'मराठी',
-      slug: 'language',
+      slug: 'marathi',
       icon: '🏛️',
       learners: '85+',
       difficulty: 'Beginner',
@@ -95,7 +95,7 @@ export default function LearnPage() {
     {
       name: 'English',
       nativeName: 'English',
-      slug: 'language',
+      slug: 'english',
       icon: '🌍',
       learners: '200+',
       difficulty: 'Beginner',

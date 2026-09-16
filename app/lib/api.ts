@@ -57,6 +57,9 @@ export const courseAPI = {
 
   getOne: (id: string) => authFetch(`/courses/${id}`),
 
+  // Filter courses by language name
+  getByLanguage: (language: string) => authFetch(`/courses?language=${encodeURIComponent(language)}`),
+
   // ✅ NEW — instructor ke saare courses (drafts bhi), backend se filtered
   getInstructorCourses: () => authFetch("/courses/instructor/mine"),
 
