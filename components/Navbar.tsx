@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Menu, X, ChevronDown, ArrowRight, LogOut, User } from 'lucide-react';
 import { useAuth } from '@/app/context/AuthContext';
 import { useRouter } from 'next/navigation';
@@ -9,6 +9,20 @@ export default function Navbar() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
+  const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const openDropdown = (label: string) => {
+    if (closeTimer.current) clearTimeout(closeTimer.current);
+    setActiveDropdown(label);
+  };
+
+  const closeDropdown = () => {
+    closeTimer.current = setTimeout(() => setActiveDropdown(null), 150);
+  };
+
+  const cancelClose = () => {
+    if (closeTimer.current) clearTimeout(closeTimer.current);
+  };
 
   const auth = useAuth();
   const { user, logout, isAuthenticated, loading } = auth || {
@@ -239,8 +253,8 @@ export default function Navbar() {
                     <div
                       key={index}
                       className="relative"
-                      onMouseEnter={() => link.hasDropdown && setActiveDropdown(link.label)}
-                      onMouseLeave={() => setActiveDropdown(null)}
+                      onMouseEnter={() => link.hasDropdown && openDropdown(link.label)}
+                      onMouseLeave={closeDropdown}
                     >
                       {link.hasDropdown ? (
                         <>
@@ -250,7 +264,12 @@ export default function Navbar() {
                           </button>
 
                           {activeDropdown === link.label && (
-                            <div className="absolute top-full left-0 mt-3 w-64 bg-white rounded-2xl shadow-[0_12px_48px_rgba(0,0,0,0.15)] overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
+                            <div
+                              className="absolute top-full left-0 pt-3 w-64"
+                              onMouseEnter={cancelClose}
+                              onMouseLeave={closeDropdown}
+                            >
+                            <div className="bg-white rounded-2xl shadow-[0_12px_48px_rgba(0,0,0,0.15)] overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
                               {link.items?.map((item, idx) => (
                                 <a
                                   key={idx}
@@ -261,6 +280,7 @@ export default function Navbar() {
                                   <span className="text-sm">{item.label}</span>
                                 </a>
                               ))}
+                            </div>
                             </div>
                           )}
                         </>
