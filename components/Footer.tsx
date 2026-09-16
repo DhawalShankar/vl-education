@@ -1,7 +1,6 @@
 "use client";
 
 import { 
-  BookOpen, 
   Mail, 
   Phone, 
   MapPin, 
@@ -19,57 +18,53 @@ import {
 
 export default function Footer() {
   const quickLinks = [
-    { label: 'About Us', href: '#about' },
-    { label: 'Our Story', href: '#story' },
-    { label: 'Careers', href: '#careers' },
-    { label: 'Press Kit', href: '#press' },
-    { label: 'Blog', href: '#blog' }
+    { label: 'About Us', href: '/about' },
+    { label: 'Our Story', href: '/about#story' },
+    { label: 'Careers', href: '/careers' },
+    { label: 'Press Kit', href: '/press' },
+    { label: 'Blog', href: '/blog' },
   ];
 
   const languages = [
-    { label: 'Hindi', href: '#hindi' },
-    { label: 'English', href: '#english' },
-    { label: 'Tamil', href: '#tamil' },
-    { label: 'Telugu', href: '#telugu' },
-    { label: 'Bengali', href: '#bengali' },
-    { label: 'View All 22+', href: '#all' }
+    { label: 'Hindi', href: '/learn/hindi' },
+    { label: 'English', href: '/learn/english' },
+    { label: 'Tamil', href: '/learn/tamil' },
+    { label: 'Telugu', href: '/learn/telugu' },
+    { label: 'Bengali', href: '/learn/bengali' },
+    { label: 'View All 22+', href: '/learn' },
   ];
 
   const resources = [
-    { label: 'Learning Paths', href: '#paths' },
-    { label: 'Practice Labs', href: '#labs' },
-    { label: 'Exam Preparation', href: '#exams' },
-    { label: 'Teacher Resources', href: '#teachers' },
-    { label: 'Help Center', href: '#help' }
+    { label: 'Learning Paths', href: '/learn' },
+    { label: 'Practice Labs', href: '/practice' },
+    { label: 'Exam Preparation', href: '/learn?tab=exams' },
+    { label: 'Teacher Resources', href: '/learn?tab=teachers' },
+    { label: 'Help Center', href: '/help' },
   ];
 
   const legal = [
-    { label: 'Privacy Policy', href: '#privacy' },
-    { label: 'Terms of Service', href: '#terms' },
-    { label: 'Cookie Policy', href: '#cookies' },
-    { label: 'Accessibility', href: '#accessibility' }
+    { label: 'Privacy Policy', href: '/privacy' },
+    { label: 'Terms of Service', href: '/terms' },
+    { label: 'Cookie Policy', href: '/cookies' },
+    { label: 'Accessibility', href: '/accessibility' },
   ];
 
   const socialLinks = [
-    { icon: Facebook, label: 'Facebook', href: '#' },
-    { icon: Twitter, label: 'Twitter', href: '#' },
-    { icon: Instagram, label: 'Instagram', href: '#' },
-    { icon: Linkedin, label: 'LinkedIn', href: '#' },
-    { icon: Youtube, label: 'YouTube', href: '#' }
+    { icon: Facebook, label: 'Facebook', href: 'https://facebook.com' },
+    { icon: Twitter, label: 'Twitter', href: 'https://twitter.com' },
+    { icon: Instagram, label: 'Instagram', href: 'https://instagram.com' },
+    { icon: Linkedin, label: 'LinkedIn', href: 'https://linkedin.com' },
+    { icon: Youtube, label: 'YouTube', href: 'https://youtube.com' },
   ];
 
   return (
     <footer className="relative bg-[#080706] border-t-2 border-amber-500/20 overflow-hidden">
 
-      {/* Background — subtle radial amber glow from bottom, no photo */}
+      {/* Background */}
       <div className="absolute inset-0 pointer-events-none">
-        {/* Deep radial glow bottom-left */}
         <div className="absolute -bottom-32 -left-32 w-150 h-150 rounded-full bg-amber-600/10 blur-[120px]" />
-        {/* Softer glow bottom-right */}
         <div className="absolute -bottom-24 -right-24 w-100 h-100 rounded-full bg-orange-600/8 blur-[100px]" />
-        {/* Very subtle top fade from page bg */}
         <div className="absolute top-0 inset-x-0 h-32 bg-linear-to-b from-[#0a0908] to-transparent" />
-        {/* Fine dot grid */}
         <div
           className="absolute inset-0 opacity-[0.04]"
           style={{
@@ -86,16 +81,16 @@ export default function Footer() {
             
             {/* Brand Column */}
             <div className="lg:col-span-4">
-              <div className="flex items-center space-x-3 mb-6">
+              <a href="/" className="flex items-center space-x-3 mb-6 group w-fit">
                 <img 
                   src="/logo.png" 
                   alt="VartaLang Logo" 
-                  className="w-12 h-12 object-contain drop-shadow-lg"
+                  className="w-12 h-12 object-contain drop-shadow-lg group-hover:scale-105 transition-transform"
                 />
-                <h3 className="font-kalam text-3xl font-bold text-white">
+                <h3 className="font-kalam text-3xl font-bold text-white group-hover:text-amber-300 transition-colors">
                   VartaLang
                 </h3>
-              </div>
+              </a>
               
               <p className="text-stone-400 mb-6 leading-relaxed text-sm">
                 Preserving India's linguistic heritage through world-class education. 
@@ -123,6 +118,8 @@ export default function Footer() {
                     <a
                       key={index}
                       href={social.href}
+                      target="_blank"
+                      rel="noopener noreferrer"
                       aria-label={social.label}
                       className="w-10 h-10 rounded-full bg-stone-900/60 border border-stone-700/50 hover:border-amber-500/50 flex items-center justify-center transition-all hover:scale-110 group"
                     >
@@ -228,10 +225,21 @@ export default function Footer() {
                 Get the latest updates on new languages, features, and learning resources
               </p>
               
-              <form className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto">
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  const input = e.currentTarget.querySelector('input') as HTMLInputElement;
+                  if (input?.value) {
+                    alert(`Thank you! We'll keep ${input.value} updated.`);
+                    input.value = '';
+                  }
+                }}
+                className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto"
+              >
                 <input
                   type="email"
                   placeholder="Enter your email"
+                  required
                   className="flex-1 px-5 py-3 bg-stone-900/60 border border-stone-700/50 rounded-full text-white placeholder-stone-500 focus:outline-none focus:border-amber-500/50 transition-colors"
                 />
                 <button 
@@ -269,7 +277,13 @@ export default function Footer() {
 
               <div className="flex items-center gap-2">
                 <Globe className="w-4 h-4 text-stone-500" />
-                <select className="bg-transparent border border-stone-700/50 rounded-lg px-3 py-1.5 text-stone-400 text-sm focus:outline-none focus:border-amber-500/50 transition-colors cursor-pointer">
+                <select
+                  className="bg-transparent border border-stone-700/50 rounded-lg px-3 py-1.5 text-stone-400 text-sm focus:outline-none focus:border-amber-500/50 transition-colors cursor-pointer"
+                  onChange={(e) => {
+                    // Language preference can be stored and used later
+                    localStorage.setItem('lang-pref', e.target.value);
+                  }}
+                >
                   <option value="en">English</option>
                   <option value="hi">हिंदी</option>
                   <option value="ta">தமிழ்</option>

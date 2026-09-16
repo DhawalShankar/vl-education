@@ -1,5 +1,6 @@
 "use client";
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { 
   BookOpen, 
   Award, 
@@ -28,9 +29,15 @@ import {
 } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
+import { useAuth } from '@/app/context/AuthContext';
+
 export default function LearnPage() {
   const [hoveredCard, setHoveredCard] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState('all');
+  const router = useRouter();
+
+  const auth = useAuth();
+  const { isAuthenticated } = auth || { isAuthenticated: false };
 
   const languages = [
     { id: 'hindi', name: 'Hindi', native: 'हिंदी', learners: '150+', icon: '📚' },
@@ -75,6 +82,7 @@ export default function LearnPage() {
       level: 'Beginner',
       modules: 48,
       icon: Rocket,
+      path: 'foundation',
       features: ['Script Mastery', 'Basic Grammar', 'Everyday Vocabulary', 'Simple Conversations']
     },
     {
@@ -83,6 +91,7 @@ export default function LearnPage() {
       level: 'Intermediate',
       modules: 64,
       icon: Briefcase,
+      path: 'professional',
       features: ['Business Communication', 'Formal Writing', 'Interview Skills', 'Workplace Fluency']
     },
     {
@@ -91,25 +100,38 @@ export default function LearnPage() {
       level: 'Advanced',
       modules: 80,
       icon: GraduationCap,
+      path: 'mastery',
       features: ['Literary Analysis', 'Cultural Context', 'Teaching Methods', 'Exam Preparation']
     }
   ];
 
   const examPrep = [
-    { name: 'IELTS Preparation', icon: '🌐', modules: 45 },
-    { name: 'Hindi Teacher Exam', icon: '📚', modules: 38 },
-    { name: 'Bengali Teacher Cert', icon: '✍️', modules: 35 },
-    { name: 'ISL Trainer License', icon: '👐', modules: 42 },
-    { name: 'Govt Job Prep', icon: '🏛️', modules: 40 },
-    { name: 'Regional Cert Exams', icon: '🎓', modules: 36 }
+    { name: 'IELTS Preparation', icon: '🌐', modules: 45, lang: 'english' },
+    { name: 'Hindi Teacher Exam', icon: '📚', modules: 38, lang: 'hindi' },
+    { name: 'Bengali Teacher Cert', icon: '✍️', modules: 35, lang: 'bengali' },
+    { name: 'ISL Trainer License', icon: '👐', modules: 42, lang: 'hindi' },
+    { name: 'Govt Job Prep', icon: '🏛️', modules: 40, lang: 'hindi' },
+    { name: 'Regional Cert Exams', icon: '🎓', modules: 36, lang: 'hindi' },
   ];
 
   const practiceLabs = [
-    { icon: Mic, title: 'Pronunciation Lab', count: 150, color: 'text-blue-400' },
-    { icon: Headphones, title: 'Listening Studio', count: 200, color: 'text-purple-400' },
-    { icon: Video, title: 'Video Immersion', count: 120, color: 'text-orange-400' },
-    { icon: MessageSquare, title: 'Conversation Sim', count: 180, color: 'text-green-400' }
+    { icon: Mic, title: 'Pronunciation Lab', count: 150, color: 'text-blue-400', href: '/practice' },
+    { icon: Headphones, title: 'Listening Studio', count: 200, color: 'text-purple-400', href: '/practice' },
+    { icon: Video, title: 'Video Immersion', count: 120, color: 'text-orange-400', href: '/practice' },
+    { icon: MessageSquare, title: 'Conversation Sim', count: 180, color: 'text-green-400', href: '/practice' },
   ];
+
+  const handleStartLearning = () => {
+    if (isAuthenticated) {
+      router.push('/dashboard');
+    } else {
+      router.push('/auth/login');
+    }
+  };
+
+  const handleCreateAccount = () => {
+    router.push('/auth/login');
+  };
 
   return (
     <div className="min-h-screen bg-[#0a0908] relative overflow-hidden">
@@ -139,17 +161,8 @@ export default function LearnPage() {
       {/* Hero Section */}
       <section className="relative pt-20 pb-32 px-6">
         <div className="max-w-7xl mx-auto relative z-10">
-          
-          {/* Top Badge */}
-          {/* <div className="flex justify-center mb-12">
-            <div className="inline-flex items-center gap-3 px-5 py-2.5 rounded-full bg-amber-500/20 border-2 border-amber-400/30 backdrop-blur-sm">
-              <Sparkles className="w-4 h-4 text-amber-300" />
-              <span className="text-sm font-semibold text-amber-100 tracking-wide">VartaLang Education Platform</span>
-              <div className="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></div>
-            </div>
-          </div> */}
 
-          {/* Main Headline - White on Blackboard */}
+          {/* Main Headline */}
           <div className="text-center mb-16">
             <h1 className="font-kalam text-6xl md:text-7xl lg:text-8xl font-bold text-white mb-8 leading-[1.1] drop-shadow-2xl">
               Learn to Communicate
@@ -171,11 +184,17 @@ export default function LearnPage() {
 
             {/* CTA Buttons */}
             <div className="flex flex-wrap gap-5 justify-center mb-16">
-              <button className="group px-10 py-5 bg-linear-to-r from-amber-500 to-orange-600 hover:from-amber-400 hover:to-orange-500 text-white rounded-xl font-bold text-lg shadow-2xl hover:shadow-amber-500/50 transition-all hover:scale-105 flex items-center gap-3">
-                Start Learning Free
+              <button
+                onClick={handleStartLearning}
+                className="group px-10 py-5 bg-linear-to-r from-amber-500 to-orange-600 hover:from-amber-400 hover:to-orange-500 text-white rounded-xl font-bold text-lg shadow-2xl hover:shadow-amber-500/50 transition-all hover:scale-105 flex items-center gap-3"
+              >
+                {isAuthenticated ? 'Go to Dashboard' : 'Start Learning Free'}
                 <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
               </button>
-              <button className="px-10 py-5 border-3 border-stone-600 hover:border-amber-500 bg-stone-900/50 backdrop-blur-sm text-stone-100 rounded-xl font-bold text-lg transition-all hover:scale-105">
+              <button
+                onClick={() => router.push('/learn')}
+                className="px-10 py-5 border-3 border-stone-600 hover:border-amber-500 bg-stone-900/50 backdrop-blur-sm text-stone-100 rounded-xl font-bold text-lg transition-all hover:scale-105"
+              >
                 Explore Courses
               </button>
             </div>
@@ -200,7 +219,7 @@ export default function LearnPage() {
         </div>
       </section>
 
-      {/* Core Features - Premium Cards */}
+      {/* Core Features */}
       <section className="relative py-20 px-6">
         <div className="max-w-7xl mx-auto relative z-10">
           
@@ -220,13 +239,12 @@ export default function LearnPage() {
             {features.map((feature, index) => {
               const Icon = feature.icon;
               return (
-                <div 
+                <button
                   key={index}
-                  className="group relative p-8 bg-stone-900/40 backdrop-blur-sm border-2 border-stone-700/50 hover:border-amber-500/50 rounded-2xl transition-all hover:-translate-y-2 hover:shadow-2xl hover:shadow-amber-500/20"
+                  onClick={() => router.push('/learn')}
+                  className="group relative p-8 bg-stone-900/40 backdrop-blur-sm border-2 border-stone-700/50 hover:border-amber-500/50 rounded-2xl transition-all hover:-translate-y-2 hover:shadow-2xl hover:shadow-amber-500/20 text-left w-full"
                 >
-                  {/* Gradient Background */}
                   <div className={`absolute inset-0 bg-linear-to-br ${feature.gradient} opacity-0 group-hover:opacity-10 rounded-2xl transition-opacity`}></div>
-                  
                   <div className="relative z-10">
                     <div className={`w-16 h-16 rounded-xl bg-linear-to-br ${feature.gradient} flex items-center justify-center mb-6 group-hover:scale-110 transition-transform`}>
                       <Icon className="w-8 h-8 text-white" />
@@ -234,7 +252,7 @@ export default function LearnPage() {
                     <h3 className="font-kalam text-2xl font-bold text-white mb-3">{feature.title}</h3>
                     <p className="text-sm text-stone-400 leading-relaxed">{feature.description}</p>
                   </div>
-                </div>
+                </button>
               );
             })}
           </div>
@@ -252,7 +270,10 @@ export default function LearnPage() {
               </h2>
               <p className="text-stone-400">Choose your learning path from 22+ languages</p>
             </div>
-            <button className="hidden md:flex items-center gap-2 px-6 py-3 border-2 border-stone-700 hover:border-amber-500 bg-stone-900/50 backdrop-blur-sm text-stone-200 rounded-xl font-semibold transition-all">
+            <button
+              onClick={() => router.push('/learn')}
+              className="hidden md:flex items-center gap-2 px-6 py-3 border-2 border-stone-700 hover:border-amber-500 bg-stone-900/50 backdrop-blur-sm text-stone-200 rounded-xl font-semibold transition-all"
+            >
               View All
               <ChevronRight className="w-5 h-5" />
             </button>
@@ -264,6 +285,7 @@ export default function LearnPage() {
                 key={lang.id}
                 onMouseEnter={() => setHoveredCard(lang.id)}
                 onMouseLeave={() => setHoveredCard(null)}
+                onClick={() => router.push(`/learn/${lang.id}`)}
                 className="group text-left p-6 bg-stone-900/60 backdrop-blur-sm border-2 border-stone-700/50 hover:border-amber-500/50 rounded-xl transition-all hover:scale-105"
               >
                 <div className="flex items-start justify-between mb-4">
@@ -341,7 +363,10 @@ export default function LearnPage() {
                     ))}
                   </div>
 
-                  <button className="w-full py-4 bg-linear-to-r from-amber-500 to-orange-600 hover:from-amber-400 hover:to-orange-500 text-white rounded-xl font-bold transition-all group-hover:shadow-xl group-hover:shadow-amber-500/30">
+                  <button
+                    onClick={() => router.push(isAuthenticated ? `/learn?path=${path.path}` : '/auth/login')}
+                    className="w-full py-4 bg-linear-to-r from-amber-500 to-orange-600 hover:from-amber-400 hover:to-orange-500 text-white rounded-xl font-bold transition-all group-hover:shadow-xl group-hover:shadow-amber-500/30"
+                  >
                     Explore Path
                   </button>
                 </div>
@@ -371,9 +396,10 @@ export default function LearnPage() {
             {practiceLabs.map((lab, index) => {
               const Icon = lab.icon;
               return (
-                <div 
+                <button
                   key={index}
-                  className="group relative p-8 bg-stone-900/60 backdrop-blur-sm border-2 border-stone-700/50 hover:border-cyan-500/50 rounded-2xl transition-all hover:-translate-y-1 cursor-pointer"
+                  onClick={() => router.push(lab.href)}
+                  className="group relative p-8 bg-stone-900/60 backdrop-blur-sm border-2 border-stone-700/50 hover:border-cyan-500/50 rounded-2xl transition-all hover:-translate-y-1 cursor-pointer text-left w-full"
                 >
                   <div className="w-14 h-14 rounded-xl bg-stone-800/50 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
                     <Icon className={`w-7 h-7 ${lab.color}`} />
@@ -381,7 +407,7 @@ export default function LearnPage() {
                   <h3 className="font-kalam text-xl font-bold text-white mb-2">{lab.title}</h3>
                   <p className="text-2xl font-bold text-amber-400 mb-3">{lab.count}+</p>
                   <p className="text-sm text-stone-400">Interactive exercises</p>
-                </div>
+                </button>
               );
             })}
           </div>
@@ -406,17 +432,18 @@ export default function LearnPage() {
 
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             {examPrep.map((exam, index) => (
-              <div 
+              <button
                 key={index}
-                className="p-6 bg-stone-900/60 backdrop-blur-sm border-2 border-stone-700/50 hover:border-green-500/50 rounded-xl transition-all hover:-translate-y-1"
+                onClick={() => router.push(`/learn/${exam.lang}`)}
+                className="p-6 bg-stone-900/60 backdrop-blur-sm border-2 border-stone-700/50 hover:border-green-500/50 rounded-xl transition-all hover:-translate-y-1 text-left w-full group"
               >
                 <div className="text-4xl mb-4">{exam.icon}</div>
-                <h3 className="font-kalam text-xl font-bold text-white mb-3">{exam.name}</h3>
+                <h3 className="font-kalam text-xl font-bold text-white mb-3 group-hover:text-green-300 transition-colors">{exam.name}</h3>
                 <div className="flex items-center gap-2 text-sm text-stone-400">
                   <Layers className="w-4 h-4" />
                   <span>{exam.modules} modules</span>
                 </div>
-              </div>
+              </button>
             ))}
           </div>
         </div>
@@ -467,11 +494,17 @@ export default function LearnPage() {
           </p>
 
           <div className="flex flex-wrap gap-4 justify-center mb-10">
-            <button className="px-8 py-4 bg-amber-500 hover:bg-amber-400 text-stone-950 rounded-md font-medium transition-all">
-              Create Account
+            <button
+              onClick={handleCreateAccount}
+              className="px-8 py-4 bg-amber-500 hover:bg-amber-400 text-stone-950 rounded-md font-medium transition-all hover:scale-105"
+            >
+              {isAuthenticated ? 'Go to Dashboard' : 'Create Account'}
             </button>
-            <button className="px-8 py-4 border border-stone-700 hover:border-stone-600 text-stone-300 rounded-md font-medium transition-all">
-              Request Information
+            <button
+              onClick={() => router.push('/learn')}
+              className="px-8 py-4 border border-stone-700 hover:border-stone-600 text-stone-300 rounded-md font-medium transition-all hover:scale-105"
+            >
+              Browse Courses
             </button>
           </div>
 
@@ -498,7 +531,7 @@ export default function LearnPage() {
           Preserving India's Linguistic Heritage Through Modern Education
         </p>
       </div>
-            <Footer/>
+      <Footer/>
     </div>
   );
 }

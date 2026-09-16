@@ -442,10 +442,17 @@ export default function LearnPage() {
 
           <div className="flex flex-wrap gap-5 justify-center mb-8">
             <Link
-              href="/matches"
+              href="/auth/login"
               className="group px-10 py-5 bg-linear-to-r from-amber-500 to-orange-600 hover:from-amber-400 hover:to-orange-500 text-white rounded-xl font-bold text-lg shadow-2xl hover:shadow-amber-500/50 transition-all hover:scale-105 flex items-center gap-3 font-kalam"
             >
-                Explore Our Certifications
+                Start Your Journey
+              <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+            </Link>
+            <Link
+              href="/dashboard"
+              className="group px-10 py-5 border-2 border-stone-600 hover:border-amber-500 bg-stone-900/50 backdrop-blur-sm text-stone-100 rounded-xl font-bold text-lg transition-all hover:scale-105 flex items-center gap-3 font-kalam"
+            >
+                My Dashboard
               <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
             </Link>
           </div>
