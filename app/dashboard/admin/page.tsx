@@ -155,23 +155,26 @@ export default function AdminDashboard() {
   const loadData = useCallback(async () => {
     setDataLoading(true);
     try {
-      const [usersRes, coursesRes] = await Promise.all([
-        adminAPI.getUsers(),
-        courseAPI.getAll("limit=100"),
-      ]);
+      const [usersRes, coursesRes, statsRes] = await Promise.all([
+      adminAPI.getUsers(),
+      adminAPI.getAdminCourses(),
+      adminAPI.getStats(),
+    ]);
 
       const usersData = await usersRes?.json();
       const coursesData = await coursesRes?.json();
+      const statsData = await statsRes?.json();
 
       const userList: User[] = usersData?.data?.users ?? usersData?.data ?? [];
       const courseList: Course[] = coursesData?.data?.courses ?? [];
+      const backendStats = statsData?.data?.stats;
 
       setUsers(userList);
       setCourses(courseList);
       setStats({
-        totalUsers: userList.length,
-        totalCourses: courseList.length,
-        totalStudents: userList.filter((u) => u.role === "student").length,
+        totalUsers: backendStats?.totalUsers ?? userList.length,
+        totalCourses: backendStats?.totalCourses ?? courseList.length,
+        totalStudents: backendStats?.totalEnrollments ?? userList.filter((u) => u.role === "student").length,
         totalInstructors: userList.filter((u) => u.role === "instructor").length,
       });
     } catch {
@@ -232,7 +235,7 @@ export default function AdminDashboard() {
   const handleDeleteCourse = async (id: string) => {
     if (!confirm("Delete this course permanently?")) return;
     try {
-      const res = await courseAPI.delete(id);
+      const res = await adminAPI.deleteCourse(id);
       if (res?.ok) {
         setCourses((prev) => prev.filter((c) => c._id !== id));
         showToast("Course deleted", true);
@@ -556,3 +559,5 @@ export default function AdminDashboard() {
     </div>
   );
 }
+
+
