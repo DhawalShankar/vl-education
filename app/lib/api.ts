@@ -37,6 +37,7 @@ const authFetch = async (url: string, options: RequestInit = {}) => {
     localStorage.setItem("accessToken", data.accessToken);
     localStorage.setItem("refreshToken", data.refreshToken);
 
+    // Retry original request with new token
     return fetch(`${BASE}${url}`, {
       ...options,
       headers: {
@@ -51,61 +52,42 @@ const authFetch = async (url: string, options: RequestInit = {}) => {
 };
 
 export const courseAPI = {
+  // Public — published courses only (student browse + admin overview)
   getAll: (params = "") => authFetch(`/courses?${params}`),
+
   getOne: (id: string) => authFetch(`/courses/${id}`),
-  getByLanguage: (language: string) =>
-    authFetch(`/courses?language=${encodeURIComponent(language)}`),
+
+  // Filter courses by language name
+  getByLanguage: (language: string) => authFetch(`/courses?language=${encodeURIComponent(language)}`),
+
+  // ✅ NEW — instructor ke saare courses (drafts bhi), backend se filtered
   getInstructorCourses: () => authFetch("/courses/instructor/mine"),
+
+  // Student — apne enrolled courses
   getMyCourses: () => authFetch("/courses/user/enrolled"),
+
   enroll: (id: string) =>
     authFetch(`/courses/${id}/enroll`, { method: "POST" }),
+
   create: (body: object) =>
     authFetch("/courses", { method: "POST", body: JSON.stringify(body) }),
+
   update: (id: string, body: object) =>
     authFetch(`/courses/${id}`, { method: "PUT", body: JSON.stringify(body) }),
+
   delete: (id: string) =>
     authFetch(`/courses/${id}`, { method: "DELETE" }),
-  addResource: (courseId: string, resource: object) =>
-    authFetch(`/courses/${courseId}/resources`, {
-      method: "POST",
-      body: JSON.stringify(resource),
-    }),
-  deleteResource: (courseId: string, resourceId: string) =>
-    authFetch(`/courses/${courseId}/resources/${resourceId}`, {
-      method: "DELETE",
-    }),
 };
 
 export const adminAPI = {
   getStats: () => authFetch("/admin/stats"),
   getUsers: () => authFetch("/admin/users"),
-  getAdminCourses: () => authFetch("/admin/courses"),
   updateRole: (id: string, role: string) =>
-    authFetch(`/admin/users/${id}/role`, {
-      method: "PATCH",
-      body: JSON.stringify({ role }),
-    }),
+    authFetch(`/admin/users/${id}/role`, { method: "PATCH", body: JSON.stringify({ role }) }),
   toggleStatus: (id: string) =>
     authFetch(`/admin/users/${id}/status`, { method: "PATCH" }),
   deleteUser: (id: string) =>
     authFetch(`/admin/users/${id}`, { method: "DELETE" }),
-  deleteCourse: (id: string) =>
-    authFetch(`/admin/courses/${id}`, { method: "DELETE" }),
-};
-
-export const authAPI = {
-  forgotPassword: (email: string) =>
-    fetch(`${BASE}/auth/forgot-password`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email }),
-    }),
-  resetPassword: (token: string, password: string) =>
-    fetch(`${BASE}/auth/reset-password/${token}`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ password }),
-    }),
 };
 
 export default authFetch;
