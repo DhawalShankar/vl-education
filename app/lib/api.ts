@@ -1,93 +1,142 @@
-const BASE = `${process.env.NEXT_PUBLIC_API_URL}/api/v1`;
+const BASE = (process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000") + "/api/v1";
 
-const authFetch = async (url: string, options: RequestInit = {}) => {
-  const token = localStorage.getItem("accessToken");
+const authFetch = async (endpoint: string, options: RequestInit = {}) => {
+  const token = typeof window !== "undefined" ? localStorage.getItem("accessToken") : null;
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+    ...(options.headers as Record<string, string>),
+  };
 
-  const res = await fetch(`${BASE}${url}`, {
-    ...options,
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-      ...options.headers,
-    },
-  });
-
-  // Auto-refresh if access token expired
-  if (res.status === 401) {
-    const refreshToken = localStorage.getItem("refreshToken");
-    if (!refreshToken) {
-      localStorage.clear();
-      window.location.href = "/auth/login";
-      return;
-    }
-
-    const refreshRes = await fetch(`${BASE}/auth/refresh`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ refreshToken }),
-    });
-
-    if (!refreshRes.ok) {
-      localStorage.clear();
-      window.location.href = "/auth/login";
-      return;
-    }
-
-    const { data } = await refreshRes.json();
-    localStorage.setItem("accessToken", data.accessToken);
-    localStorage.setItem("refreshToken", data.refreshToken);
-
-    // Retry original request with new token
-    return fetch(`${BASE}${url}`, {
-      ...options,
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${data.accessToken}`,
-        ...options.headers,
-      },
-    });
+  if (token) {
+    headers["Authorization"] = "Bearer " + token;
   }
+
+  const res = await fetch(BASE + endpoint, {
+    ...options,
+    headers,
+  });
 
   return res;
 };
 
+export const authAPI = {
+  ssoExchange: async (code: string) => {
+    const res = await authFetch("/auth/sso/exchange", {
+      method: "POST",
+      body: JSON.stringify({ code }),
+    });
+    if (!res.ok) throw new Error("Failed to exchange SSO code");
+    return res.json();
+  },
+  devLogin: async (email: string, role = "student", fullName = "Dev User") => {
+    const res = await authFetch("/auth/dev-login", {
+      method: "POST",
+      body: JSON.stringify({ email, role, full_name: fullName }),
+    });
+    if (!res.ok) throw new Error("Dev login failed");
+    return res.json();
+  },
+  getMe: async () => {
+    const res = await authFetch("/auth/me");
+    if (!res.ok) return null;
+    return res.json();
+  },
+};
+
 export const courseAPI = {
-  // Public — published courses only (student browse + admin overview)
-  getAll: (params = "") => authFetch(`/courses?${params}`),
+  getLanguages: async () => {
+    const res = await authFetch("/courses/languages");
+    if (!res.ok) return [];
+    return res.json();
+  },
+  getInstructors: async (language?: string) => {
+    const url = language 
+      ? "/courses/instructors?language=" + encodeURIComponent(language)
+      : "/courses/instructors";
+    const res = await authFetch(url);
+    if (!res.ok) return [];
+    return res.json();
+  },
+  getAll: async (filters: any = "") => {
+    if (typeof filters === "string") {
+      return authFetch("/courses" + (filters ? "?" + filters : ""));
+    }
+    const params = new URLSearchParams();
+    if (filters?.language) params.append("language", filters.language);
+    if (filters?.instructor_id) params.append("instructor_id", filters.instructor_id);
+    if (filters?.level) params.append("level", filters.level);
+    const queryString = params.toString() ? "?" + params.toString() : "";
+    const res = await authFetch("/courses" + queryString);
+    if (!res.ok) return [];
+    return res.json();
+  },
+  getOne: async (courseId: string) => {
+    const res = await authFetch("/courses/" + courseId);
+    if (!res.ok) throw new Error("Course not found");
+    return res.json();
+  },
+  getByLanguage: async (language: string) => {
+    return authFetch("/courses?language=" + encodeURIComponent(language));
+  },
+  getInstructorCourses: async () => {
+    return authFetch("/courses/instructor/mine");
+  },
+  getMyCourses: async () => {
+    return authFetch("/enrollments/mine");
+  },
+  enroll: async (courseId: string) => {
+    return authFetch("/enrollments/" + courseId + "/enroll?demo_bypass=true", { method: "POST" });
+  },
+  create: async (body: object) => {
+    return authFetch("/courses", { method: "POST", body: JSON.stringify(body) });
+  },
+  update: async (id: string, body: object) => {
+    return authFetch("/courses/" + id, { method: "PUT", body: JSON.stringify(body) });
+  },
+  delete: async (id: string) => {
+    return authFetch("/courses/" + id, { method: "DELETE" });
+  },
+};
 
-  getOne: (id: string) => authFetch(`/courses/${id}`),
-
-  // Filter courses by language name
-  getByLanguage: (language: string) => authFetch(`/courses?language=${encodeURIComponent(language)}`),
-
-  // ✅ NEW — instructor ke saare courses (drafts bhi), backend se filtered
-  getInstructorCourses: () => authFetch("/courses/instructor/mine"),
-
-  // Student — apne enrolled courses
-  getMyCourses: () => authFetch("/courses/user/enrolled"),
-
-  enroll: (id: string) =>
-    authFetch(`/courses/${id}/enroll`, { method: "POST" }),
-
-  create: (body: object) =>
-    authFetch("/courses", { method: "POST", body: JSON.stringify(body) }),
-
-  update: (id: string, body: object) =>
-    authFetch(`/courses/${id}`, { method: "PUT", body: JSON.stringify(body) }),
-
-  delete: (id: string) =>
-    authFetch(`/courses/${id}`, { method: "DELETE" }),
+export const enrollmentAPI = {
+  enroll: async (courseId: string, demoBypass = true) => {
+    const res = await authFetch("/enrollments/" + courseId + "/enroll?demo_bypass=" + demoBypass, {
+      method: "POST",
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.detail || "Enrollment failed");
+    }
+    return res.json();
+  },
+  getMyCourses: async () => {
+    const res = await authFetch("/enrollments/mine");
+    if (!res.ok) return [];
+    return res.json();
+  },
+  toggleLesson: async (courseId: string, lessonId: string) => {
+    const res = await authFetch("/enrollments/" + courseId + "/lessons/" + lessonId + "/toggle", {
+      method: "POST",
+    });
+    if (!res.ok) throw new Error("Failed to update progress");
+    return res.json();
+  },
+  getProgress: async (courseId: string) => {
+    const res = await authFetch("/enrollments/" + courseId + "/progress");
+    if (!res.ok) return null;
+    return res.json();
+  },
 };
 
 export const adminAPI = {
-  getStats: () => authFetch("/admin/stats"),
-  getUsers: () => authFetch("/admin/users"),
+  getStats: () => authFetch("/courses/languages"),
+  getUsers: () => authFetch("/auth/me"),
   updateRole: (id: string, role: string) =>
-    authFetch(`/admin/users/${id}/role`, { method: "PATCH", body: JSON.stringify({ role }) }),
+    authFetch("/auth/dev-login", { method: "POST", body: JSON.stringify({ role }) }),
   toggleStatus: (id: string) =>
-    authFetch(`/admin/users/${id}/status`, { method: "PATCH" }),
+    authFetch("/auth/me", { method: "GET" }),
   deleteUser: (id: string) =>
-    authFetch(`/admin/users/${id}`, { method: "DELETE" }),
+    authFetch("/auth/me", { method: "GET" }),
 };
 
 export default authFetch;

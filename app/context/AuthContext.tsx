@@ -1,20 +1,22 @@
 "use client";
-import { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import { authAPI } from "@/app/lib/api";
 
-const BASE = `${process.env.NEXT_PUBLIC_API_URL}/api/v1`;
-
-interface User {
+export interface User {
   id: string;
   email: string;
+  full_name: string;
   name: string;
   role: "student" | "instructor" | "admin";
+  avatar_url?: string | null;
 }
 
 interface AuthContextType {
   user: User | null;
   loading: boolean;
-  login: (email: string, password: string) => Promise<User>;
-  register: (name: string, email: string, password: string, role?: string) => Promise<User>;
+  loginAs: (role: "student" | "instructor" | "admin", name?: string, email?: string) => Promise<User>;
+  login: (email: string, password?: string) => Promise<User>;
+  register: (name: string, email: string, password?: string, role?: string) => Promise<User>;
   logout: () => Promise<void>;
   isGuest: boolean;
   isStudent: boolean;
@@ -29,61 +31,77 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
+  const formatUser = (raw: any): User => ({
+    id: raw.id,
+    email: raw.email,
+    full_name: raw.full_name || raw.name || "User",
+    name: raw.full_name || raw.name || "User",
+    role: raw.role,
+    avatar_url: raw.avatar_url,
+  });
+
+  const fetchProfile = async () => {
+    try {
+      const token = typeof window !== "undefined" ? localStorage.getItem("accessToken") : null;
+      if (!token) {
+        setUser(null);
+        setLoading(false);
+        return;
+      }
+      const userData = await authAPI.getMe();
+      if (userData && userData.id) {
+        setUser(formatUser(userData));
+      } else {
+        localStorage.removeItem("accessToken");
+        setUser(null);
+      }
+    } catch {
+      localStorage.removeItem("accessToken");
+      setUser(null);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const token = localStorage.getItem("accessToken");
-    if (!token) return setLoading(false);
-    fetch(`${BASE}/auth/me`, {
-      headers: { Authorization: `Bearer ${token}` },
-    })
-      .then((r) => r.json())
-      .then((data) => {
-        if (data.success) setUser(data.data.user);
-        else localStorage.clear();
-      })
-      .catch(() => localStorage.clear())
-      .finally(() => setLoading(false));
+    fetchProfile();
   }, []);
 
-  const login = async (email: string, password: string): Promise<User> => {
-    const res = await fetch(`${BASE}/auth/login`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password }),
-    });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.message);
-    localStorage.setItem("accessToken", data.data.accessToken);
-    localStorage.setItem("refreshToken", data.data.refreshToken);
-    setUser(data.data.user);
-    return data.data.user;
-  };
-
-  const register = async (
-    name: string,
-    email: string,
-    password: string,
-    role = "student"
+  const loginAs = async (
+    role: "student" | "instructor" | "admin",
+    name?: string,
+    email?: string
   ): Promise<User> => {
-    const res = await fetch(`${BASE}/auth/register`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name, email, password, role }),
-    });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.message);
-    localStorage.setItem("accessToken", data.data.accessToken);
-    localStorage.setItem("refreshToken", data.data.refreshToken);
-    setUser(data.data.user);
-    return data.data.user;
+    setLoading(true);
+    try {
+      const defaultName = role === "instructor" ? "Hans Schmidt" : role === "admin" ? "Platform Admin" : "Priya Patel";
+      const defaultEmail = role === "instructor" ? "instructor@vartalang.in" : role === "admin" ? "admin@vartalang.in" : "student@vartalang.in";
+      
+      const res = await authAPI.devLogin(email || defaultEmail, role, name || defaultName);
+      if (typeof window !== "undefined") {
+        localStorage.setItem("accessToken", res.access_token);
+      }
+      const formatted = formatUser(res.user);
+      setUser(formatted);
+      return formatted;
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const logout = async () => {
-    const token = localStorage.getItem("accessToken");
-    await fetch(`${BASE}/auth/logout`, {
-      method: "POST",
-      headers: { Authorization: `Bearer ${token}` },
-    }).catch(() => {});
-    localStorage.clear();
+  const login = async (email: string, password?: string): Promise<User> => {
+    return loginAs("student", email.split("@")[0], email);
+  };
+
+  const register = async (name: string, email: string, password?: string, role = "student"): Promise<User> => {
+    const validRole = role === "instructor" ? "instructor" : role === "admin" ? "admin" : "student";
+    return loginAs(validRole, name, email);
+  };
+
+  const logout = async (): Promise<void> => {
+    if (typeof window !== "undefined") {
+      localStorage.removeItem("accessToken");
+    }
     setUser(null);
   };
 
@@ -98,6 +116,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       value={{
         user,
         loading,
+        loginAs,
         login,
         register,
         logout,
@@ -113,4 +132,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   );
 };
 
-export const useAuth = () => useContext(AuthContext);
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error("useAuth must be used within an AuthProvider");
+  }
+  return context;
+};
