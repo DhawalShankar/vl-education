@@ -64,7 +64,13 @@ function getTimeLeft() {
 }
 
 export default function ComingSoonPage() {
-  const [timeLeft, setTimeLeft] = useState(getTimeLeft());
+  const [mounted, setMounted] = useState(false);
+  const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0, done: false });
+
+  useEffect(() => {
+    setMounted(true);
+    setTimeLeft(getTimeLeft());
+  }, []);
 
   useEffect(() => {
     const timer = setInterval(() => setTimeLeft(getTimeLeft()), 1000);
@@ -139,8 +145,8 @@ export default function ComingSoonPage() {
                 key={unit.label}
                 className="w-24 md:w-32 py-6 bg-stone-900/60 backdrop-blur-sm border-2 border-stone-700/50 rounded-2xl"
               >
-                <div className="font-kalam text-4xl md:text-5xl font-bold text-white mb-1 tabular-nums">
-                  {String(unit.value).padStart(2, '0')}
+                <div suppressHydrationWarning className="font-kalam text-4xl md:text-5xl font-bold text-white mb-1 tabular-nums">
+                  {mounted ? String(unit.value).padStart(2, '0') : '00'}
                 </div>
                 <div className="text-xs text-stone-400">{unit.label}</div>
               </div>
