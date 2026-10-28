@@ -1,4 +1,4 @@
-const BASE = (process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000") + "/api/v1";
+﻿const BASE = (process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000") + "/api/v1";
 
 const authFetch = async (endpoint: string, options: RequestInit = {}) => {
   const token = typeof window !== "undefined" ? localStorage.getItem("accessToken") : null;
@@ -25,7 +25,13 @@ export const authAPI = {
       method: "POST",
       body: JSON.stringify({ code }),
     });
-    if (!res.ok) throw new Error("Failed to exchange SSO code");
+    if (!res.ok) {
+      const errData = await res.json().catch(() => ({}));
+      const msg = errData.detail || "Failed to exchange SSO code";
+      const err = new Error(msg);
+      (err as any).status = res.status;
+      throw err;
+    }
     return res.json();
   },
   devLogin: async (email: string, role = "student", fullName = "Dev User") => {
@@ -33,13 +39,21 @@ export const authAPI = {
       method: "POST",
       body: JSON.stringify({ email, role, full_name: fullName }),
     });
-    if (!res.ok) throw new Error("Dev login failed");
+    if (!res.ok) {
+      const errData = await res.json().catch(() => ({}));
+      const msg = errData.detail || "Dev login failed";
+      throw new Error(msg);
+    }
     return res.json();
   },
   getMe: async () => {
-    const res = await authFetch("/auth/me");
-    if (!res.ok) return null;
-    return res.json();
+    try {
+      const res = await authFetch("/auth/me");
+      if (!res.ok) return null;
+      return res.json();
+    } catch {
+      return null;
+    }
   },
 };
 

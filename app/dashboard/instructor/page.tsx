@@ -44,7 +44,8 @@ export default function InstructorDashboard() {
 
   // ── Auth guard ──────────────────────────────────────────────────────────────
   useEffect(() => {
-    if (!loading && !isAuthenticated) router.push("/auth/login");
+    const hasToken = typeof window !== "undefined" && !!localStorage.getItem("accessToken");
+    if (!loading && !isAuthenticated && !hasToken) router.push("/auth/login");
     if (!loading && user?.role === "student") router.push("/dashboard");
     if (!loading && user?.role === "admin") router.push("/admin");
   }, [loading, isAuthenticated, user]);

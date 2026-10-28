@@ -70,7 +70,8 @@ export default function StudentDashboard() {
   const [message, setMessage] = useState<{ type: "error" | "success"; text: string } | null>(null);
 
   useEffect(() => {
-    if (!loading && !isAuthenticated) router.push("/auth/login");
+    const hasToken = typeof window !== "undefined" && !!localStorage.getItem("accessToken");
+    if (!loading && !isAuthenticated && !hasToken) router.push("/auth/login");
     if (!loading && user?.role === "admin") router.push("/dashboard/admin");
     if (!loading && user?.role === "instructor") router.push("/dashboard/instructor");
   }, [loading, isAuthenticated, user]);
@@ -80,19 +81,21 @@ export default function StudentDashboard() {
     const fetchData = async () => {
       try {
         const [enrolledRes, allRes] = await Promise.all([
-          courseAPI.getMyCourses(),
-          courseAPI.getAll(),
+          courseAPI.getMyCourses().catch(() => []),
+          courseAPI.getAll().catch(() => []),
         ]);
         if (enrolledRes) {
-          const d = await enrolledRes.json();
-          if (d.success) setCourses(d.data.courses);
+          const d = typeof (enrolledRes as any).json === "function" ? await (enrolledRes as any).json() : enrolledRes;
+          const coursesList = Array.isArray(d) ? d : (d?.data?.courses || d?.courses || []);
+          setCourses(coursesList);
         }
         if (allRes) {
-          const d = await allRes.json();
-          if (d.success) setAllCourses(d.data.courses);
+          const d = typeof (allRes as any).json === "function" ? await (allRes as any).json() : allRes;
+          const coursesList = Array.isArray(d) ? d : (d?.data?.courses || d?.courses || []);
+          setAllCourses(coursesList);
         }
       } catch (err) {
-        console.error(err);
+        console.error("Dashboard data fetch error:", err);
       } finally {
         setLoadingData(false);
       }

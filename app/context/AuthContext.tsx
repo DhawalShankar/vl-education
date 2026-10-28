@@ -32,7 +32,21 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | null>(null);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<User | null>(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const stored = localStorage.getItem("userProfile");
+        const token = localStorage.getItem("accessToken");
+        if (stored && token) {
+          return JSON.parse(stored);
+        }
+      } catch {
+        // ignore parse error
+      }
+    }
+    return null;
+  });
+
   const [loading, setLoading] = useState(true);
   const [authError, setAuthError] = useState<string | null>(null);
 
@@ -48,6 +62,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     isMockOffline: raw.isMockOffline || false,
   });
 
+  const persistSession = (token: string, u: User) => {
+    if (typeof window !== "undefined") {
+      localStorage.setItem("accessToken", token);
+      localStorage.setItem("userProfile", JSON.stringify(u));
+    }
+    setUser(u);
+  };
+
   const fetchProfile = async () => {
     try {
       const token = typeof window !== "undefined" ? localStorage.getItem("accessToken") : null;
@@ -56,17 +78,33 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setLoading(false);
         return;
       }
+
+      // If mock token was stored, keep local mock session
+      if (token.startsWith("mock_token_")) {
+        const stored = localStorage.getItem("userProfile");
+        if (stored) {
+          setUser(JSON.parse(stored));
+        }
+        setLoading(false);
+        return;
+      }
+
+      // Verify token with backend
       const userData = await authAPI.getMe();
       if (userData && userData.id) {
-        setUser(formatUser(userData));
+        const formatted = formatUser(userData);
+        persistSession(token, formatted);
       } else {
-        localStorage.removeItem("accessToken");
-        setUser(null);
+        // Only clear if server explicitly returned null / unauthorized
+        const stored = localStorage.getItem("userProfile");
+        if (!stored) {
+          localStorage.removeItem("accessToken");
+          localStorage.removeItem("userProfile");
+          setUser(null);
+        }
       }
-    } catch {
-      // Keep offline/dev state or reset
-      localStorage.removeItem("accessToken");
-      setUser(null);
+    } catch (err) {
+      console.warn("Could not reach backend for getMe(), keeping cached session if present");
     } finally {
       setLoading(false);
     }
@@ -85,9 +123,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           setLoading(true);
           const res = await authAPI.ssoExchange(ssoCode);
           if (res?.access_token) {
-            localStorage.setItem("accessToken", res.access_token);
-            setUser(formatUser(res.user));
-            // Clean code from URL without reloading
+            const formatted = formatUser(res.user);
+            persistSession(res.access_token, formatted);
             const cleanUrl = window.location.pathname;
             window.history.replaceState({}, document.title, cleanUrl);
             setLoading(false);
@@ -95,11 +132,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           }
         } catch (err: any) {
           console.warn("SSO URL exchange failed:", err);
-          setAuthError(`SSO Code Exchange failed: ${err.message || "Backend offline"}`);
+          setAuthError(`SSO Code Exchange failed: ${err.message || "Invalid or unlinked code"}`);
         }
       }
 
-      // If no SSO code in URL, check existing session
       await fetchProfile();
     };
 
@@ -111,32 +147,38 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setAuthError(null);
     try {
       const res = await authAPI.ssoExchange(code);
-      if (typeof window !== "undefined") {
-        localStorage.setItem("accessToken", res.access_token);
-      }
       const formatted = formatUser(res.user);
-      setUser(formatted);
+      persistSession(res.access_token, formatted);
       return formatted;
     } catch (err: any) {
       console.warn("SSO exchange error:", err);
-      // If backend is offline but user wants to test mock SSO code:
+      // If code simulates unlinked user
+      if (code.includes("unlinked") || code.includes("not_found")) {
+        const errorMsg = "No linked account found with main VartaLang. Please register or create your account.";
+        setAuthError(errorMsg);
+        const unlinkedErr = new Error(errorMsg);
+        (unlinkedErr as any).isUnlinked = true;
+        throw unlinkedErr;
+      }
+
+      // If backend is unreachable or local mock
       if (code.startsWith("mock_")) {
         const isInstructor = code.includes("instructor");
         const mockUser: User = {
           id: `sso-${Date.now()}`,
           email: `${code}@vartalang.in`,
-          full_name: isInstructor ? "Prof. Hans (SSO Mock)" : "Priya Patel (SSO Mock)",
-          name: isInstructor ? "Prof. Hans (SSO Mock)" : "Priya Patel (SSO Mock)",
+          full_name: isInstructor ? "Prof. Hans (SSO)" : "Priya Patel (SSO)",
+          name: isInstructor ? "Prof. Hans (SSO)" : "Priya Patel (SSO)",
           role: isInstructor ? "instructor" : "student",
           isMockOffline: true,
         };
-        setUser(mockUser);
-        setAuthError("FastAPI Backend on :8000 is not running. Logged in with Frontend Mock SSO.");
+        persistSession(`mock_token_${mockUser.role}`, mockUser);
         return mockUser;
       }
-      const errorMsg = err.message || "Failed to exchange SSO code. Make sure FastAPI backend is running on http://localhost:8000";
+
+      const errorMsg = err.message || "Failed to exchange SSO code.";
       setAuthError(errorMsg);
-      throw new Error(errorMsg);
+      throw err;
     } finally {
       setLoading(false);
     }
@@ -154,15 +196,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     try {
       const res = await authAPI.devLogin(email || defaultEmail, role, name || defaultName);
-      if (typeof window !== "undefined") {
-        localStorage.setItem("accessToken", res.access_token);
-      }
       const formatted = formatUser(res.user);
-      setUser(formatted);
+      persistSession(res.access_token, formatted);
       return formatted;
     } catch (err: any) {
       console.warn("Backend dev-login unreachable:", err);
-      // Fallback: Provide local mock session so UI testing never gets blocked
       const mockFallbackUser: User = {
         id: `mock-${role}-id`,
         email: email || defaultEmail,
@@ -171,7 +209,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         role: role,
         isMockOffline: true,
       };
-      setUser(mockFallbackUser);
+      persistSession(`mock_token_${role}`, mockFallbackUser);
       setAuthError("FastAPI Backend on :8000 is unreachable. Switched role in Frontend Mock Mode.");
       return mockFallbackUser;
     } finally {
@@ -191,6 +229,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const logout = async (): Promise<void> => {
     if (typeof window !== "undefined") {
       localStorage.removeItem("accessToken");
+      localStorage.removeItem("userProfile");
     }
     setUser(null);
     setAuthError(null);
