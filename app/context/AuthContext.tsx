@@ -20,6 +20,9 @@ interface AuthContextType {
   user: LMSUser | null;
   loading: boolean;
   isAuthenticated: boolean;
+  isAdmin: boolean;
+  isInstructor: boolean;
+  isStudent: boolean;
   login: (email: string, password: string) => Promise<LMSUser>;
   logout: () => Promise<void>;
 }
@@ -89,7 +92,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, loading, isAuthenticated: !!user, login, logout }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        loading,
+        isAuthenticated: !!user,
+        isAdmin: user?.role === "admin",
+        isInstructor: user?.role === "instructor",
+        isStudent: user?.role === "student",
+        login,
+        logout,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );
