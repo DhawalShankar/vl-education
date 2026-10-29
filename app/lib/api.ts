@@ -1,4 +1,5 @@
-﻿const BASE = (process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000") + "/api/v1";
+﻿// app/lib/api.ts
+const BASE = (process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000") + "/api/v1";
 
 const authFetch = async (endpoint: string, options: RequestInit = {}) => {
   const token = typeof window !== "undefined" ? localStorage.getItem("accessToken") : null;
@@ -27,22 +28,10 @@ export const authAPI = {
     });
     if (!res.ok) {
       const errData = await res.json().catch(() => ({}));
-      const msg = errData.detail || "Failed to exchange SSO code";
+      const msg = typeof errData.detail === "string" ? errData.detail : "Failed to exchange SSO code";
       const err = new Error(msg);
       (err as any).status = res.status;
       throw err;
-    }
-    return res.json();
-  },
-  devLogin: async (email: string, role = "student", fullName = "Dev User") => {
-    const res = await authFetch("/auth/dev-login", {
-      method: "POST",
-      body: JSON.stringify({ email, role, full_name: fullName }),
-    });
-    if (!res.ok) {
-      const errData = await res.json().catch(() => ({}));
-      const msg = errData.detail || "Dev login failed";
-      throw new Error(msg);
     }
     return res.json();
   },
@@ -64,7 +53,7 @@ export const courseAPI = {
     return res.json();
   },
   getInstructors: async (language?: string) => {
-    const url = language 
+    const url = language
       ? "/courses/instructors?language=" + encodeURIComponent(language)
       : "/courses/instructors";
     const res = await authFetch(url);
@@ -99,7 +88,7 @@ export const courseAPI = {
     return authFetch("/enrollments/mine");
   },
   enroll: async (courseId: string) => {
-    return authFetch("/enrollments/" + courseId + "/enroll?demo_bypass=true", { method: "POST" });
+    return authFetch("/enrollments/" + courseId + "/enroll", { method: "POST" });
   },
   create: async (body: object) => {
     return authFetch("/courses", { method: "POST", body: JSON.stringify(body) });
@@ -113,13 +102,14 @@ export const courseAPI = {
 };
 
 export const enrollmentAPI = {
-  enroll: async (courseId: string, demoBypass = true) => {
-    const res = await authFetch("/enrollments/" + courseId + "/enroll?demo_bypass=" + demoBypass, {
-      method: "POST",
-    });
+  enroll: async (courseId: string, demoBypass = false) => {
+    const res = await authFetch(
+      "/enrollments/" + courseId + "/enroll" + (demoBypass ? "?demo_bypass=true" : ""),
+      { method: "POST" }
+    );
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
-      throw new Error(err.detail || "Enrollment failed");
+      throw new Error(typeof err.detail === "string" ? err.detail : "Enrollment failed");
     }
     return res.json();
   },
@@ -142,15 +132,17 @@ export const enrollmentAPI = {
   },
 };
 
+// Admin endpoints are not built in the LMS backend yet. These are placeholders
+// so the old admin page still type-checks; they intentionally do nothing.
+const notImplemented = (): Promise<Response> =>
+  Promise.reject(new Error("Admin API not implemented yet"));
+
 export const adminAPI = {
   getStats: () => authFetch("/courses/languages"),
   getUsers: () => authFetch("/auth/me"),
-  updateRole: (id: string, role: string) =>
-    authFetch("/auth/dev-login", { method: "POST", body: JSON.stringify({ role }) }),
-  toggleStatus: (id: string) =>
-    authFetch("/auth/me", { method: "GET" }),
-  deleteUser: (id: string) =>
-    authFetch("/auth/me", { method: "GET" }),
+  updateRole: (_id: string, _role: string) => notImplemented(),
+  toggleStatus: (_id: string) => notImplemented(),
+  deleteUser: (_id: string) => notImplemented(),
 };
 
 export default authFetch;

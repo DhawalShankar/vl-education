@@ -2,8 +2,8 @@
 "use client";
 
 import { createContext, useCallback, useContext, useEffect, useState, ReactNode } from "react";
+import { authAPI } from "@/app/lib/api";
 
-const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api/v1";
 const MAIN_API = process.env.NEXT_PUBLIC_MAIN_API_URL || "http://localhost:5000";
 const TOKEN_KEY = "accessToken";
 
@@ -39,17 +39,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const token = localStorage.getItem(TOKEN_KEY);
-    if (!token) {
+    if (!localStorage.getItem(TOKEN_KEY)) {
       setLoading(false);
       return;
     }
-    fetch(`${API}/auth/me`, { headers: { Authorization: `Bearer ${token}` } })
-      .then(async (res) => {
-        if (!res.ok) throw new Error("Session expired");
-        setUser(normalize(await res.json()));
+    authAPI
+      .getMe()
+      .then((u) => {
+        if (u) setUser(normalize(u));
+        else localStorage.removeItem(TOKEN_KEY);
       })
-      .catch(() => localStorage.removeItem(TOKEN_KEY))
       .finally(() => setLoading(false));
   }, []);
 
@@ -72,13 +71,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!r2.ok || !d2.code) throw new Error(errText(d2, "Could not start SSO"));
 
     // 3. Exchange the code for an LMS session
-    const r3 = await fetch(`${API}/auth/sso/exchange`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ code: d2.code }),
-    });
-    const d3 = await r3.json().catch(() => ({}));
-    if (!r3.ok) throw new Error(errText(d3, "SSO login failed"));
+    const d3 = await authAPI.ssoExchange(d2.code);
 
     localStorage.setItem(TOKEN_KEY, d3.access_token);
     const u = normalize(d3.user);
@@ -109,7 +102,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 }
 
-// app/context/AuthContext.tsx  (last line replace)
 export function useAuth(): AuthContextType {
   const ctx = useContext(AuthContext);
   if (!ctx) throw new Error("useAuth must be used inside <AuthProvider>");

@@ -148,7 +148,7 @@ export default function CourseExplorer() {
 
     try {
       setEnrollingId(course.id);
-      await enrollmentAPI.enroll(course.id, true);
+      await enrollmentAPI.enroll(course.id, false);
       await fetchMyEnrollments();
       setActiveCourseId(course.id);
     } catch (err) {
