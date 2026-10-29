@@ -1,14 +1,13 @@
+// components/CourseExplorer.tsx
 "use client";
 import React, { useState, useEffect } from "react";
-import { 
-  Globe, 
-  BookOpen, 
-  Play, 
-  Sparkles, 
-  User as UserIcon, 
-  CheckCircle2, 
+import { useRouter } from "next/navigation";
+import {
+  BookOpen,
+  Play,
+  Sparkles,
   ArrowRight,
-  GraduationCap
+  GraduationCap,
 } from "lucide-react";
 import { courseAPI, enrollmentAPI } from "@/app/lib/api";
 import { useAuth } from "@/app/context/AuthContext";
@@ -54,11 +53,12 @@ interface EnrolledCourse {
 }
 
 export default function CourseExplorer() {
-  const { user, loginAs, isAuthenticated } = useAuth();
+  const { user, isAuthenticated } = useAuth();
+  const router = useRouter();
 
   const [languages, setLanguages] = useState<LanguageItem[]>([]);
   const [selectedLanguage, setSelectedLanguage] = useState<string>("All");
-  
+
   const [instructors, setInstructors] = useState<InstructorItem[]>([]);
   const [selectedInstructorId, setSelectedInstructorId] = useState<string | null>(null);
 
@@ -69,31 +69,24 @@ export default function CourseExplorer() {
   const [activeCourseId, setActiveCourseId] = useState<string | null>(null);
   const [enrollingId, setEnrollingId] = useState<string | null>(null);
 
-  // 1. Fetch available languages
+  // 1. Fetch available languages (real data only, no fallback pills)
   useEffect(() => {
-    courseAPI.getLanguages().then((langs) => {
-      // If DB has languages, use them, otherwise provide popular language pills
-      const baseLangs = langs?.length > 0 
-        ? langs 
-        : [
-            { language: "German", course_count: 3 },
-            { language: "Hindi", course_count: 5 },
-            { language: "Spanish", course_count: 2 },
-            { language: "French", course_count: 2 },
-            { language: "Tamil", course_count: 4 },
-            { language: "English", course_count: 6 },
-          ];
-      setLanguages(baseLangs);
-    });
+    courseAPI
+      .getLanguages()
+      .then((langs) => setLanguages(langs || []))
+      .catch(() => setLanguages([]));
   }, []);
 
   // 2. Fetch instructors when language changes
   useEffect(() => {
     const lang = selectedLanguage === "All" ? undefined : selectedLanguage;
-    courseAPI.getInstructors(lang).then((insts) => {
-      setInstructors(insts || []);
-      setSelectedInstructorId(null);
-    });
+    courseAPI
+      .getInstructors(lang)
+      .then((insts) => {
+        setInstructors(insts || []);
+        setSelectedInstructorId(null);
+      })
+      .catch(() => setInstructors([]));
   }, [selectedLanguage]);
 
   // 3. Fetch courses
@@ -106,6 +99,8 @@ export default function CourseExplorer() {
 
       const data = await courseAPI.getAll(filters);
       setCourses(data || []);
+    } catch {
+      setCourses([]);
     } finally {
       setLoadingCourses(false);
     }
@@ -113,6 +108,7 @@ export default function CourseExplorer() {
 
   useEffect(() => {
     fetchCourses();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedLanguage, selectedInstructorId]);
 
   // 4. Fetch student enrollments to show "Enrolled" / "Resume" state
@@ -139,13 +135,15 @@ export default function CourseExplorer() {
 
   useEffect(() => {
     fetchMyEnrollments();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAuthenticated, user?.id]);
 
   // Handle Enrollment
   const handleEnroll = async (course: CourseCard) => {
-    // If not authenticated, automatically log in as demo student Priya for seamless UX!
+    // Not logged in -> send to real login (no demo user)
     if (!isAuthenticated) {
-      await loginAs("student", "Priya Patel", "priya@vartalang.in");
+      router.push("/auth/login");
+      return;
     }
 
     try {
@@ -162,7 +160,7 @@ export default function CourseExplorer() {
 
   return (
     <section id="learn" className="py-16 px-4 sm:px-8 max-w-7xl mx-auto space-y-12">
-      
+
       {/* Section Title */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div>
@@ -203,9 +201,13 @@ export default function CourseExplorer() {
             >
               <span>{item.language}</span>
               {item.course_count > 0 && (
-                <span className={`text-[10px] px-1.5 py-0.2 rounded-full ${
-                  selectedLanguage === item.language ? "bg-white/20 text-white" : "bg-white/10 text-white/60"
-                }`}>
+                <span
+                  className={`text-[10px] px-1.5 py-0.5 rounded-full ${
+                    selectedLanguage === item.language
+                      ? "bg-white/20 text-white"
+                      : "bg-white/10 text-white/60"
+                  }`}
+                >
                   {item.course_count}
                 </span>
               )}
@@ -246,7 +248,7 @@ export default function CourseExplorer() {
                   }`}
                 >
                   <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-[#FF5500] to-amber-400 flex items-center justify-center font-bold text-xs text-white">
-                    {inst.full_name[0]}
+                    {inst.full_name?.[0]}
                   </div>
                   <div>
                     <p className="text-xs font-bold leading-tight">{inst.full_name}</p>
@@ -309,10 +311,10 @@ export default function CourseExplorer() {
                     {/* Instructor Info */}
                     <div className="flex items-center gap-2.5 pt-2 border-t border-white/5">
                       <div className="w-6 h-6 rounded-full bg-gradient-to-tr from-amber-500 to-[#FF5500] flex items-center justify-center text-[10px] font-bold text-white">
-                        {course.instructor.full_name[0]}
+                        {course.instructor?.full_name?.[0]}
                       </div>
                       <span className="text-xs text-white/80 font-medium">
-                        {course.instructor.full_name}
+                        {course.instructor?.full_name}
                       </span>
                     </div>
 
