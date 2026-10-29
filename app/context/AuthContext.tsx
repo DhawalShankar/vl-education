@@ -1,5 +1,4 @@
-﻿// app/context/AuthContext.tsx
-"use client";
+﻿"use client";
 
 import { createContext, useCallback, useContext, useEffect, useState, ReactNode } from "react";
 import { authAPI } from "@/app/lib/api";
@@ -24,6 +23,7 @@ interface AuthContextType {
   isInstructor: boolean;
   isStudent: boolean;
   login: (email: string, password: string) => Promise<LMSUser>;
+  loginWithGoogle: (accessToken: string, email: string, name: string) => Promise<LMSUser>;
   logout: () => Promise<void>;
 }
 
@@ -52,25 +52,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       .finally(() => setLoading(false));
   }, []);
 
-  const login = useCallback(async (email: string, password: string) => {
-    // 1. Login on main VartaLang backend
-    const r1 = await fetch(`${MAIN_API}/auth/login`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password }),
-    });
-    const d1 = await r1.json().catch(() => ({}));
-    if (!r1.ok || !d1.token) throw new Error(errText(d1, "Login failed"));
-
-    // 2. Ask main backend for a one-time SSO code
+  // Shared steps 2 and 3: main-backend token -> SSO code -> LMS session
+  const finishSso = useCallback(async (mainToken: string) => {
     const r2 = await fetch(`${MAIN_API}/sso/code`, {
       method: "POST",
-      headers: { Authorization: `Bearer ${d1.token}` },
+      headers: { Authorization: `Bearer ${mainToken}` },
     });
     const d2 = await r2.json().catch(() => ({}));
     if (!r2.ok || !d2.code) throw new Error(errText(d2, "Could not start SSO"));
 
-    // 3. Exchange the code for an LMS session
     const d3 = await authAPI.ssoExchange(d2.code);
 
     localStorage.setItem(TOKEN_KEY, d3.access_token);
@@ -78,6 +68,39 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(u);
     return u;
   }, []);
+
+  const login = useCallback(
+    async (email: string, password: string) => {
+      const r1 = await fetch(`${MAIN_API}/auth/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
+      const d1 = await r1.json().catch(() => ({}));
+      if (!r1.ok || !d1.token) throw new Error(errText(d1, "Login failed"));
+      return finishSso(d1.token);
+    },
+    [finishSso]
+  );
+
+  const loginWithGoogle = useCallback(
+    async (accessToken: string, email: string, name: string) => {
+      const r1 = await fetch(`${MAIN_API}/auth/google-login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ googleAccessToken: accessToken, email, name }),
+      });
+      const d1 = await r1.json().catch(() => ({}));
+      if (!r1.ok || !d1.token) {
+        const err: any = new Error(errText(d1, "Google login failed"));
+        err.status = r1.status;
+        err.notFound = r1.status === 404 || /not found/i.test(errText(d1, ""));
+        throw err;
+      }
+      return finishSso(d1.token);
+    },
+    [finishSso]
+  );
 
   const logout = useCallback(async () => {
     localStorage.removeItem(TOKEN_KEY);
@@ -94,6 +117,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         isInstructor: user?.role === "instructor",
         isStudent: user?.role === "student",
         login,
+        loginWithGoogle,
         logout,
       }}
     >
