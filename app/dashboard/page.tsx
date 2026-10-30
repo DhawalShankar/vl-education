@@ -24,6 +24,7 @@ import { useAuth } from "../context/AuthContext";
 import { enrollmentAPI } from "../lib/api";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import { useUserStreak } from "../lib/streak";
 
 interface EnrolledCourse {
   _id?: string;
@@ -90,6 +91,7 @@ export default function StudentDashboard() {
 
   const [enrolledCourses, setEnrolledCourses] = useState<EnrolledCourse[]>([]);
   const [fetchingCourses, setFetchingCourses] = useState(true);
+  const { streak } = useUserStreak(user?.email || user?.id);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -255,8 +257,14 @@ export default function StudentDashboard() {
                 <Flame className="w-4 h-4 text-orange-400" />
               </div>
             </div>
-            <p className="font-kalam text-3xl font-bold text-orange-400 mb-1">3 Days</p>
-            <span className="text-xs text-stone-500">Practice today to keep it!</span>
+            <p className="font-kalam text-3xl font-bold text-orange-400 mb-1">
+              {streak.currentStreak} Day{streak.currentStreak === 1 ? "" : "s"}
+            </p>
+            <span className="text-xs text-stone-500">
+              {streak.currentStreak === 1
+                ? "Practice today to build momentum!"
+                : `Best: ${streak.longestStreak} days · ${streak.totalDaysActive} active`}
+            </span>
           </div>
 
           <div className="p-5 sm:p-6 rounded-2xl bg-stone-900/60 border border-stone-800/80 backdrop-blur-md">
