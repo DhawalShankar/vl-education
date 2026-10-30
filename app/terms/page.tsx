@@ -10,7 +10,7 @@ export default function TermsPage() {
       <Navbar />
       <div className="fixed inset-0 opacity-20 pointer-events-none" style={{ backgroundImage: `url('https://images.unsplash.com/photo-1580582932707-520aed937b7b?w=1920&q=80')`, backgroundSize: 'cover' }} />
       <div className="relative z-10 max-w-4xl mx-auto px-6 py-12">
-        <Link href="/" className="inline-flex items-center gap-2 text-stone-400 hover:text-amber-400 transition-colors mb-12 group">
+        <Link href="/home" className="inline-flex items-center gap-2 text-stone-400 hover:text-amber-400 transition-colors mb-12 group">
           <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" /><span className="text-sm">Back to Home</span>
         </Link>
         <div className="flex items-center gap-4 mb-8">

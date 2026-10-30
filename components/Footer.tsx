@@ -77,7 +77,7 @@ export default function Footer() {
           
           {/* Brand Info (2 cols on lg) */}
           <div className="lg:col-span-2 space-y-4">
-            <Link href="/" className="inline-flex items-center gap-3 group">
+            <Link href="/home" className="inline-flex items-center gap-3 group">
               <img
                 src="/logo.png"
                 alt="VartaLang Logo"
