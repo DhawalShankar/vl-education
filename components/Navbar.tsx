@@ -2,19 +2,67 @@
 "use client";
 import React, { useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/app/context/AuthContext";
-import { Bell, Sun, ChevronDown, LogOut, LayoutDashboard } from "lucide-react";
+import { Bell, Sun, ChevronDown, LogOut, LayoutDashboard, Menu, X } from "lucide-react";
+
+type NavItem = { label: string; href: string; ready: boolean };
+
+// ready:false => shown greyed with a "Soon" badge, not clickable.
+// Flip to true when the page is built on real data.
+const NAV_ITEMS: NavItem[] = [
+  { label: "My Learning", href: "/dashboard", ready: true },
+  { label: "Courses", href: "/learn", ready: true },
+  { label: "Practice Labs", href: "/practice", ready: false },
+  { label: "Challenges", href: "/challenges", ready: false },
+  { label: "Certifications", href: "/certifications", ready: false },
+  { label: "Community", href: "/community", ready: false },
+];
 
 export default function Navbar() {
   const { user, logout, isAuthenticated } = useAuth();
   const router = useRouter();
+  const pathname = usePathname();
   const [showMenu, setShowMenu] = useState(false);
+  const [showMobile, setShowMobile] = useState(false);
 
   const handleLogout = async () => {
     setShowMenu(false);
     await logout();
     router.replace("/auth/login");
+  };
+
+  const renderItem = (item: NavItem, mobile = false) => {
+    const active = pathname === item.href || pathname.startsWith(item.href + "/");
+    const base = mobile ? "px-3 py-2.5 rounded-xl text-sm" : "text-[13px]";
+
+    if (!item.ready) {
+      return (
+        <span
+          key={item.href}
+          className={`${base} flex items-center gap-1.5 text-white/30 cursor-not-allowed select-none`}
+        >
+          {item.label}
+          <span className="text-[9px] uppercase font-bold px-1.5 py-0.5 rounded-full bg-white/10 text-white/40">
+            Soon
+          </span>
+        </span>
+      );
+    }
+
+    return (
+      <Link
+        key={item.href}
+        href={item.href}
+        onClick={() => setShowMobile(false)}
+        className={`${base} flex items-center gap-1.5 transition-colors ${
+          active ? "text-white font-semibold" : "text-white/70 hover:text-white"
+        } ${mobile && active ? "bg-white/10" : ""}`}
+      >
+        {active && <span className="w-1.5 h-1.5 rounded-full bg-[#FF5500]" />}
+        {item.label}
+      </Link>
+    );
   };
 
   return (
@@ -30,18 +78,9 @@ export default function Navbar() {
           </span>
         </Link>
 
-        {/* Center Nav Links */}
-        <div className="hidden lg:flex items-center gap-7 text-sm font-medium text-white/80">
-          <Link href="#learn" className="text-white font-semibold flex items-center gap-1.5 hover:text-[#FF6600] transition-colors">
-            <span className="w-1.5 h-1.5 rounded-full bg-[#FF5500]"></span>
-            Learn
-          </Link>
-          <Link href="#challenge" className="hover:text-white transition-colors">Challenge</Link>
-          <Link href="#matches" className="hover:text-white transition-colors">Matches</Link>
-          <Link href="#chats" className="hover:text-white transition-colors">Chats</Link>
-          <Link href="#roles" className="hover:text-white transition-colors">Target Roles</Link>
-          <Link href="#jobs" className="hover:text-white transition-colors">Jobs</Link>
-          <Link href="#about" className="hover:text-white transition-colors">About</Link>
+        {/* Center Nav Links (desktop) */}
+        <div className="hidden lg:flex items-center gap-6 font-medium">
+          {NAV_ITEMS.map((item) => renderItem(item))}
         </div>
 
         {/* Right side */}
@@ -67,7 +106,7 @@ export default function Navbar() {
                     {user.full_name?.[0]}
                   </div>
                 )}
-                <span className="max-w-[120px] truncate">{user.full_name}</span>
+                <span className="max-w-[120px] truncate hidden sm:block">{user.full_name}</span>
                 <ChevronDown className="w-3.5 h-3.5 text-white/60" />
               </button>
 
@@ -109,11 +148,27 @@ export default function Navbar() {
             </Link>
           )}
 
-          <div className="w-9 h-9 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-amber-400/80">
+          <div className="hidden sm:flex w-9 h-9 rounded-full bg-white/5 border border-white/10 items-center justify-center text-amber-400/80">
             <Sun className="w-4 h-4" />
           </div>
+
+          {/* Mobile menu toggle */}
+          <button
+            aria-label="Menu"
+            onClick={() => setShowMobile(!showMobile)}
+            className="lg:hidden w-9 h-9 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 flex items-center justify-center text-white/80"
+          >
+            {showMobile ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
+          </button>
         </div>
       </nav>
+
+      {/* Mobile menu panel */}
+      {showMobile && (
+        <div className="lg:hidden mt-2 rounded-3xl bg-[#16130F]/95 border border-white/10 backdrop-blur-xl p-2 flex flex-col shadow-2xl">
+          {NAV_ITEMS.map((item) => renderItem(item, true))}
+        </div>
+      )}
     </header>
   );
 }
