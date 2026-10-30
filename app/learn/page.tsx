@@ -2,11 +2,11 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { 
-  BookOpen, 
-  ArrowRight, 
-  Sparkles, 
-  Globe, 
+import {
+  BookOpen,
+  ArrowRight,
+  Sparkles,
+  Globe,
   Search,
   Users,
   Award,
@@ -28,9 +28,9 @@ export default function LearnPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedLevel, setSelectedLevel] = useState('all');
   const [selectedCategory, setSelectedCategory] = useState('all');
-  
 
- 
+
+
   const languages = [
     {
       name: 'Hindi',
@@ -123,8 +123,8 @@ export default function LearnPage() {
   ];
 
   const filteredLanguages = languages.filter(lang => {
-    const matchesSearch = lang.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                         lang.nativeName.includes(searchQuery);
+    const matchesSearch = lang.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      lang.nativeName.includes(searchQuery);
     const matchesLevel = selectedLevel === 'all' || lang.difficulty === selectedLevel;
     const matchesCategory = selectedCategory === 'all' || lang.category === selectedCategory;
     return matchesSearch && matchesLevel && matchesCategory;
@@ -132,11 +132,11 @@ export default function LearnPage() {
 
 
   return (
-    <div className="min-h-screen bg-[#0a0908] relative overflow-hidden">
+    <div className=" min-h-screen bg-[#0a0908] relative overflow-hidden">
       <Navbar />
 
       {/* Blackboard Texture Background */}
-      <div 
+      <div
         className="fixed inset-0 opacity-30 pointer-events-none"
         style={{
           backgroundImage: `url('https://images.unsplash.com/photo-1580582932707-520aed937b7b?w=1920&q=80')`,
@@ -147,7 +147,7 @@ export default function LearnPage() {
       ></div>
 
       {/* Noise Texture Overlay */}
-      <div 
+      <div
         className="fixed inset-0 opacity-[0.03] pointer-events-none mix-blend-overlay"
         style={{
           backgroundImage: `url("data:image/svg+xml,%3Csvg width='200' height='200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' /%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.5'/%3E%3C/svg%3E")`,
@@ -155,9 +155,9 @@ export default function LearnPage() {
       ></div>
 
       {/* Hero Section */}
-      <section className="relative pt-7 pb-16 px-6">
+      <section className="relative pt-32 pb-16 px-6">
         <div className="max-w-7xl mx-auto relative z-10">
-          
+
           {/* Badge */}
           <div className="flex justify-center mb-12">
             <div className="inline-flex items-center gap-3 px-5 py-2.5 rounded-full bg-amber-500/20 border-2 border-amber-400/30 backdrop-blur-sm">
@@ -206,7 +206,7 @@ export default function LearnPage() {
       <section className="relative px-6 pb-12">
         <div className="max-w-7xl mx-auto relative z-10">
           <div className="p-8 rounded-3xl bg-stone-900/60 backdrop-blur-sm border-2 border-stone-700/50">
-            
+
             {/* Search Bar */}
             <div className="mb-6">
               <div className="relative">
@@ -232,11 +232,10 @@ export default function LearnPage() {
                     <button
                       key={cat.value}
                       onClick={() => setSelectedCategory(cat.value)}
-                      className={`px-4 py-2 rounded-lg text-sm font-medium transition-all font-kalam ${
-                        selectedCategory === cat.value
-                          ? 'bg-linear-to-r from-amber-500 to-orange-600 text-white shadow-lg shadow-amber-500/30'
-                          : 'bg-stone-800/50 text-stone-300 hover:bg-stone-700/50 border-2 border-stone-700/50'
-                      }`}
+                      className={`px-4 py-2 rounded-lg text-sm font-medium transition-all font-kalam ${selectedCategory === cat.value
+                        ? 'bg-linear-to-r from-amber-500 to-orange-600 text-white shadow-lg shadow-amber-500/30'
+                        : 'bg-stone-800/50 text-stone-300 hover:bg-stone-700/50 border-2 border-stone-700/50'
+                        }`}
                     >
                       {typeof cat.icon === 'string' ? cat.icon : <cat.icon className="w-4 h-4 inline" />} {cat.label}
                     </button>
@@ -254,11 +253,10 @@ export default function LearnPage() {
                     <button
                       key={level.value}
                       onClick={() => setSelectedLevel(level.value)}
-                      className={`px-4 py-2 rounded-lg text-sm font-medium transition-all font-kalam ${
-                        selectedLevel === level.value
-                          ? 'bg-linear-to-r from-amber-500 to-orange-600 text-white shadow-lg shadow-amber-500/30'
-                          : 'bg-stone-800/50 text-stone-300 hover:bg-stone-700/50 border-2 border-stone-700/50'
-                      }`}
+                      className={`px-4 py-2 rounded-lg text-sm font-medium transition-all font-kalam ${selectedLevel === level.value
+                        ? 'bg-linear-to-r from-amber-500 to-orange-600 text-white shadow-lg shadow-amber-500/30'
+                        : 'bg-stone-800/50 text-stone-300 hover:bg-stone-700/50 border-2 border-stone-700/50'
+                        }`}
                     >
                       {level.label}
                     </button>
@@ -308,13 +306,12 @@ export default function LearnPage() {
                       <div className="text-4xl w-14 h-14 flex items-center justify-center rounded-xl bg-stone-800/50">
                         {lang.icon}
                       </div>
-                      <div className={`flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium font-kalam ${
-                        lang.difficulty === 'Beginner' 
-                          ? 'bg-green-500/20 text-green-300 border border-green-500/30'
-                          : lang.difficulty === 'Intermediate'
+                      <div className={`flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium font-kalam ${lang.difficulty === 'Beginner'
+                        ? 'bg-green-500/20 text-green-300 border border-green-500/30'
+                        : lang.difficulty === 'Intermediate'
                           ? 'bg-yellow-500/20 text-yellow-300 border border-yellow-500/30'
                           : 'bg-red-500/20 text-red-300 border border-red-500/30'
-                      }`}>
+                        }`}>
                         {lang.difficulty}
                       </div>
                     </div>
@@ -389,7 +386,7 @@ export default function LearnPage() {
               {
                 icon: MessageCircle,
                 title: 'Native Speakers',
-                desc: 'Connect with language partners',
+                desc: 'Connect with language groups',
                 gradient: 'from-purple-500 to-pink-500'
               },
               {
@@ -405,12 +402,12 @@ export default function LearnPage() {
                 gradient: 'from-green-500 to-emerald-500'
               }
             ].map((feature, i) => (
-              <div 
+              <div
                 key={i}
                 className="group relative p-8 bg-stone-900/60 backdrop-blur-sm border-2 border-stone-700/50 hover:border-cyan-500/50 rounded-2xl transition-all hover:-translate-y-2 hover:shadow-2xl hover:shadow-cyan-500/20"
               >
                 <div className={`absolute inset-0 bg-linear-to-br ${feature.gradient} opacity-0 group-hover:opacity-10 rounded-2xl transition-opacity`}></div>
-                
+
                 <div className="relative z-10">
                   <div className={`w-14 h-14 rounded-xl bg-linear-to-br ${feature.gradient} flex items-center justify-center mb-6 group-hover:scale-110 transition-transform`}>
                     <feature.icon className="w-7 h-7 text-white" />
@@ -430,13 +427,13 @@ export default function LearnPage() {
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-full mb-6 bg-linear-to-br from-amber-500/30 to-orange-600/30">
             <Sparkles className="w-8 h-8 text-amber-400" />
           </div>
-          
+
           <h2 className="font-kalam text-5xl md:text-6xl font-bold text-white mb-6 leading-tight">
             Ready to Start?
           </h2>
-          
+
           <p className="text-xl mb-8 max-w-2xl mx-auto text-stone-300 leading-relaxed">
-            Join thousands of learners mastering Indian languages through real conversations 
+            Join thousands of learners mastering Indian languages through real conversations
             and curated resources.
           </p>
 
@@ -445,14 +442,14 @@ export default function LearnPage() {
               href="/auth/login"
               className="group px-10 py-5 bg-linear-to-r from-amber-500 to-orange-600 hover:from-amber-400 hover:to-orange-500 text-white rounded-xl font-bold text-lg shadow-2xl hover:shadow-amber-500/50 transition-all hover:scale-105 flex items-center gap-3 font-kalam"
             >
-                Start Your Journey
+              Start Your Journey
               <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
             </Link>
             <Link
               href="/dashboard"
               className="group px-10 py-5 border-2 border-stone-600 hover:border-amber-500 bg-stone-900/50 backdrop-blur-sm text-stone-100 rounded-xl font-bold text-lg transition-all hover:scale-105 flex items-center gap-3 font-kalam"
             >
-                My Dashboard
+              My Dashboard
               <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
             </Link>
           </div>

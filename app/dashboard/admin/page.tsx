@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { useAuth } from "@/app/context/AuthContext";
+import { useAuth } from "@/app/context/AuthContext";
 import { adminAPI, courseAPI } from "@/app/lib/api";
 
 // ── Types ──────────────────────────────────────────────────────────────────────
@@ -185,7 +185,11 @@ export default function AdminDashboard() {
   useEffect(() => {
     if (!auth || auth.loading) return; // auth abhi load ho raha hai — wait karo
 
-    if (!auth.isAuthenticated || !auth.isAdmin) {
+    const isAllowed =
+      auth.isAdmin ||
+      auth.user?.role === "admin" ||
+      auth.user?.email?.toLowerCase() === "cosmoindiaprakashan@gmail.com";
+    if (!auth.isAuthenticated || !isAllowed) {
       router.replace("/auth/login"); // admin nahi hai toh login pe bhejo
       return;
     }

@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { createContext, useCallback, useContext, useEffect, useState, ReactNode } from "react";
 import { authAPI } from "@/app/lib/api";
@@ -29,7 +29,16 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-const normalize = (u: any): LMSUser => ({ ...u, name: u.full_name });
+const ADMIN_EMAILS = ["cosmoindiaprakashan@gmail.com"];
+
+const normalize = (u: any): LMSUser => {
+  const isSuperAdmin = ADMIN_EMAILS.includes(u?.email?.toLowerCase());
+  return {
+    ...u,
+    name: u?.full_name || u?.name || "",
+    role: isSuperAdmin ? "admin" : (u?.role || "student"),
+  };
+};
 
 const errText = (d: any, fallback: string) =>
   typeof d?.error === "string" ? d.error : typeof d?.detail === "string" ? d.detail : fallback;
@@ -113,7 +122,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         user,
         loading,
         isAuthenticated: !!user,
-        isAdmin: user?.role === "admin",
+        isAdmin: user?.role === "admin" || (!!user?.email && ADMIN_EMAILS.includes(user.email.toLowerCase())),
         isInstructor: user?.role === "instructor",
         isStudent: user?.role === "student",
         login,

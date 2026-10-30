@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/app/context/AuthContext";
-import { Bell, Sun, ChevronDown, LogOut, LayoutDashboard, Menu, X } from "lucide-react";
+import { Bell, Sun, ChevronDown, LogOut, LayoutDashboard, Menu, X, Shield, BookOpen } from "lucide-react";
 
 type NavItem = { label: string; href: string; ready: boolean };
 
@@ -13,10 +13,10 @@ type NavItem = { label: string; href: string; ready: boolean };
 const NAV_ITEMS: NavItem[] = [
   { label: "My Learning", href: "/dashboard", ready: true },
   { label: "Courses", href: "/learn", ready: true },
-  { label: "Practice Labs", href: "/practice", ready: false },
-  { label: "Challenges", href: "/challenges", ready: false },
-  { label: "Certifications", href: "/certifications", ready: false },
-  { label: "Community", href: "/community", ready: false },
+  { label: "Practice Labs", href: "/practice", ready: true },
+  { label: "Challenges", href: "/challenges", ready: true },
+  { label: "Certifications", href: "/certifications", ready: true },
+  { label: "Community", href: "/community", ready: true },
 ];
 
 export default function Navbar() {
@@ -127,6 +127,26 @@ export default function Navbar() {
                     <LayoutDashboard className="w-4 h-4 text-[#FF7700]" />
                     <span>My Dashboard</span>
                   </Link>
+                  {(user.role === "admin" || user.email?.toLowerCase() === "cosmoindiaprakashan@gmail.com") && (
+                    <Link
+                      href="/dashboard/admin"
+                      onClick={() => setShowMenu(false)}
+                      className="w-full text-left px-3 py-2 rounded-xl text-xs text-amber-300 hover:text-white hover:bg-white/10 flex items-center gap-2.5 transition-colors"
+                    >
+                      <Shield className="w-4 h-4 text-amber-400" />
+                      <span>Admin Portal</span>
+                    </Link>
+                  )}
+                  {user.role === "instructor" && (
+                    <Link
+                      href="/dashboard/instructor"
+                      onClick={() => setShowMenu(false)}
+                      className="w-full text-left px-3 py-2 rounded-xl text-xs text-sky-300 hover:text-white hover:bg-white/10 flex items-center gap-2.5 transition-colors"
+                    >
+                      <BookOpen className="w-4 h-4 text-sky-400" />
+                      <span>Instructor Studio</span>
+                    </Link>
+                  )}
 
                   <button
                     onClick={handleLogout}
