@@ -5,10 +5,8 @@ import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 
 const team = [
-  { name: 'Priya Sharma', role: 'Co-founder & CEO', emoji: '👩‍💼', bg: 'from-amber-500 to-orange-500' },
-  { name: 'Arjun Mehta', role: 'Co-founder & CTO', emoji: '👨‍💻', bg: 'from-blue-500 to-cyan-500' },
-  { name: 'Kavya Nair', role: 'Head of Curriculum', emoji: '👩‍🏫', bg: 'from-purple-500 to-pink-500' },
-  { name: 'Rohan Das', role: 'Head of AI & Labs', emoji: '👨‍🔬', bg: 'from-green-500 to-teal-500' },
+  { name: 'Dhawal Shukla', role: 'Founder', emoji: '👨‍💼', bg: 'from-amber-500 to-orange-500' },
+  { name: 'Dhruv Khanna', role: 'CTO & Co-Founder', emoji: '👨‍💻', bg: 'from-blue-500 to-cyan-500' },
 ];
 
 const values = [
@@ -60,7 +58,7 @@ export default function AboutPage() {
           <h2 id="story" className="font-kalam text-4xl font-bold text-white mb-6">Our Story</h2>
           <div className="space-y-4 text-stone-300 leading-relaxed">
             <p>
-              VartaLang was born in 2024 from a simple frustration: despite India having 22 scheduled languages 
+              VartaLang was born in 2026 from a simple frustration: despite India having 22 scheduled languages 
               and hundreds of dialects, quality language learning resources were fragmented, expensive, or simply 
               unavailable for most learners.
             </p>
@@ -99,7 +97,7 @@ export default function AboutPage() {
         {/* Team */}
         <div className="mb-20">
           <h2 className="font-kalam text-4xl font-bold text-white mb-10 text-center">The Team</h2>
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid sm:grid-cols-2 gap-6 max-w-2xl mx-auto">
             {team.map((member, i) => (
               <div key={i} className="p-6 rounded-2xl bg-stone-900/60 border border-stone-700/50 text-center hover:border-amber-500/30 transition-all">
                 <div className={`w-16 h-16 rounded-2xl bg-gradient-to-br ${member.bg} flex items-center justify-center text-3xl mx-auto mb-4 shadow-lg`}>
@@ -118,7 +116,7 @@ export default function AboutPage() {
             { value: '6+', label: 'Languages', icon: Globe },
             { value: '500+', label: 'Learners', icon: Users },
             { value: '150+', label: 'Resources', icon: BookOpen },
-            { value: '2024', label: 'Founded', icon: Award },
+            { value: '2026', label: 'Founded', icon: Award },
           ].map((stat, i) => {
             const Icon = stat.icon;
             return (

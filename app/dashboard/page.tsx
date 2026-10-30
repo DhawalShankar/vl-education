@@ -33,10 +33,7 @@ export default function StudentDashboard() {
     <div className="min-h-screen bg-[#0a0908] text-white">
       <div className="border-b border-stone-800/50 bg-stone-900/40 backdrop-blur-md px-6 py-4 flex items-center justify-between sticky top-0 z-40">
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center">
-            <BookOpen className="w-4 h-4 text-white" />
-          </div>
-          <span className="text-xl font-bold">VartaLang</span>
+          <img src="/logo.png" alt="VartaLang" className="h-8 w-auto object-contain drop-shadow-lg" />
           <span className="px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 text-xs font-semibold border border-amber-500/20 capitalize">
             {user.role}
           </span>

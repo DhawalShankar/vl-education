@@ -282,10 +282,7 @@ export default function AdminDashboard() {
       <header className="sticky top-0 z-40 border-b border-stone-800/60 bg-[#0a0908]/90 backdrop-blur-md">
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg bg-linear-to-br from-amber-500 to-orange-600 flex items-center justify-center text-white font-bold text-sm">
-              V
-            </div>
-            <span className="font-bold text-white">VartaLang</span>
+            <img src="/logo.png" alt="VartaLang" className="h-8 w-auto object-contain drop-shadow-lg" />
             <span className="text-stone-600 text-sm mx-2">/</span>
             <span className="text-stone-400 text-sm">Admin</span>
           </div>

@@ -26,8 +26,8 @@ export default function PrivacyPage() {
             { title: '2. How We Use Your Information', body: 'Your data is used to personalize your learning experience, save course progress, send important platform updates, and improve our services. We may use anonymized, aggregated data for analytics.' },
             { title: '3. Data Storage & Security', body: 'All data is stored securely using industry-standard encryption. Access tokens are stored in localStorage and refresh tokens are used to maintain sessions. You can log out at any time to invalidate your session.' },
             { title: '4. Cookies', body: 'We use essential cookies to maintain your login session. We do not currently use tracking or advertising cookies. You can review our Cookie Policy for more details.' },
-            { title: '5. Your Rights', body: 'You have the right to access, correct, or delete your personal data. To exercise these rights or make any privacy-related request, contact us at privacy@vartalang.com.' },
-            { title: '6. Contact', body: 'For privacy concerns, write to us at privacy@vartalang.com. We aim to respond within 72 hours.' },
+            { title: '5. Your Rights', body: 'You have the right to access, correct, or delete your personal data. To exercise these rights or make any privacy-related request, contact us at support@cosmoindiaprakashan.in.' },
+            { title: '6. Contact', body: 'For privacy concerns, write to us at support@cosmoindiaprakashan.in. We aim to respond within 72 hours.' },
           ].map((s, i) => (
             <div key={i}>
               <h2 className="font-kalam text-2xl font-bold text-white mb-3">{s.title}</h2>

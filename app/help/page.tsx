@@ -93,13 +93,13 @@ export default function HelpPage() {
 
         {/* Contact Options */}
         <div className="grid md:grid-cols-2 gap-6 mb-10">
-          <a href="mailto:hello@vartalang.com" className="group p-6 rounded-2xl bg-stone-900/60 border border-stone-700/50 hover:border-amber-500/40 transition-all flex items-start gap-4">
+          <a href="mailto:support@cosmoindiaprakashan.in" className="group p-6 rounded-2xl bg-stone-900/60 border border-stone-700/50 hover:border-amber-500/40 transition-all flex items-start gap-4">
             <div className="w-12 h-12 rounded-xl bg-amber-500/20 flex items-center justify-center shrink-0 group-hover:bg-amber-500/30 transition-colors">
               <Mail className="w-6 h-6 text-amber-400" />
             </div>
             <div>
               <h3 className="font-kalam text-lg font-bold text-white mb-1">Email Support</h3>
-              <p className="text-stone-400 text-sm">hello@vartalang.com</p>
+              <p className="text-stone-400 text-sm">support@cosmoindiaprakashan.in</p>
               <p className="text-stone-500 text-xs mt-1">Response within 24 hours</p>
             </div>
           </a>

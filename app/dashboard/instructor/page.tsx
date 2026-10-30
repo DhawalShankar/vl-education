@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { BookOpen, Plus, Pencil, Trash2, LogOut, X, Check } from "lucide-react";
+import { Plus, Pencil, Trash2, LogOut, X, Check } from "lucide-react";
 import { useAuth } from "@/app/context/AuthContext";
 import { courseAPI } from "@/app/lib/api";
 
@@ -164,10 +164,7 @@ export default function InstructorDashboard() {
       {/* Header */}
       <div className="border-b border-stone-800/50 bg-stone-900/40 backdrop-blur-md px-6 py-4 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg bg-linear-to-br from-amber-500 to-orange-600 flex items-center justify-center">
-            <BookOpen className="w-4 h-4 text-white" />
-          </div>
-          <span className="font-kalam text-xl font-bold">VartaLang</span>
+          <img src="/logo.png" alt="VartaLang" className="h-8 w-auto object-contain drop-shadow-lg" />
           <span className="px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-300 text-xs font-semibold border border-blue-500/20">
             Instructor
           </span>

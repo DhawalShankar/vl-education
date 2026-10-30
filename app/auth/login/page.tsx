@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useEffect, useState, FormEvent } from "react";
 import { useRouter } from "next/navigation";
@@ -65,9 +65,7 @@ export default function LoginPage() {
     <div className="min-h-screen bg-[#0B0A08] flex items-center justify-center px-4">
       <div className="w-full max-w-md bg-[#14120E]/90 border border-white/10 rounded-3xl p-10 shadow-2xl shadow-black/80">
         <div className="flex flex-col items-center text-center mb-8">
-          <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-[#FF5500] to-[#FF8800] flex items-center justify-center mb-3">
-            <span className="text-white text-xl font-black tracking-wider">VL</span>
-          </div>
+          <img src="/logo.png" alt="VartaLang Logo" className="h-14 w-auto object-contain mb-3 drop-shadow-lg" />
           <h1 className="text-2xl font-bold text-white">VartaLang LMS</h1>
           <p className="text-xs text-white/50 mt-1">Sign in with your VartaLang account</p>
         </div>

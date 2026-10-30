@@ -1,7 +1,7 @@
 "use client";
 import { useState } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, Mail, ArrowRight, BookOpen } from 'lucide-react';
+import { ArrowLeft, Mail, ArrowRight } from 'lucide-react';
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState('');
@@ -28,11 +28,8 @@ export default function ForgotPasswordPage() {
         <div className="bg-stone-900/60 backdrop-blur-md border border-stone-700/50 rounded-2xl p-10">
 
           {/* Logo */}
-          <div className="flex items-center justify-center gap-3 mb-8">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center">
-              <BookOpen className="w-5 h-5 text-white" />
-            </div>
-            <h1 className="font-kalam text-2xl font-bold text-white">VartaLang</h1>
+          <div className="flex items-center justify-center mb-8">
+            <img src="/logo.png" alt="VartaLang Logo" className="h-12 w-auto object-contain drop-shadow-lg" />
           </div>
 
           {!submitted ? (

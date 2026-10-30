@@ -1,6 +1,6 @@
 "use client";
 import Link from 'next/link';
-import { ArrowLeft, BookOpen, Clock, ArrowRight } from 'lucide-react';
+import { ArrowLeft, Clock, ArrowRight } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 
@@ -86,7 +86,7 @@ export default function BlogPage() {
         {/* Header */}
         <div className="text-center mb-16">
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-amber-500/20 border border-amber-400/30 mb-6">
-            <BookOpen className="w-4 h-4 text-amber-400" />
+            <img src="/logo.png" alt="" className="h-5 w-auto object-contain" />
             <span className="text-sm font-bold text-amber-200">VartaLang Blog</span>
           </div>
           <h1 className="font-kalam text-5xl md:text-6xl font-bold text-white mb-4">

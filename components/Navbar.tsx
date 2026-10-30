@@ -1,4 +1,4 @@
-﻿// components/Navbar.tsx
+// components/Navbar.tsx
 "use client";
 import React, { useState } from "react";
 import Link from "next/link";
@@ -69,13 +69,12 @@ export default function Navbar() {
     <header className="fixed top-5 left-0 right-0 z-50 px-4 sm:px-8 max-w-7xl mx-auto">
       <nav className="glass-panel rounded-full px-5 py-3 flex items-center justify-between shadow-2xl border border-white/10 bg-[#16130F]/85 backdrop-blur-xl">
         {/* Brand Logo */}
-        <Link href="/dashboard" className="flex items-center gap-3 group">
-          <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-[#FF5500] to-[#FF8800] flex items-center justify-center shadow-lg shadow-[#FF5500]/25 group-hover:scale-105 transition-transform">
-            <span className="text-white text-lg font-black tracking-wider">VL</span>
-          </div>
-          <span className="text-white font-bold text-lg tracking-tight font-display">
-            VartaLang
-          </span>
+        <Link href="/dashboard" className="flex items-center gap-2 group">
+          <img
+            src="/logo.png"
+            alt="VartaLang Logo"
+            className="h-10 w-auto object-contain group-hover:scale-105 transition-transform drop-shadow-lg"
+          />
         </Link>
 
         {/* Center Nav Links (desktop) */}

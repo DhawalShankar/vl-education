@@ -1,6 +1,6 @@
 "use client";
 import Link from 'next/link';
-import { ArrowLeft, Home, BookOpen, ArrowRight } from 'lucide-react';
+import { ArrowLeft, Home, ArrowRight } from 'lucide-react';
 
 export default function NotFound() {
   return (
@@ -21,12 +21,8 @@ export default function NotFound() {
           404
         </div>
 
-        {/* Logo */}
-        <div className="flex items-center justify-center gap-3 mb-8">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center shadow-lg">
-            <BookOpen className="w-5 h-5 text-white" />
-          </div>
-          <span className="font-kalam text-2xl font-bold text-white">VartaLang</span>
+        <div className="flex items-center justify-center mb-8">
+          <img src="/logo.png" alt="VartaLang Logo" className="h-12 w-auto object-contain drop-shadow-lg" />
         </div>
 
         <h1 className="font-kalam text-4xl md:text-5xl font-bold text-white mb-4">

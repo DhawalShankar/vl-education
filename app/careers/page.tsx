@@ -52,7 +52,7 @@ export default function CareersPage() {
                 </div>
               </div>
               <a
-                href="mailto:careers@vartalang.com"
+                href="mailto:support@cosmoindiaprakashan.in"
                 className="shrink-0 flex items-center gap-2 px-5 py-2.5 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/30 text-amber-300 text-sm font-semibold font-kalam transition-all"
               >
                 Apply <ArrowRight className="w-4 h-4" />
@@ -64,7 +64,7 @@ export default function CareersPage() {
         <div className="text-center p-10 rounded-3xl bg-stone-900/60 border border-stone-700/50">
           <h2 className="font-kalam text-3xl font-bold text-white mb-3">Don't See Your Role?</h2>
           <p className="text-stone-400 mb-6">We're always looking for talented people. Send us your CV and tell us how you'd contribute.</p>
-          <a href="mailto:careers@vartalang.com" className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-amber-500 to-orange-600 text-white font-bold rounded-xl font-kalam transition-all hover:scale-105">
+          <a href="mailto:support@cosmoindiaprakashan.in" className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-amber-500 to-orange-600 text-white font-bold rounded-xl font-kalam transition-all hover:scale-105">
             Send Open Application <ArrowRight className="w-4 h-4" />
           </a>
         </div>

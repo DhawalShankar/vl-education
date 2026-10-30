@@ -1,303 +1,227 @@
 "use client";
 
-import { 
-  Mail, 
-  Phone, 
-  MapPin, 
-  Facebook, 
-  Twitter, 
-  Instagram, 
-  Linkedin, 
-  Youtube,
-  ArrowRight,
+import Link from "next/link";
+import {
+  Mail,
+  Phone,
+  MapPin,
   Globe,
-  Award,
-  Shield,
-  Heart
-} from 'lucide-react';
+  Heart,
+  Facebook,
+  Twitter,
+  Instagram,
+  Linkedin,
+  Youtube,
+  ArrowUpRight,
+} from "lucide-react";
 
 export default function Footer() {
-  const quickLinks = [
-    { label: 'About Us', href: '/about' },
-    { label: 'Our Story', href: '/about#story' },
-    { label: 'Careers', href: '/careers' },
-    { label: 'Press Kit', href: '/press' },
-    { label: 'Blog', href: '/blog' },
+  const platformLinks = [
+    { label: "Courses", href: "/learn" },
+    { label: "Practice Labs", href: "/practice" },
+    { label: "Challenges", href: "/challenges" },
+    { label: "Certifications", href: "/certifications" },
   ];
 
-  const languages = [
-    { label: 'Hindi', href: '/learn/hindi' },
-    { label: 'English', href: '/learn/english' },
-    { label: 'Tamil', href: '/learn/tamil' },
-    { label: 'Telugu', href: '/learn/telugu' },
-    { label: 'Bengali', href: '/learn/bengali' },
-    { label: 'View All 22+', href: '/learn' },
+  const companyLinks = [
+    { label: "About Us", href: "/about" },
+    { label: "Community", href: "/community" },
+    { label: "Blog", href: "/blog" },
+    { label: "Careers", href: "/careers" },
+    { label: "Help Center", href: "/help" },
   ];
 
-  const resources = [
-    { label: 'Learning Paths', href: '/learn' },
-    { label: 'Practice Labs', href: '/practice' },
-    { label: 'Exam Preparation', href: '/learn?tab=exams' },
-    { label: 'Teacher Resources', href: '/learn?tab=teachers' },
-    { label: 'Help Center', href: '/help' },
-  ];
-
-  const legal = [
-    { label: 'Privacy Policy', href: '/privacy' },
-    { label: 'Terms of Service', href: '/terms' },
-    { label: 'Cookie Policy', href: '/cookies' },
-    { label: 'Accessibility', href: '/accessibility' },
+  const legalLinks = [
+    { label: "Privacy Policy", href: "/privacy" },
+    { label: "Terms of Service", href: "/terms" },
   ];
 
   const socialLinks = [
-    { icon: Facebook, label: 'Facebook', href: 'https://facebook.com' },
-    { icon: Twitter, label: 'Twitter', href: 'https://twitter.com' },
-    { icon: Instagram, label: 'Instagram', href: 'https://instagram.com' },
-    { icon: Linkedin, label: 'LinkedIn', href: 'https://linkedin.com' },
-    { icon: Youtube, label: 'YouTube', href: 'https://youtube.com' },
+    {
+      name: "X (Twitter)",
+      handle: "@vartalang",
+      href: "https://x.com/vartalang",
+      icon: Twitter,
+    },
+    {
+      name: "Instagram",
+      handle: "@vartalang",
+      href: "https://instagram.com/vartalang",
+      icon: Instagram,
+    },
+    {
+      name: "YouTube",
+      handle: "@vartalang",
+      href: "https://youtube.com/@vartalang",
+      icon: Youtube,
+    },
+    {
+      name: "LinkedIn",
+      handle: "@vartalang",
+      href: "https://linkedin.com/company/vartalang",
+      icon: Linkedin,
+    },
+    {
+      name: "Facebook",
+      handle: "@vartalang",
+      href: "https://facebook.com/vartalang",
+      icon: Facebook,
+    },
   ];
 
   return (
-    <footer className="relative bg-[#080706] border-t-2 border-amber-500/20 overflow-hidden">
+    <footer className="relative bg-[#070605] border-t border-stone-800/80 text-stone-300">
+      <div className="max-w-7xl mx-auto px-6 py-14">
+        {/* Main Columns */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-10 lg:gap-8 pb-12 border-b border-stone-800/70">
+          
+          {/* Brand Info (2 cols on lg) */}
+          <div className="lg:col-span-2 space-y-4">
+            <Link href="/" className="inline-flex items-center gap-3 group">
+              <img
+                src="/logo.png"
+                alt="VartaLang Logo"
+                className="h-10 w-auto object-contain drop-shadow-md group-hover:scale-105 transition-transform"
+              />
+              <span className="font-kalam text-2xl font-bold text-white tracking-tight group-hover:text-amber-300 transition-colors">
+                VartaLang
+              </span>
+            </Link>
 
-      {/* Background */}
-      <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute -bottom-32 -left-32 w-150 h-150 rounded-full bg-amber-600/10 blur-[120px]" />
-        <div className="absolute -bottom-24 -right-24 w-100 h-100 rounded-full bg-orange-600/8 blur-[100px]" />
-        <div className="absolute top-0 inset-x-0 h-32 bg-linear-to-b from-[#0a0908] to-transparent" />
-        <div
-          className="absolute inset-0 opacity-[0.04]"
-          style={{
-            backgroundImage: `radial-gradient(circle, #d97706 1px, transparent 1px)`,
-            backgroundSize: '32px 32px'
-          }}
-        />
-      </div>
+            <p className="text-sm text-stone-400 leading-relaxed max-w-sm">
+              Preserving India&apos;s rich linguistic heritage through modern, AI-powered
+              language education. An initiative by Cosmo India Prakashan.
+            </p>
 
-      <div className="relative z-10">
-        {/* Main Footer Content */}
-        <div className="max-w-7xl mx-auto px-6 pt-16 pb-8">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-12 mb-12">
-            
-            {/* Brand Column */}
-            <div className="lg:col-span-4">
-              <a href="/" className="flex items-center space-x-3 mb-6 group w-fit">
-                <img 
-                  src="/logo.png" 
-                  alt="VartaLang Logo" 
-                  className="w-12 h-12 object-contain drop-shadow-lg group-hover:scale-105 transition-transform"
-                />
-                <h3 className="font-kalam text-3xl font-bold text-white group-hover:text-amber-300 transition-colors">
-                  VartaLang
-                </h3>
-              </a>
-              
-              <p className="text-stone-400 mb-6 leading-relaxed text-sm">
-                Preserving India's linguistic heritage through world-class education. 
-                Master any language with AI-powered labs, curated curriculums, and 
-                exceptional mentor support.
-              </p>
-
-              {/* Trust Badges */}
-              <div className="flex flex-wrap gap-4 mb-8">
-                <div className="flex items-center gap-2 px-3 py-2 bg-stone-900/60 border border-stone-700/50 rounded-lg">
-                  <Shield className="w-4 h-4 text-amber-400" />
-                  <span className="text-xs text-stone-300 font-semibold">Certified</span>
-                </div>
-                <div className="flex items-center gap-2 px-3 py-2 bg-stone-900/60 border border-stone-700/50 rounded-lg">
-                  <Award className="w-4 h-4 text-amber-400" />
-                  <span className="text-xs text-stone-300 font-semibold">Expert Curated</span>
-                </div>
+            {/* Social Handles */}
+            <div className="pt-2">
+              <div className="flex items-center gap-2 mb-3">
+                <span className="text-xs font-medium text-stone-400">Social</span>
+                <span className="text-[11px] font-mono px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-300 border border-amber-500/20">
+                  @vartalang
+                </span>
               </div>
-
-              {/* Social Links */}
-              <div className="flex items-center gap-3">
-                {socialLinks.map((social, index) => {
+              <div className="flex items-center gap-2.5">
+                {socialLinks.map((social) => {
                   const Icon = social.icon;
                   return (
                     <a
-                      key={index}
+                      key={social.name}
                       href={social.href}
                       target="_blank"
                       rel="noopener noreferrer"
-                      aria-label={social.label}
-                      className="w-10 h-10 rounded-full bg-stone-900/60 border border-stone-700/50 hover:border-amber-500/50 flex items-center justify-center transition-all hover:scale-110 group"
+                      title={`${social.name}: ${social.handle}`}
+                      aria-label={`${social.name}: ${social.handle}`}
+                      className="w-9 h-9 rounded-xl bg-stone-900/90 border border-stone-800 hover:border-amber-500/50 hover:bg-stone-800/80 text-stone-400 hover:text-amber-400 flex items-center justify-center transition-all hover:scale-105"
                     >
-                      <Icon className="w-4 h-4 text-stone-400 group-hover:text-amber-400 transition-colors" />
+                      <Icon className="w-4 h-4" />
                     </a>
                   );
                 })}
               </div>
             </div>
-
-            {/* Quick Links */}
-            <div className="lg:col-span-2">
-              <h4 className="font-kalam text-xl font-bold text-white mb-6">Company</h4>
-              <ul className="space-y-3">
-                {quickLinks.map((link, index) => (
-                  <li key={index}>
-                    <a 
-                      href={link.href}
-                      className="text-stone-400 hover:text-amber-400 transition-colors text-sm flex items-center gap-2 group"
-                    >
-                      <ArrowRight className="w-3 h-3 opacity-0 group-hover:opacity-100 -ml-5 group-hover:ml-0 transition-all" />
-                      <span>{link.label}</span>
-                    </a>
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            {/* Languages */}
-            <div className="lg:col-span-2">
-              <h4 className="font-kalam text-xl font-bold text-white mb-6">Languages</h4>
-              <ul className="space-y-3">
-                {languages.map((link, index) => (
-                  <li key={index}>
-                    <a 
-                      href={link.href}
-                      className="text-stone-400 hover:text-amber-400 transition-colors text-sm flex items-center gap-2 group"
-                    >
-                      <ArrowRight className="w-3 h-3 opacity-0 group-hover:opacity-100 -ml-5 group-hover:ml-0 transition-all" />
-                      <span>{link.label}</span>
-                    </a>
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            {/* Resources */}
-            <div className="lg:col-span-2">
-              <h4 className="font-kalam text-xl font-bold text-white mb-6">Resources</h4>
-              <ul className="space-y-3">
-                {resources.map((link, index) => (
-                  <li key={index}>
-                    <a 
-                      href={link.href}
-                      className="text-stone-400 hover:text-amber-400 transition-colors text-sm flex items-center gap-2 group"
-                    >
-                      <ArrowRight className="w-3 h-3 opacity-0 group-hover:opacity-100 -ml-5 group-hover:ml-0 transition-all" />
-                      <span>{link.label}</span>
-                    </a>
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            {/* Contact Info */}
-            <div className="lg:col-span-2">
-              <h4 className="font-kalam text-xl font-bold text-white mb-6">Contact</h4>
-              <ul className="space-y-4">
-                <li>
-                  <a 
-                    href="mailto:hello@vartalang.com"
-                    className="text-stone-400 hover:text-amber-400 transition-colors text-sm flex items-start gap-3 group"
-                  >
-                    <Mail className="w-4 h-4 mt-0.5 text-amber-400" />
-                    <span>hello@vartalang.com</span>
-                  </a>
-                </li>
-                <li>
-                  <a 
-                    href="tel:+911234567890"
-                    className="text-stone-400 hover:text-amber-400 transition-colors text-sm flex items-start gap-3 group"
-                  >
-                    <Phone className="w-4 h-4 mt-0.5 text-amber-400" />
-                    <span>+91 123 456 7890</span>
-                  </a>
-                </li>
-                <li className="text-stone-400 text-sm flex items-start gap-3">
-                  <MapPin className="w-4 h-4 mt-0.5 text-amber-400 shrink-0" />
-                  <span>Mumbai, Maharashtra<br />India</span>
-                </li>
-              </ul>
-            </div>
-
           </div>
 
-          {/* Newsletter Section */}
-          <div className="border-t border-stone-800/50 pt-12 pb-8">
-            <div className="max-w-2xl mx-auto text-center mb-12">
-              <h3 className="font-kalam text-3xl font-bold text-white mb-3">
-                Stay Connected
-              </h3>
-              <p className="text-stone-400 mb-6">
-                Get the latest updates on new languages, features, and learning resources
-              </p>
-              
-              <form
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  const input = e.currentTarget.querySelector('input') as HTMLInputElement;
-                  if (input?.value) {
-                    alert(`Thank you! We'll keep ${input.value} updated.`);
-                    input.value = '';
-                  }
-                }}
-                className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto"
-              >
-                <input
-                  type="email"
-                  placeholder="Enter your email"
-                  required
-                  className="flex-1 px-5 py-3 bg-stone-900/60 border border-stone-700/50 rounded-full text-white placeholder-stone-500 focus:outline-none focus:border-amber-500/50 transition-colors"
-                />
-                <button 
-                  type="submit"
-                  className="px-8 py-3 bg-linear-to-r from-amber-500 to-orange-600 hover:from-amber-400 hover:to-orange-500 text-white font-bold rounded-full transition-all hover:shadow-lg hover:shadow-amber-500/30 flex items-center justify-center gap-2 font-kalam"
-                >
-                  <span>Subscribe</span>
-                  <ArrowRight className="w-4 h-4" />
-                </button>
-              </form>
-            </div>
-          </div>
-
-          {/* Bottom Bar */}
-          <div className="border-t border-stone-800/50 pt-8">
-            <div className="flex flex-col md:flex-row justify-between items-center gap-6">
-              
-              <div className="flex items-center gap-2 text-stone-500 text-sm">
-                <span>© 2026 VartaLang. Made with</span>
-                <Heart className="w-4 h-4 text-red-500 fill-red-500" />
-                <span>in India</span>
-              </div>
-
-              <div className="flex flex-wrap items-center gap-6">
-                {legal.map((link, index) => (
-                  <a
-                    key={index}
+          {/* Platform */}
+          <div>
+            <h4 className="font-kalam text-lg font-bold text-white mb-4 tracking-wide">
+              Platform
+            </h4>
+            <ul className="space-y-2.5 text-sm">
+              {platformLinks.map((link) => (
+                <li key={link.href}>
+                  <Link
                     href={link.href}
-                    className="text-stone-500 hover:text-amber-400 transition-colors text-sm"
+                    className="text-stone-400 hover:text-amber-400 transition-colors"
                   >
                     {link.label}
-                  </a>
-                ))}
-              </div>
-
-              <div className="flex items-center gap-2">
-                <Globe className="w-4 h-4 text-stone-500" />
-                <select
-                  className="bg-transparent border border-stone-700/50 rounded-lg px-3 py-1.5 text-stone-400 text-sm focus:outline-none focus:border-amber-500/50 transition-colors cursor-pointer"
-                  onChange={(e) => {
-                    // Language preference can be stored and used later
-                    localStorage.setItem('lang-pref', e.target.value);
-                  }}
-                >
-                  <option value="en">English</option>
-                  <option value="hi">हिंदी</option>
-                  <option value="ta">தமிழ்</option>
-                  <option value="te">తెలుగు</option>
-                  <option value="bn">বাংলা</option>
-                </select>
-              </div>
-            </div>
+                  </Link>
+                </li>
+              ))}
+            </ul>
           </div>
 
-          <div className="mt-8 text-center">
-            <p className="text-xs text-stone-600 font-kalam italic">
-              "Preserving India's Linguistic Heritage Through Modern Education"
-            </p>
+          {/* Company */}
+          <div>
+            <h4 className="font-kalam text-lg font-bold text-white mb-4 tracking-wide">
+              Company
+            </h4>
+            <ul className="space-y-2.5 text-sm">
+              {companyLinks.map((link) => (
+                <li key={link.href}>
+                  <Link
+                    href={link.href}
+                    className="text-stone-400 hover:text-amber-400 transition-colors"
+                  >
+                    {link.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Contact */}
+          <div>
+            <h4 className="font-kalam text-lg font-bold text-white mb-4 tracking-wide">
+              Contact
+            </h4>
+            <ul className="space-y-3 text-sm">
+              <li>
+                <a
+                  href="mailto:support@cosmoindiaprakashan.in"
+                  className="text-stone-400 hover:text-amber-400 transition-colors flex items-start gap-2.5 group"
+                >
+                  <Mail className="w-4 h-4 mt-0.5 text-amber-400 shrink-0" />
+                  <span className="break-all">support@cosmoindiaprakashan.in</span>
+                </a>
+              </li>
+              <li>
+                <a
+                  href="tel:+917388270331"
+                  className="text-stone-400 hover:text-amber-400 transition-colors flex items-center gap-2.5"
+                >
+                  <Phone className="w-4 h-4 text-amber-400 shrink-0" />
+                  <span>+91 73882 70331</span>
+                </a>
+              </li>
+              <li className="text-stone-400 flex items-start gap-2.5">
+                <MapPin className="w-4 h-4 mt-0.5 text-amber-400 shrink-0" />
+                <span>Kanpur, Uttar Pradesh, India</span>
+              </li>
+              <li>
+                <a
+                  href="https://vartalang.in"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-stone-400 hover:text-amber-400 transition-colors flex items-center gap-2.5 group"
+                >
+                  <Globe className="w-4 h-4 text-amber-400 shrink-0" />
+                  <span>vartalang.in</span>
+                  <ArrowUpRight className="w-3.5 h-3.5 opacity-60 group-hover:opacity-100 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+                </a>
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        {/* Bottom Bar */}
+        <div className="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-stone-500">
+          <div className="flex items-center gap-2">
+            <span>© 2026 VartaLang · Cosmo India Prakashan. Made with</span>
+            <Heart className="w-3.5 h-3.5 text-red-500 fill-red-500" />
+            <span>in India</span>
+          </div>
+
+          <div className="flex items-center gap-6">
+            {legalLinks.map((link) => (
+              <Link
+                key={link.href}
+                href={link.href}
+                className="text-stone-500 hover:text-amber-400 transition-colors"
+              >
+                {link.label}
+              </Link>
+            ))}
           </div>
         </div>
       </div>
