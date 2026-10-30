@@ -70,9 +70,7 @@ export default function AboutPage() {
               mother tongue.
             </p>
             <p>
-              Today, VartaLang serves learners across 6 languages with plans to expand to all 22 official Indian 
-              languages, along with specialized exam preparation programs for IELTS, teacher certifications, and 
-              government competitive examinations.
+              Today, VartaLang serves 60+ learners across 22+ languages, along with specialized exam preparation programs for IELTS, teacher certifications, and government competitive examinations.
             </p>
           </div>
         </div>
@@ -113,8 +111,8 @@ export default function AboutPage() {
         {/* Stats */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-16">
           {[
-            { value: '6+', label: 'Languages', icon: Globe },
-            { value: '500+', label: 'Learners', icon: Users },
+            { value: '22+', label: 'Languages', icon: Globe },
+            { value: '60+', label: 'Learners', icon: Users },
             { value: '150+', label: 'Resources', icon: BookOpen },
             { value: '2026', label: 'Founded', icon: Award },
           ].map((stat, i) => {

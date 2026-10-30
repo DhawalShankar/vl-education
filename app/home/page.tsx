@@ -145,7 +145,7 @@ export default function HomePage() {
           <div className="inline-flex items-center gap-2.5 px-4 py-2 rounded-full bg-[#FF5500]/15 border border-[#FF5500]/30 backdrop-blur-md mb-8 shadow-lg shadow-[#FF5500]/10">
             <Sparkles className="w-4 h-4 text-[#FF8800] animate-pulse" />
             <span className="text-xs sm:text-sm font-semibold text-orange-200 tracking-wide uppercase">
-              India&apos;s Vernacular Language Platform
+              India&apos;s Language Bridge
             </span>
           </div>
 

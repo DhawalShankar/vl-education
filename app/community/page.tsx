@@ -26,8 +26,8 @@ const team = [
 ];
 
 const stats = [
-  { value: "6+", label: "Languages", icon: Globe },
-  { value: "500+", label: "Learners", icon: Users },
+  { value: "22+", label: "Languages", icon: Globe },
+  { value: "60+", label: "Learners", icon: Users },
   { value: "150+", label: "Resources", icon: BookOpen },
   { value: "2026", label: "Founded", icon: Award },
 ];
