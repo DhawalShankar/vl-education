@@ -1,177 +1,81 @@
 "use client";
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+
+import Link from "next/link";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import {
-  Mic,
+  ArrowRight,
   Headphones,
-  PenTool,
+  Mic,
   BookOpen,
-  Crown,
-  ChevronRight,
-  Award,
-  Clock,
-  Trophy,
-  CheckCircle,
+  PenTool,
   Sparkles,
+  Crown,
+  Clock,
   Brain,
+  CheckCircle,
   Zap
 } from "lucide-react";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
-
-interface Lab {
-  id: string;
-  title: string;
-  description: string;
-  icon: React.ComponentType<{ className?: string }>;
-  type: "free" | "premium";
-  duration: string;
-  exercises: number;
-  gradient: string;
-}
-
-interface ProgressStats {
-  totalSessions: number;
-  completedLabs: number;
-  mentorReviews: number;
-  streakDays: number;
-  todaysPractice: number;
-}
+const labs = [
+  {
+    icon: Headphones,
+    title: "Listening Studio",
+    desc: "Curated native audio clips with comprehension exercises, interactive speed controls, and transcripts.",
+    gradient: "from-blue-500 to-indigo-600",
+    eta: "Q4 2026",
+    highlights: ["Native Audio", "Transcripts", "Speed Control"],
+  },
+  {
+    icon: Mic,
+    title: "Pronunciation Practice",
+    desc: "Record your voice and get instant AI-assisted feedback on tones, vowel lengths, and phoneme accuracy.",
+    gradient: "from-orange-500 to-red-600",
+    eta: "Q4 2026",
+    highlights: ["Voice AI", "Accent Analysis", "Native Comparison"],
+  },
+  {
+    icon: BookOpen,
+    title: "Meaning Match",
+    desc: "Hear a spoken word or read a phrase, then match the correct meaning from context clues under time pressure.",
+    gradient: "from-green-500 to-teal-600",
+    eta: "Q1 2027",
+    highlights: ["Spaced Repetition", "Context Clues", "Vocabulary"],
+  },
+  {
+    icon: PenTool,
+    title: "Dictation Studio",
+    desc: "Listen to natural sentences in full flow, type them in authentic script, and get scored on grammatical accuracy.",
+    gradient: "from-purple-500 to-pink-600",
+    eta: "Q1 2027",
+    highlights: ["Script Typing", "Auto-grading", "Grammar Scored"],
+  },
+  {
+    icon: Sparkles,
+    title: "Subtle Sound Distinction",
+    desc: "Train your ear to master nuances that trip up non-native speakers (e.g. ड vs ड़, त vs ट, retroflex sounds).",
+    gradient: "from-yellow-500 to-amber-600",
+    eta: "Q1 2027",
+    highlights: ["Minimal Pairs", "Ear Training", "Phonetics"],
+  },
+  {
+    icon: Crown,
+    title: "Expert Mentor Review",
+    desc: "Submit your recordings and essays directly to certified language educators for detailed feedback within 24 hours.",
+    gradient: "from-violet-500 to-purple-700",
+    eta: "Q2 2027",
+    highlights: ["Certified Mentors", "Personalized Audio Notes", "Rubric Scored"],
+  },
+];
 
 export default function PracticePage() {
-  const router = useRouter();
-
-  const [selectedLanguage, setSelectedLanguage] = useState<string>("Hindi");
-  const [progress, setProgress] = useState<ProgressStats | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [isAuthenticating, setIsAuthenticating] = useState(true);
-
-  const languages = [
-    "Hindi", "English", "Tamil", "Telugu", "Bengali", "Marathi",
-  ];
-
-  const labs: Lab[] = [
-    {
-      id: "listening-lab",
-      title: "Listening Lab",
-      description: "Hear words/sentences → Write what you heard → Check accuracy",
-      icon: Headphones,
-      type: "free",
-      duration: "10–15 min",
-      exercises: 20,
-      gradient: "from-blue-500 to-indigo-600",
-    },
-    {
-      id: "pronunciation-recording",
-      title: "Pronunciation Practice",
-      description: "Record yourself saying words → Submit for mentor review",
-      icon: Mic,
-      type: "free",
-      duration: "5–10 min",
-      exercises: 15,
-      gradient: "from-orange-500 to-red-600",
-    },
-    {
-      id: "meaning-match",
-      title: "Meaning Match",
-      description: "Hear a word → Choose correct meaning from 4 options",
-      icon: BookOpen,
-      type: "free",
-      duration: "8–12 min",
-      exercises: 25,
-      gradient: "from-green-500 to-teal-600",
-    },
-    {
-      id: "dictation-lab",
-      title: "Dictation Lab",
-      description: "Listen to full sentences → Type them out → Get scored",
-      icon: PenTool,
-      type: "free",
-      duration: "10–15 min",
-      exercises: 10,
-      gradient: "from-purple-500 to-pink-600",
-    },
-    {
-      id: "sound-identification",
-      title: "Sound Recognition",
-      description: "Identify similar-sounding letters (ड vs ड़, त vs ट)",
-      icon: Sparkles,
-      type: "free",
-      duration: "5–8 min",
-      exercises: 30,
-      gradient: "from-yellow-500 to-orange-600",
-    },
-    {
-      id: "mentor-review",
-      title: "Get Mentor Review",
-      description: "Submit your recordings → Get detailed feedback from experts",
-      icon: Crown,
-      type: "premium",
-      duration: "24 hrs",
-      exercises: 1,
-      gradient: "from-violet-500 to-purple-600",
-    },
-  ];
-
-  useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (!token) {
-      router.push("/auth/login");
-      return;
-    }
-    setIsAuthenticating(false);
-    fetchProgress();
-  }, []);
-
-  const fetchProgress = async () => {
-    const token = localStorage.getItem("token");
-    if (!token) { router.push("/auth/login"); return; }
-    try {
-      const res = await fetch(`${API_URL}/practice/progress`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (res.ok) {
-        const data = await res.json();
-        setProgress(data.progress || { totalSessions: 0, completedLabs: 0, mentorReviews: 0, streakDays: 0, todaysPractice: 0 });
-      } else {
-        setProgress({ totalSessions: 0, completedLabs: 0, mentorReviews: 0, streakDays: 0, todaysPractice: 0 });
-      }
-    } catch {
-      setProgress({ totalSessions: 0, completedLabs: 0, mentorReviews: 0, streakDays: 0, todaysPractice: 0 });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleLabClick = (labId: string) => {
-    router.push(`/practice/session?lab=${labId}&language=${selectedLanguage}`);
-  };
-
-  if (loading || isAuthenticating) {
-    return (
-      <div className="min-h-screen bg-[#0a0908]">
-        <Navbar />
-        <div className="pt-20 flex items-center justify-center min-h-[70vh]">
-          <div className="text-center">
-            <div className="w-16 h-16 border-4 border-amber-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-            <p className="text-amber-200">
-              {isAuthenticating ? "Checking authentication…" : "Loading practice labs…"}
-            </p>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="min-h-screen bg-[#0a0908] relative overflow-hidden">
       <Navbar />
 
-      {/* Background */}
+      {/* Background Ambience */}
       <div
-        className="fixed inset-0 opacity-30 pointer-events-none"
+        className="fixed inset-0 opacity-25 pointer-events-none"
         style={{
           backgroundImage: `url('https://images.unsplash.com/photo-1580582932707-520aed937b7b?w=1920&q=80')`,
           backgroundSize: "cover",
@@ -179,133 +83,112 @@ export default function PracticePage() {
           backgroundAttachment: "fixed",
         }}
       />
-      <div className="fixed inset-0 opacity-[0.03] pointer-events-none mix-blend-overlay"
-        style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg width='200' height='200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' /%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.5'/%3E%3C/svg%3E")` }}
-      />
+      <div className="fixed inset-0 bg-gradient-to-b from-blue-950/20 via-transparent to-amber-950/15 pointer-events-none" />
 
-      <div className="max-w-7xl mx-auto px-6 pt-32 pb-16 relative z-10">
-
-        {/* Hero */}
+      <div className="relative z-10 max-w-6xl mx-auto px-6 pt-36 pb-20">
+        {/* Hero Section */}
         <div className="text-center mb-16">
-          <div className="flex justify-center mb-8">
-            <div className="inline-flex items-center gap-3 px-5 py-2.5 rounded-full bg-cyan-500/20 border-2 border-cyan-400/30 backdrop-blur-sm">
-              <Brain className="w-4 h-4 text-cyan-300" />
-              <span className="text-sm font-semibold text-cyan-100 tracking-wide">AI-Powered Practice</span>
-              <div className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse" />
-            </div>
+          <div className="inline-flex items-center gap-3 px-5 py-2.5 rounded-full bg-cyan-500/20 border-2 border-cyan-400/30 backdrop-blur-sm mb-8">
+            <Brain className="w-4 h-4 text-cyan-300" />
+            <span className="text-sm font-semibold text-cyan-100 tracking-wide">
+              Coming Soon · AI-Powered Practice
+            </span>
+            <div className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse" />
           </div>
-          <h1 className="font-kalam text-6xl md:text-7xl font-bold text-white mb-8 leading-[1.1] drop-shadow-2xl">
+
+          <h1 className="font-kalam text-6xl md:text-7xl lg:text-8xl font-bold text-white mb-6 leading-[1.1] drop-shadow-2xl">
             Practice Labs
             <br />
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-200 via-yellow-200 to-amber-300">
-              Master Your Skills
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 via-amber-200 to-orange-300">
+              Interactive Skill Mastery
             </span>
           </h1>
-          <p className="text-xl text-stone-300 max-w-3xl mx-auto mb-8">
-            Hands-on exercises to improve listening, speaking, and comprehension
+
+          <p className="text-xl text-stone-300 max-w-3xl mx-auto leading-relaxed mb-6">
+            Hands-on, voice-first practice labs powered by AI speech analysis and expert mentor
+            review. Built for true conversational fluency, not just passive memorization.
           </p>
 
-          {/* Language Selector */}
-          <div className="inline-flex flex-col items-center gap-3">
-            <label className="text-sm font-bold text-amber-300 font-kalam">Practice Language</label>
-            <select
-              value={selectedLanguage}
-              onChange={(e) => setSelectedLanguage(e.target.value)}
-              className="px-6 py-3 rounded-xl border-2 border-stone-700/50 bg-stone-900/80 text-white font-medium outline-none focus:border-amber-500/50 transition-all font-kalam text-lg"
-            >
-              {languages.map((lang) => (
-                <option key={lang} value={lang}>{lang}</option>
-              ))}
-            </select>
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-stone-900/80 border border-stone-800 text-stone-400 text-xs font-medium">
+            <Clock className="w-3.5 h-3.5 text-amber-400" />
+            <span>Target Launch: Starting Q4 2026 · Integrated across all 22 Indian languages</span>
           </div>
-        </div>
-
-        {/* Progress Stats */}
-        {progress && (
-          <div className="grid grid-cols-2 gap-6 mb-16 max-w-xl mx-auto">
-            <div className="p-6 rounded-2xl bg-stone-900/60 backdrop-blur-sm border-2 border-stone-700/50">
-              <div className="flex items-center gap-3 mb-3">
-                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-yellow-500 to-orange-600 flex items-center justify-center">
-                  <Trophy className="w-6 h-6 text-white" />
-                </div>
-                <span className="text-sm font-medium text-stone-400 font-kalam">Streak</span>
-              </div>
-              <p className="font-kalam text-4xl font-bold text-amber-400">{progress.streakDays} days</p>
-            </div>
-            <div className="p-6 rounded-2xl bg-stone-900/60 backdrop-blur-sm border-2 border-stone-700/50">
-              <div className="flex items-center gap-3 mb-3">
-                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center">
-                  <CheckCircle className="w-6 h-6 text-white" />
-                </div>
-                <span className="text-sm font-medium text-stone-400 font-kalam">Labs Done</span>
-              </div>
-              <p className="font-kalam text-4xl font-bold text-green-400">{progress.completedLabs}</p>
-            </div>
-          </div>
-        )}
-
-        {/* Section Header */}
-        <div className="text-center mb-12">
-          <div className="inline-block px-4 py-2 rounded-full bg-blue-500/20 border border-blue-400/30 mb-6">
-            <span className="text-sm font-bold text-blue-200">INTERACTIVE EXERCISES</span>
-          </div>
-          <h2 className="font-kalam text-4xl md:text-5xl font-bold text-white mb-4">Choose Your Practice</h2>
-          <p className="text-lg text-stone-400">Real-time feedback • Adaptive learning • Immersive practice</p>
         </div>
 
         {/* Labs Grid */}
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {labs.map((lab) => (
-            <button
-              key={lab.id}
-              onClick={() => handleLabClick(lab.id)}
-              className="group text-left p-8 rounded-2xl bg-stone-900/60 backdrop-blur-sm border-2 border-stone-700/50 hover:border-amber-500/50 transition-all hover:scale-105 hover:shadow-2xl hover:shadow-amber-500/20"
-            >
-              <div className="flex items-start justify-between mb-6">
-                <div className={`p-4 rounded-xl bg-gradient-to-br ${lab.gradient} group-hover:scale-110 transition-transform`}>
-                  <lab.icon className="w-8 h-8 text-white" />
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-20">
+          {labs.map((lab, i) => {
+            const Icon = lab.icon;
+            return (
+              <div
+                key={i}
+                className="group p-8 rounded-2xl bg-stone-900/60 border-2 border-stone-800/80 hover:border-cyan-500/50 transition-all hover:-translate-y-1 flex flex-col justify-between"
+              >
+                <div>
+                  <div className="flex items-start justify-between gap-4 mb-6">
+                    <div
+                      className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${lab.gradient} flex items-center justify-center group-hover:scale-110 transition-transform shadow-lg`}
+                    >
+                      <Icon className="w-7 h-7 text-white" />
+                    </div>
+                    <span className="shrink-0 flex items-center gap-1.5 text-xs text-stone-400 bg-stone-800/80 px-3 py-1 rounded-full border border-stone-700/60 font-mono">
+                      <Clock className="w-3 h-3 text-amber-400" />
+                      {lab.eta}
+                    </span>
+                  </div>
+
+                  <h3 className="font-kalam text-2xl font-bold text-white mb-3 group-hover:text-cyan-200 transition-colors">
+                    {lab.title}
+                  </h3>
+                  <p className="text-stone-400 text-sm leading-relaxed mb-6">{lab.desc}</p>
                 </div>
-                {lab.type === "premium" && (
-                  <div className="px-3 py-1.5 rounded-lg flex items-center gap-1.5 bg-purple-500/20 border border-purple-400/30">
-                    <Crown className="w-3.5 h-3.5 text-purple-300" />
-                    <span className="text-xs font-medium text-purple-200 font-kalam">Premium</span>
-                  </div>
-                )}
-              </div>
-              <h3 className="font-kalam text-2xl font-bold text-white mb-3">{lab.title}</h3>
-              <p className="text-sm mb-6 text-stone-400 leading-relaxed">{lab.description}</p>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4 text-sm">
-                  <div className="flex items-center gap-1.5">
-                    <Clock className="w-4 h-4 text-amber-400" />
-                    <span className="text-stone-400 font-kalam">{lab.duration}</span>
-                  </div>
-                  <div className="flex items-center gap-1.5">
-                    <Zap className="w-4 h-4 text-amber-400" />
-                    <span className="text-stone-400 font-kalam">{lab.exercises} ex</span>
+
+                <div className="pt-4 border-t border-stone-800/80">
+                  <div className="flex flex-wrap gap-1.5">
+                    {lab.highlights.map((h) => (
+                      <span
+                        key={h}
+                        className="text-[11px] px-2.5 py-1 rounded-lg bg-stone-800/60 border border-stone-700/50 text-stone-300"
+                      >
+                        {h}
+                      </span>
+                    ))}
                   </div>
                 </div>
-                <ChevronRight className="w-5 h-5 transition-transform group-hover:translate-x-1 text-amber-400" />
               </div>
-            </button>
-          ))}
+            );
+          })}
         </div>
 
-        {/* Bottom CTA */}
-        <div className="mt-20 text-center p-12 rounded-3xl bg-stone-900/60 backdrop-blur-sm border-2 border-stone-700/50">
-          <Award className="w-16 h-16 mx-auto mb-6 text-amber-400" />
-          <h3 className="font-kalam text-3xl font-bold text-white mb-4">Track Your Progress</h3>
-          <p className="text-lg text-stone-400 mb-8 max-w-2xl mx-auto">
-            Complete exercises daily to maintain your streak and unlock achievements
+        {/* Bottom Banner */}
+        <div className="text-center p-12 sm:p-14 rounded-3xl bg-gradient-to-br from-cyan-500/10 via-stone-900/70 to-amber-500/10 border-2 border-cyan-500/20 backdrop-blur-md">
+          <Zap className="w-16 h-16 mx-auto mb-6 text-cyan-400 drop-shadow-lg" />
+          <h2 className="font-kalam text-4xl font-bold text-white mb-4">
+            Prepare Your Foundation Today
+          </h2>
+          <p className="text-stone-300 max-w-2xl mx-auto mb-8 leading-relaxed text-base">
+            While our engineering team fine-tunes the AI pronunciation models and listening studio,
+            you can start learning scripts, grammar, and core phrases right now through our structured Courses.
           </p>
-          <div className="flex flex-wrap justify-center gap-6 text-sm text-stone-500">
-            {["Daily practice", "Real-time feedback", "Track improvement"].map((t) => (
-              <div key={t} className="flex items-center gap-2">
-                <CheckCircle className="w-4 h-4 text-green-400" />
-                <span>{t}</span>
-              </div>
-            ))}
+
+          <div className="flex flex-wrap justify-center gap-6 mb-8 text-sm text-stone-400">
+            {["Real-time Speech Feedback", "22 Indian Languages", "Expert Mentor Critiques"].map(
+              (item) => (
+                <div key={item} className="flex items-center gap-2">
+                  <CheckCircle className="w-4 h-4 text-green-400" />
+                  <span>{item}</span>
+                </div>
+              )
+            )}
           </div>
+
+          <Link
+            href="/learn"
+            className="inline-flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-400 hover:to-orange-500 text-white rounded-xl font-bold font-kalam text-lg transition-all hover:scale-105 shadow-2xl hover:shadow-amber-500/50"
+          >
+            <span>Explore Language Courses</span>
+            <ArrowRight className="w-5 h-5" />
+          </Link>
         </div>
       </div>
 

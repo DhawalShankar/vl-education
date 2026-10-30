@@ -1,37 +1,9 @@
-// "use client";
-// import React, { useRef } from "react";
-// import Navbar from "@/components/Navbar";
-// import Hero from "@/components/Hero";
-// import CourseExplorer from "@/components/CourseExplorer";
-// import Footer from "@/components/Footer";
-
-// export default function Home() {
-//   const explorerRef = useRef<HTMLDivElement>(null);
-
-//   const scrollToExplorer = () => {
-//     explorerRef.current?.scrollIntoView({ behavior: "smooth" });
-//   };
-
-//   return (
-//     <main className="min-h-screen bg-[#0B0A08] text-white selection:bg-[#FF5500] selection:text-white">
-//       {/* Floating Pill Header */}
-//       <Navbar />
-
-//       {/* Hero Section matching VartaLang Brand Screenshot */}
-//       <Hero onExploreClick={scrollToExplorer} />
-
-//       {/* Course Explorer with 3-Tier Hierarchy */}
-//       <div ref={explorerRef}>
-//         <CourseExplorer />
-//       </div>
-
-//       {/* Footer */}
-//       <Footer />
-//     </main>
-//   );
-// }
 "use client";
-import { useState, useEffect } from 'react';
+
+import { useState, useEffect } from "react";
+import Link from "next/link";
+import Navbar from "@/components/Navbar";
+import Footer from "@/components/Footer";
 import {
   Globe,
   Shield,
@@ -40,11 +12,13 @@ import {
   Mic,
   BookOpen,
   Users,
-  ArrowRight
-} from 'lucide-react';
+  ArrowRight,
+  Clock,
+  Sparkles
+} from "lucide-react";
 
 // Launch target: adjust this single constant if the date shifts.
-const LAUNCH_DATE = new Date('2026-12-01T00:00:00+05:30'); // IST
+const LAUNCH_DATE = new Date("2026-12-01T00:00:00+05:30"); // IST
 
 function getTimeLeft() {
   const now = new Date().getTime();
@@ -59,13 +33,19 @@ function getTimeLeft() {
     hours: Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)),
     minutes: Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60)),
     seconds: Math.floor((distance % (1000 * 60)) / 1000),
-    done: false
+    done: false,
   };
 }
 
 export default function ComingSoonPage() {
   const [mounted, setMounted] = useState(false);
-  const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0, done: false });
+  const [timeLeft, setTimeLeft] = useState({
+    days: 0,
+    hours: 0,
+    minutes: 0,
+    seconds: 0,
+    done: false,
+  });
 
   useEffect(() => {
     setMounted(true);
@@ -78,145 +58,233 @@ export default function ComingSoonPage() {
   }, []);
 
   const countdownUnits = [
-    { label: 'Days', value: timeLeft.days },
-    { label: 'Hours', value: timeLeft.hours },
-    { label: 'Minutes', value: timeLeft.minutes },
-    { label: 'Seconds', value: timeLeft.seconds }
+    { label: "Days", value: timeLeft.days },
+    { label: "Hours", value: timeLeft.hours },
+    { label: "Minutes", value: timeLeft.minutes },
+    { label: "Seconds", value: timeLeft.seconds },
   ];
 
   const previewFeatures = [
-    { icon: Mic, title: '22 Languages', description: 'Voice-first practice across every scheduled Indian language, plus English' },
-    { icon: BookOpen, title: 'Guided Paths', description: 'Structured curriculum from first script to exam-ready fluency' },
-    { icon: Users, title: 'Real Mentors', description: 'Language experts reviewing your progress, not just an algorithm' }
+    {
+      icon: Mic,
+      title: "22 Indian Languages",
+      description:
+        "Voice-first practice across every official Indian scheduled language, plus English and regional dialects.",
+      badge: "Voice & Speech AI",
+      gradient: "from-amber-500 to-orange-600",
+    },
+    {
+      icon: BookOpen,
+      title: "Guided Learning Paths",
+      description:
+        "Structured curriculum from your first native script to high-stakes exam and workplace fluency.",
+      badge: "Curated Tracks",
+      gradient: "from-blue-500 to-indigo-600",
+    },
+    {
+      icon: Users,
+      title: "Certified Native Mentors",
+      description:
+        "Language educators and linguistic experts reviewing your speech recordings with personalized audio notes.",
+      badge: "Human Feedback",
+      gradient: "from-purple-500 to-pink-600",
+    },
   ];
 
   return (
-    <div className="min-h-screen bg-[#0a0908] relative overflow-hidden">
-      {/* Blackboard Texture Background */}
-      <div
-        className="fixed inset-0 opacity-30 pointer-events-none"
-        style={{
-          backgroundImage: `url('https://images.unsplash.com/photo-1580582932707-520aed937b7b?w=1920&q=80')`,
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-          backgroundAttachment: 'fixed'
-        }}
-      ></div>
+    <div className="min-h-screen bg-[#070605] text-white relative overflow-hidden flex flex-col justify-between">
+      {/* Floating Main Navbar */}
+      <Navbar />
 
-      {/* Noise Texture Overlay */}
-      <div
-        className="fixed inset-0 opacity-[0.03] pointer-events-none mix-blend-overlay"
-        style={{
-          backgroundImage: `url("data:image/svg+xml,%3Csvg width='200' height='200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' /%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.5'/%3E%3C/svg%3E")`,
-        }}
-      ></div>
+      {/* ── SECTION 1: HERO WITH HERITAGE ARCHITECTURE BACKDROP ──────── */}
+      <section className="relative pt-36 pb-24 px-6 min-h-[92vh] flex items-center justify-center overflow-hidden">
+        {/* Carefully positioned Unsplash Indian Heritage Background */}
+        <div
+          className="absolute inset-0 pointer-events-none opacity-40 mix-blend-luminosity scale-105 transition-transform duration-1000"
+          style={{
+            backgroundImage: `url('https://images.unsplash.com/photo-1524492412937-b28074a5d7da?w=1920&q=85')`,
+            backgroundSize: "cover",
+            backgroundPosition: "center 32%",
+            filter: "contrast(115%) brightness(85%)",
+          }}
+        />
 
-      {/* Gradient Overlays */}
-      <div className="fixed inset-0 bg-linear-to-b from-amber-900/10 via-transparent to-orange-900/10 pointer-events-none"></div>
+        {/* Ambient Warm Vignette & Gradient Overlays */}
+        <div
+          className="absolute inset-0 pointer-events-none"
+          style={{
+            background: `
+              radial-gradient(ellipse 90% 65% at 50% 28%, rgba(217, 119, 6, 0.18), transparent 75%),
+              linear-gradient(180deg, rgba(7, 6, 5, 0.6) 0%, rgba(7, 6, 5, 0.85) 60%, #070605 100%)
+            `,
+          }}
+        />
 
-      {/* Hero / Coming Soon */}
-      <section className="relative pt-16 pb-20 px-6 min-h-screen flex items-center">
+        {/* Delicate Noise Overlay */}
+        <div
+          className="absolute inset-0 opacity-[0.025] pointer-events-none mix-blend-overlay"
+          style={{
+            backgroundImage: `url("data:image/svg+xml,%3Csvg width='200' height='200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' /%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.5'/%3E%3C/svg%3E")`,
+          }}
+        />
+
         <div className="max-w-5xl mx-auto relative z-10 text-center w-full">
-
-          <div className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-amber-500/10 border border-amber-400/30 mb-10">
-            <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span>
-            <span className="text-sm font-semibold text-amber-200">Under Development</span>
+          {/* Status Badge */}
+          <div className="inline-flex items-center gap-2.5 px-5 py-2 rounded-full bg-amber-500/15 border border-amber-400/30 backdrop-blur-md mb-8 shadow-lg shadow-amber-500/10">
+            <span className="w-2.5 h-2.5 rounded-full bg-amber-400 animate-pulse" />
+            <span className="text-xs sm:text-sm font-semibold text-amber-200 tracking-wide uppercase">
+              Platform Launching December 2026
+            </span>
           </div>
 
-          <h1 className="font-kalam text-6xl md:text-7xl lg:text-8xl font-bold text-white mb-8 leading-[1.1] drop-shadow-2xl">
+          {/* Headline */}
+          <h1 className="font-kalam text-6xl md:text-7xl lg:text-8xl font-bold text-white mb-6 leading-[1.08] drop-shadow-2xl tracking-tight">
             Something New Is
             <br />
-            <span className="text-transparent bg-clip-text bg-linear-to-r from-amber-200 via-yellow-200 to-amber-300">
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-200 via-yellow-200 to-amber-400">
               Being Written
             </span>
           </h1>
 
-          <p className="text-xl md:text-2xl text-stone-200 max-w-3xl mx-auto leading-relaxed mb-4">
-            VartaLang is putting the finishing touches on its full learning experience.
+          <p className="text-xl md:text-2xl text-stone-200 max-w-3xl mx-auto leading-relaxed mb-4 font-normal">
+            Preserving India&apos;s rich linguistic heritage through modern, AI-powered education.
           </p>
-          <p className="text-base text-stone-400 max-w-2xl mx-auto mb-14">
-            Labs, learning paths, and mentor support — arriving this December.
+          <p className="text-base text-stone-400 max-w-2xl mx-auto mb-12">
+            Practice labs, structured learning paths, and expert mentor support — arriving this winter.
           </p>
 
-          {/* Countdown */}
-          <div className="flex flex-wrap items-center justify-center gap-4 md:gap-6 mb-14">
+          {/* Countdown Display */}
+          <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-6 mb-12">
             {countdownUnits.map((unit) => (
               <div
                 key={unit.label}
-                className="w-24 md:w-32 py-6 bg-stone-900/60 backdrop-blur-sm border-2 border-stone-700/50 rounded-2xl"
+                className="w-20 sm:w-28 py-5 sm:py-6 bg-stone-900/80 backdrop-blur-xl border border-stone-700/60 rounded-2xl shadow-2xl hover:border-amber-500/40 transition-colors"
               >
-                <div suppressHydrationWarning className="font-kalam text-4xl md:text-5xl font-bold text-white mb-1 tabular-nums">
-                  {mounted ? String(unit.value).padStart(2, '0') : '00'}
+                <div
+                  suppressHydrationWarning
+                  className="font-kalam text-3xl sm:text-5xl font-bold text-amber-300 mb-1 tabular-nums"
+                >
+                  {mounted ? String(unit.value).padStart(2, "0") : "00"}
                 </div>
-                <div className="text-xs text-stone-400">{unit.label}</div>
+                <div className="text-[11px] sm:text-xs text-stone-400 font-medium uppercase tracking-wider">
+                  {unit.label}
+                </div>
               </div>
             ))}
           </div>
 
           {timeLeft.done && (
-            <p className="text-amber-300 font-semibold mb-10">
-              Launch day is here — thanks for waiting with us.
+            <p className="text-amber-300 font-semibold mb-8 text-lg">
+              Launch day is here — thank you for being part of the journey.
             </p>
           )}
 
-          {/* Meanwhile message */}
-          <div className="max-w-md mx-auto">
-            <p className="text-stone-300 mb-5">
-              Until then, sign up at <span className="text-amber-300 font-semibold">vartalang.in</span> to get in early.
-            </p>
-            <a
-              href="https://vartalang.in/auth/signup"
-              className="px-8 py-4 bg-linear-to-r from-amber-500 to-orange-600 hover:from-amber-400 hover:to-orange-500 text-white rounded-xl font-bold shadow-xl hover:shadow-amber-500/40 transition-all inline-flex items-center justify-center gap-2"
+          {/* Early Sign-up CTA & Direct Navigation */}
+          <div className="max-w-xl mx-auto flex flex-col sm:flex-row items-center justify-center gap-4 mb-14">
+            <Link
+              href="/learn"
+              className="w-full sm:w-auto px-8 py-4 bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-400 hover:to-orange-500 text-white rounded-xl font-bold font-kalam text-lg shadow-xl shadow-amber-500/25 transition-all hover:scale-105 flex items-center justify-center gap-2"
             >
-              Sign Up at vartalang.in
-              <ArrowRight className="w-4 h-4" />
-            </a>
+              <span>Explore Courses</span>
+              <ArrowRight className="w-5 h-5" />
+            </Link>
+
+            <Link
+              href="/dashboard"
+              className="w-full sm:w-auto px-8 py-4 rounded-xl bg-stone-900/80 hover:bg-stone-800/90 border border-stone-700/70 text-stone-200 hover:text-white font-bold font-kalam text-lg transition-all hover:scale-105 flex items-center justify-center gap-2"
+            >
+              <span>My Learning Portal</span>
+            </Link>
           </div>
 
           {/* Trust Indicators */}
-          <div className="flex flex-wrap items-center justify-center gap-10 mt-16">
+          <div className="flex flex-wrap items-center justify-center gap-6 sm:gap-10 pt-4 border-t border-stone-800/60 max-w-3xl mx-auto">
             {[
-              { icon: Shield, text: 'Certified Content' },
-              { icon: Star, text: 'Expert-Curated' },
-              { icon: Globe, text: '22 Languages' },
-              { icon: Award, text: 'Exam-Ready' }
+              { icon: Shield, text: "Certified Content" },
+              { icon: Star, text: "Expert-Curated" },
+              { icon: Globe, text: "22 Indian Languages" },
+              { icon: Award, text: "Official Credentials" },
             ].map((item, i) => (
-              <div key={i} className="flex items-center gap-2.5 text-stone-300">
-                <div className="w-8 h-8 rounded-lg bg-amber-500/20 flex items-center justify-center">
-                  <item.icon className="w-4 h-4 text-amber-400" />
+              <div key={i} className="flex items-center gap-2 text-stone-400 text-xs sm:text-sm">
+                <div className="w-7 h-7 rounded-lg bg-amber-500/15 flex items-center justify-center shrink-0">
+                  <item.icon className="w-3.5 h-3.5 text-amber-400" />
                 </div>
-                <span className="text-sm font-semibold">{item.text}</span>
+                <span className="font-medium text-stone-300">{item.text}</span>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* What's Coming */}
-      <section className="relative py-20 px-6 border-t-2 border-stone-800/50">
+      {/* ── SECTION 2: WHAT'S COMING WITH CLASSICAL LIBRARY BACKDROP ─── */}
+      <section className="relative py-24 px-6 border-t border-stone-800/80 overflow-hidden">
+        {/* Library / Knowledge Background */}
+        <div
+          className="absolute inset-0 pointer-events-none opacity-25 mix-blend-luminosity"
+          style={{
+            backgroundImage: `url('https://images.unsplash.com/photo-1507842229451-79b1be8838d6?w=1920&q=85')`,
+            backgroundSize: "cover",
+            backgroundPosition: "center 45%",
+          }}
+        />
+
+        {/* Dark Vignette Overlay */}
+        <div
+          className="absolute inset-0 pointer-events-none"
+          style={{
+            background:
+              "linear-gradient(180deg, #070605 0%, rgba(7, 6, 5, 0.88) 40%, #070605 100%)",
+          }}
+        />
+
         <div className="max-w-6xl mx-auto relative z-10">
-          <div className="text-center mb-14">
-            <h2 className="font-kalam text-4xl md:text-5xl font-bold text-white mb-4">
-              What&apos;s Coming
+          <div className="text-center mb-16">
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-blue-500/10 border border-blue-400/25 mb-4">
+              <Sparkles className="w-3.5 h-3.5 text-blue-400" />
+              <span className="text-xs font-semibold text-blue-200 uppercase tracking-wide">
+                Under Active Development
+              </span>
+            </div>
+            <h2 className="font-kalam text-4xl sm:text-5xl font-bold text-white mb-4">
+              What&apos;s Coming in December
             </h2>
             <p className="text-lg text-stone-400 max-w-2xl mx-auto">
-              A preview of what launches in December
+              A comprehensive language learning ecosystem crafted specifically for India.
             </p>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-6">
+          <div className="grid md:grid-cols-3 gap-8">
             {previewFeatures.map((feature, index) => {
               const Icon = feature.icon;
               return (
                 <div
                   key={index}
-                  className="p-8 bg-stone-900/40 backdrop-blur-sm border-2 border-stone-700/50 rounded-2xl"
+                  className="p-8 bg-stone-900/70 backdrop-blur-xl border border-stone-800/90 hover:border-amber-500/50 rounded-2xl transition-all hover:-translate-y-1 shadow-xl flex flex-col justify-between group"
                 >
-                  <div className="w-14 h-14 rounded-xl bg-linear-to-br from-amber-500 to-orange-600 flex items-center justify-center mb-6">
-                    <Icon className="w-7 h-7 text-white" />
+                  <div>
+                    <div className="flex items-center justify-between mb-6">
+                      <div
+                        className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${feature.gradient} flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform`}
+                      >
+                        <Icon className="w-7 h-7 text-white" />
+                      </div>
+                      <span className="text-[11px] font-medium px-2.5 py-1 rounded-full bg-stone-800/80 border border-stone-700/60 text-stone-300">
+                        {feature.badge}
+                      </span>
+                    </div>
+
+                    <h3 className="font-kalam text-2xl font-bold text-white mb-3 group-hover:text-amber-200 transition-colors">
+                      {feature.title}
+                    </h3>
+                    <p className="text-sm text-stone-400 leading-relaxed mb-6">
+                      {feature.description}
+                    </p>
                   </div>
-                  <h3 className="font-kalam text-2xl font-bold text-white mb-3">{feature.title}</h3>
-                  <p className="text-sm text-stone-400 leading-relaxed">{feature.description}</p>
+
+                  <div className="pt-4 border-t border-stone-800/80 flex items-center gap-2 text-xs text-amber-400 font-semibold font-kalam">
+                    <Clock className="w-3.5 h-3.5" />
+                    <span>Launching December 2026</span>
+                  </div>
                 </div>
               );
             })}
@@ -224,30 +292,54 @@ export default function ComingSoonPage() {
         </div>
       </section>
 
-      {/* Meanwhile CTA */}
-      <section className="py-20 px-6 border-t border-stone-800/50">
-        <div className="max-w-2xl mx-auto text-center">
-          <h2 className="font-kalam text-3xl md:text-4xl font-normal text-stone-100 mb-4">
-            Already recording for the Great Indian Voice Challenge?
+      {/* ── SECTION 3: VOICE CHALLENGE CTA WITH STUDIO VOCAL BACKDROP ─── */}
+      <section className="relative py-24 px-6 border-t border-stone-800/80 overflow-hidden">
+        {/* Acoustic / Vocal Studio Background */}
+        <div
+          className="absolute inset-0 pointer-events-none opacity-20 mix-blend-screen"
+          style={{
+            backgroundImage: `url('https://images.unsplash.com/photo-1590602847861-f357a9332bbc?w=1920&q=85')`,
+            backgroundSize: "cover",
+            backgroundPosition: "center 35%",
+          }}
+        />
+
+        {/* Gradient Transition */}
+        <div
+          className="absolute inset-0 pointer-events-none"
+          style={{
+            background:
+              "linear-gradient(180deg, #070605 0%, rgba(180, 83, 9, 0.12) 50%, #070605 100%)",
+          }}
+        />
+
+        <div className="max-w-3xl mx-auto text-center relative z-10 p-10 sm:p-14 rounded-3xl bg-stone-900/60 backdrop-blur-xl border border-amber-500/25 shadow-2xl">
+          <div className="w-14 h-14 rounded-2xl bg-amber-500/20 flex items-center justify-center mx-auto mb-6 text-amber-400">
+            <Mic className="w-7 h-7" />
+          </div>
+
+          <h2 className="font-kalam text-3xl sm:text-4xl font-bold text-white mb-4">
+            Already participating in the Great Indian Voice Challenge?
           </h2>
-          <p className="text-stone-400 mb-8 leading-relaxed">
-            That part of VartaLang is live right now — no need to wait for December.
+          <p className="text-stone-300 mb-8 leading-relaxed max-w-xl mx-auto text-base">
+            That part of VartaLang is live right now! Help train AI voice models for Indian languages
+            and earn cash rewards for verified recordings.
           </p>
+
           <a
             href="https://vartalang.in/challenge"
-            className="inline-block px-8 py-4 bg-amber-500 hover:bg-amber-400 text-stone-950 rounded-md font-medium transition-all hover:scale-105"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2.5 px-8 py-4 bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-400 hover:to-orange-500 text-stone-950 font-bold rounded-xl transition-all hover:scale-105 shadow-xl shadow-amber-500/20 font-kalam text-lg"
           >
-            Go to the Voice Challenge
+            <span>Go to the Voice Challenge</span>
+            <ArrowRight className="w-4 h-4" />
           </a>
         </div>
       </section>
 
-      {/* Footer Note */}
-      <div className="border-t border-stone-800/50 py-8 px-6">
-        <p className="text-center text-xs text-stone-600">
-          Preserving India&apos;s Linguistic Heritage Through Modern Education
-        </p>
-      </div>
+      {/* Global Minimalist Footer */}
+      <Footer />
     </div>
   );
 }
