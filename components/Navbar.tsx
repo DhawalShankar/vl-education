@@ -7,7 +7,6 @@ import { useAuth } from "@/app/context/AuthContext";
 import {
   Flame,
   Sparkles,
-  Sun,
   ChevronDown,
   LogOut,
   LayoutDashboard,
@@ -282,10 +281,7 @@ export default function Navbar() {
             </Link>
           )}
 
-          <div className="hidden sm:flex w-9 h-9 rounded-full bg-white/5 border border-white/10 items-center justify-center text-amber-400/80">
-            <Sun className="w-4 h-4" />
-          </div>
-
+          
           {/* Mobile menu toggle */}
           <button
             aria-label="Menu"
