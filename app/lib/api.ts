@@ -271,4 +271,200 @@ export const adminAPI = {
   deleteUser: (id: string) => authFetch("/admin/users/" + id, { method: "DELETE" }),
 };
 
+// app/lib/api.ts  (append at the bottom, before or after `export default authFetch`)
+
+/* ── Learning catalog / player (matches live openapi.json) ── */
+export interface LanguageSummary {
+  language: string;
+  course_count: number;
+}
+
+export interface InstructorPublic {
+  id: string;
+  full_name: string;
+  avatar_url?: string | null;
+}
+
+export interface CourseResource {
+  id: string;
+  type: string;
+  title: string;
+  url: string;
+  duration?: string | null;
+  description?: string | null;
+}
+
+export interface CourseCard {
+  id: string;
+  title: string;
+  description?: string | null;
+  language: string;
+  level: string;
+  category: string;
+  duration?: string | null;
+  thumbnail_url?: string | null;
+  price: string;
+  tags: string[];
+  resources: CourseResource[];
+  instructor_id: string;
+  instructor: InstructorPublic;
+  status: string;
+  is_free: boolean;
+  is_featured: boolean;
+  modules_count: number;
+  lessons_count: number;
+  enrolled_count: number;
+}
+
+export interface LessonOut {
+  id: string;
+  module_id: string;
+  title: string;
+  description?: string | null;
+  youtube_video_id?: string | null;
+  notes_url?: string | null;
+  order_index: number;
+  is_preview: boolean;
+  is_unlocked: boolean;
+}
+
+export interface ModuleOut {
+  id: string;
+  course_id: string;
+  title: string;
+  description?: string | null;
+  order_index: number;
+  lessons: LessonOut[];
+}
+
+export interface CourseDetail extends CourseCard {
+  modules: ModuleOut[];
+}
+
+export interface CourseProgress {
+  course_id: string;
+  total_lessons: number;
+  completed_lessons: number;
+  progress_percentage: number;
+  completed_lesson_ids: string[];
+  is_completed: boolean;
+}
+
+export interface LessonToggle {
+  lesson_id: string;
+  is_completed: boolean;
+  completed_at?: string | null;
+  course_progress_percentage: number;
+  completed_lessons: number;
+  total_lessons: number;
+  is_course_completed: boolean;
+}
+
+export const learnAPI = {
+  languages: () => getJSON<LanguageSummary[]>("/courses/languages"),
+  courses: (f: { language?: string; instructor_id?: string; level?: string; category?: string; featured?: boolean } = {}) => {
+    const p = new URLSearchParams();
+    if (f.language) p.append("language", f.language);
+    if (f.instructor_id) p.append("instructor_id", f.instructor_id);
+    if (f.level) p.append("level", f.level);
+    if (f.category) p.append("category", f.category);
+    if (f.featured !== undefined) p.append("featured", String(f.featured));
+    p.append("limit", "100");
+    return getJSON<CourseCard[]>("/courses?" + p.toString());
+  },
+  course: (id: string) => getJSON<CourseDetail>("/courses/" + id),
+  enroll: (id: string) => getJSON<EnrollmentOut>("/enrollments/" + id + "/enroll", { method: "POST" }),
+  progress: (id: string) => getJSON<CourseProgress>("/enrollments/" + id + "/progress"),
+  toggle: (courseId: string, lessonId: string) =>
+    getJSON<LessonToggle>("/enrollments/" + courseId + "/lessons/" + lessonId + "/toggle", { method: "POST" }),
+};
+
+// app/lib/api.ts  (append at the bottom)
+
+/* ── Instructor studio ── */
+export interface InstructorProfile {
+  name: string;
+  title: string;
+  bio: string;
+  languages: string[];
+  experienceYears: number;
+  avatarUrl?: string | null;
+  twitter?: string | null;
+  linkedin?: string | null;
+  youtube?: string | null;
+  website?: string | null;
+  upiId?: string | null;
+  bankAccount?: string | null;
+}
+
+export interface CourseInput {
+  title: string;
+  description?: string;
+  language: string;
+  level: string;
+  category: string;
+  duration?: string;
+  price: number;
+  tags: string[];
+}
+
+export interface LessonInput {
+  title: string;
+  description?: string;
+  youtube_video_id?: string;
+  notes_url?: string;
+  order_index: number;
+  is_preview: boolean;
+}
+
+const send = (method: string, body?: unknown): RequestInit => ({
+  method,
+  ...(body !== undefined ? { body: JSON.stringify(body) } : {}),
+});
+
+export const instructorAPI = {
+  myCourses: () => getJSON<CourseCard[]>("/courses/instructor/mine"),
+  course: (id: string) => getJSON<CourseDetail>("/courses/" + id),
+
+  // New courses are created as drafts; the instructor publishes explicitly
+  createCourse: (body: CourseInput) =>
+    getJSON<CourseDetail>("/courses", send("POST", { ...body, isPublished: false })),
+  updateCourse: (id: string, body: Partial<CourseInput>) =>
+    getJSON<CourseDetail>("/courses/" + id, send("PUT", body)),
+  setStatus: (id: string, status: "draft" | "published" | "archived") =>
+    getJSON<CourseCard>("/courses/" + id + "/status", send("PATCH", { status })),
+  deleteCourse: (id: string) => getJSON<void>("/courses/" + id, send("DELETE")),
+
+  addModule: (courseId: string, body: { title: string; description?: string; order_index: number }) =>
+    getJSON<ModuleOut>("/courses/" + courseId + "/modules", send("POST", body)),
+  deleteModule: (moduleId: string) => getJSON<void>("/courses/modules/" + moduleId, send("DELETE")),
+
+  addLesson: (moduleId: string, body: LessonInput) =>
+    getJSON<LessonOut>("/courses/modules/" + moduleId + "/lessons", send("POST", body)),
+  updateLesson: (lessonId: string, body: Partial<LessonInput>) =>
+    getJSON<LessonOut>("/courses/lessons/" + lessonId, send("PUT", body)),
+  deleteLesson: (lessonId: string) => getJSON<void>("/courses/lessons/" + lessonId, send("DELETE")),
+
+  addResource: (
+    courseId: string,
+    body: { type: string; title: string; url: string; duration?: string; description?: string }
+  ) => getJSON<CourseResource>("/courses/" + courseId + "/resources", send("POST", body)),
+  deleteResource: (courseId: string, resourceId: string) =>
+    getJSON<void>("/courses/" + courseId + "/resources/" + resourceId, send("DELETE")),
+
+  // null = this instructor has no saved profile yet
+  getProfile: async (): Promise<InstructorProfile | null> => {
+    const res = await authFetch("/instructor/profile");
+    if (res.status === 404) return null;
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(typeof err.detail === "string" ? err.detail : `Request failed (${res.status})`);
+    }
+    return res.json();
+  },
+  saveProfile: (body: Partial<InstructorProfile> & { name: string }) =>
+    getJSON<InstructorProfile>("/instructor/profile", send("POST", body)),
+};
+
 export default authFetch;
+
