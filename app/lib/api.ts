@@ -15,10 +15,14 @@ const authFetch = async (endpoint: string, options: RequestInit = {}) => {
   }
 
   const doFetch = () => fetch(BASE + endpoint, { ...options, headers });
+  const method = (options.method || "GET").toUpperCase();
 
   try {
     return await doFetch();
-  } catch {
+  } catch (e) {
+    // Only retry GETs (safe to repeat). POST/PUT/PATCH/DELETE are not idempotent,
+    // e.g. a retried lesson toggle can flip the state twice.
+    if (method !== "GET") throw e;
     // Render free tier may be asleep: wait and retry once on network failure
     await sleep(4000);
     return doFetch();
@@ -271,8 +275,6 @@ export const adminAPI = {
   deleteUser: (id: string) => authFetch("/admin/users/" + id, { method: "DELETE" }),
 };
 
-// app/lib/api.ts  (append at the bottom, before or after `export default authFetch`)
-
 /* ── Learning catalog / player (matches live openapi.json) ── */
 export interface LanguageSummary {
   language: string;
@@ -379,8 +381,6 @@ export const learnAPI = {
     getJSON<LessonToggle>("/enrollments/" + courseId + "/lessons/" + lessonId + "/toggle", { method: "POST" }),
 };
 
-// app/lib/api.ts  (append at the bottom)
-
 /* ── Instructor studio ── */
 export interface InstructorProfile {
   name: string;
@@ -467,4 +467,3 @@ export const instructorAPI = {
 };
 
 export default authFetch;
-
