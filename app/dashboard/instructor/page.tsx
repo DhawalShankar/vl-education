@@ -6,9 +6,11 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
   BookOpen,
-  Check,
   CheckCircle,
+  ChevronDown,
+  ChevronRight,
   ExternalLink,
+  Eye,
   Layers,
   ListOrdered,
   Pencil,
@@ -22,7 +24,15 @@ import {
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { useAuth } from "@/app/context/AuthContext";
-import { CourseCard, CourseInput, InstructorProfile, instructorAPI } from "@/app/lib/api";
+import {
+  CourseCard,
+  CourseDetail,
+  CourseInput,
+  InstructorProfile,
+  LessonInput,
+  ModuleOut,
+  instructorAPI,
+} from "@/app/lib/api";
 import { useApi } from "@/app/lib/useApi";
 import { LANGUAGE_CATALOG, slugify } from "@/app/lib/languages";
 
@@ -32,6 +42,7 @@ const RESOURCE_TYPES = ["video", "pdf", "article", "audio"];
 
 const inputCls =
   "w-full bg-stone-950 border border-stone-800 rounded-xl px-4 py-2.5 text-white text-sm outline-none focus:border-amber-500 transition-colors";
+const errBoxCls = "px-4 py-3 rounded-xl text-sm bg-red-500/10 border border-red-500/20 text-red-300";
 
 /* ── helpers ── */
 const errMsg = (e: unknown, fallback = "Something went wrong") => (e instanceof Error ? e.message : fallback);
@@ -212,11 +223,7 @@ export default function InstructorStudioPage() {
 
         {tab === "courses" && (
           <>
-            {courses.error && (
-              <div className="mb-6 px-4 py-3 rounded-xl text-sm bg-red-500/10 border border-red-500/20 text-red-300">
-                Could not load your courses: {courses.error}
-              </div>
-            )}
+            {courses.error && <div className={`mb-6 ${errBoxCls}`}>Could not load your courses: {courses.error}</div>}
 
             {courses.loading ? (
               <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -349,7 +356,10 @@ export default function InstructorStudioPage() {
           onClose={() => setCourseForm(null)}
           onSaved={(info) => {
             setCourseForm(null);
-            setMessage({ type: "success", text: info.created ? "Draft created. Add modules and lessons, then publish." : "Course updated." });
+            setMessage({
+              type: "success",
+              text: info.created ? "Draft created. Add modules and lessons, then publish." : "Course updated.",
+            });
             reload();
             if (info.created) setCurriculumId(info.id);
           }}
@@ -357,11 +367,7 @@ export default function InstructorStudioPage() {
       )}
 
       {curriculumId && (
-        <CurriculumModal
-          courseId={curriculumId}
-          onClose={() => setCurriculumId(null)}
-          onChanged={reload}
-        />
+        <CurriculumModal courseId={curriculumId} onClose={() => setCurriculumId(null)} onChanged={reload} />
       )}
 
       <Footer />
@@ -415,9 +421,8 @@ function CourseFormModal({
         await instructorAPI.updateCourse(editing.id, body);
         onSaved({ id: editing.id, created: false });
       } else {
+        // api.createCourse already sends isPublished: false and modules: 0
         const created = await instructorAPI.createCourse(body);
-        // Make sure a new course never goes live by accident
-        if (created.status !== "draft") await instructorAPI.setStatus(created.id, "draft");
         onSaved({ id: created.id, created: true });
       }
     } catch (err) {
@@ -437,9 +442,7 @@ function CourseFormModal({
           </button>
         </div>
 
-        {error && (
-          <div className="mb-4 px-4 py-3 rounded-xl text-sm bg-red-500/10 border border-red-500/20 text-red-300">{error}</div>
-        )}
+        {error && <div className={`mb-4 ${errBoxCls}`}>{error}</div>}
 
         <form onSubmit={submit} className="space-y-4">
           <div>
@@ -546,31 +549,115 @@ function CourseFormModal({
 }
 
 /* ═══════════════════ PROFILE ═══════════════════ */
+type ProfileForm = {
+  name: string;
+  title: string;
+  bio: string;
+  languages: string; // comma separated in the UI
+  experienceYears: number;
+  avatarUrl: string;
+  twitter: string;
+  linkedin: string;
+  youtube: string;
+  website: string;
+  upiId: string;
+  bankAccount: string;
+};
+
+const EMPTY_PROFILE: ProfileForm = {
+  name: "",
+  title: "",
+  bio: "",
+  languages: "",
+  experienceYears: 0,
+  avatarUrl: "",
+  twitter: "",
+  linkedin: "",
+  youtube: "",
+  website: "",
+  upiId: "",
+  bankAccount: "",
+};
+
+const toForm = (p: InstructorProfile): ProfileForm => ({
+  name: p.name ?? "",
+  title: p.title ?? "",
+  bio: p.bio ?? "",
+  languages: (p.languages ?? []).join(", "),
+  experienceYears: p.experienceYears ?? 0,
+  avatarUrl: p.avatarUrl ?? "",
+  twitter: p.twitter ?? "",
+  linkedin: p.linkedin ?? "",
+  youtube: p.youtube ?? "",
+  website: p.website ?? "",
+  upiId: p.upiId ?? "",
+  bankAccount: p.bankAccount ?? "",
+});
+
 function ProfileTab({ onMessage }: { onMessage: (message: { type: "error" | "success"; text: string }) => void }) {
-  const [profile, setProfile] = useState<Partial<InstructorProfile>>({});
+  const [form, setForm] = useState<ProfileForm>(EMPTY_PROFILE);
+  const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const api = instructorAPI as any;
-    if (typeof api.getProfile !== "function") return;
-    api.getProfile().then((value: InstructorProfile) => setProfile(value ?? {})).catch((e: unknown) => setError(errMsg(e)));
+    let alive = true;
+    instructorAPI
+      .getProfile()
+      .then((p) => {
+        if (alive && p) setForm(toForm(p));
+      })
+      .catch((e) => alive && setError(errMsg(e, "Could not load your profile.")))
+      .finally(() => alive && setLoading(false));
+    return () => {
+      alive = false;
+    };
   }, []);
+
+  const set = <K extends keyof ProfileForm>(key: K, value: ProfileForm[K]) => setForm((f) => ({ ...f, [key]: value }));
 
   const save = async (e: FormEvent) => {
     e.preventDefault();
-    setSaving(true);
     setError(null);
+    if (form.name.trim().length < 2) return setError("Name must be at least 2 characters.");
+    setSaving(true);
     try {
-      const api = instructorAPI as any;
-      if (typeof api.updateProfile === "function") await api.updateProfile(profile);
+      const saved = await instructorAPI.saveProfile({
+        name: form.name.trim(),
+        title: form.title.trim() || "Language Educator & Linguistic Mentor",
+        bio: form.bio.trim(),
+        languages: form.languages.split(",").map((l) => l.trim()).filter(Boolean),
+        experienceYears: Math.max(0, Math.floor(form.experienceYears) || 0),
+        avatarUrl: form.avatarUrl.trim(),
+        twitter: form.twitter.trim(),
+        linkedin: form.linkedin.trim(),
+        youtube: form.youtube.trim(),
+        website: form.website.trim(),
+        upiId: form.upiId.trim(),
+        bankAccount: form.bankAccount.trim(),
+      });
+      setForm(toForm(saved));
       onMessage({ type: "success", text: "Profile updated." });
-    } catch (e) {
-      setError(errMsg(e, "Could not save your profile."));
+    } catch (err) {
+      setError(errMsg(err, "Could not save your profile."));
     } finally {
       setSaving(false);
     }
   };
+
+  if (loading) return <div className="h-64 max-w-2xl rounded-2xl bg-white/5 border border-white/10 animate-pulse" />;
+
+  const field = (label: string, key: keyof ProfileForm, placeholder = "") => (
+    <div>
+      <label className="block text-xs text-stone-400 mb-1">{label}</label>
+      <input
+        value={String(form[key])}
+        onChange={(e) => set(key, e.target.value as never)}
+        placeholder={placeholder}
+        className={inputCls}
+      />
+    </div>
+  );
 
   return (
     <form onSubmit={save} className="max-w-2xl p-6 sm:p-8 rounded-2xl bg-stone-900/60 border border-stone-800 space-y-5">
@@ -578,18 +665,61 @@ function ProfileTab({ onMessage }: { onMessage: (message: { type: "error" | "suc
         <h2 className="font-kalam text-3xl font-bold">Public profile</h2>
         <p className="text-sm text-stone-400 mt-1">Tell learners a little about you.</p>
       </div>
-      {error && <div className="px-4 py-3 rounded-xl text-sm bg-red-500/10 border border-red-500/20 text-red-300">{error}</div>}
+      {error && <div className={errBoxCls}>{error}</div>}
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        {field("Full name *", "name", "Your name")}
+        {field("Headline", "title", "Language Educator & Linguistic Mentor")}
+      </div>
+
       <div>
         <label className="block text-xs text-stone-400 mb-1">Bio</label>
         <textarea
-          rows={6}
-          value={String((profile as any).bio ?? "")}
-          onChange={(e) => setProfile((current) => ({ ...current, bio: e.target.value }))}
+          rows={5}
+          maxLength={2000}
+          value={form.bio}
+          onChange={(e) => set("bio", e.target.value)}
           className={inputCls}
           placeholder="Share your teaching experience and interests."
         />
       </div>
-      <button disabled={saving} className="px-5 py-2.5 rounded-xl bg-amber-500 text-stone-950 font-bold disabled:opacity-50 flex items-center gap-2">
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        {field("Languages (comma separated)", "languages", "Hindi, English")}
+        <div>
+          <label className="block text-xs text-stone-400 mb-1">Years of experience</label>
+          <input
+            type="number"
+            min={0}
+            value={form.experienceYears}
+            onChange={(e) => set("experienceYears", Number(e.target.value))}
+            className={`${inputCls} font-mono`}
+          />
+        </div>
+      </div>
+
+      {field("Avatar URL", "avatarUrl", "https://...")}
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        {field("Website", "website", "https://...")}
+        {field("YouTube", "youtube", "https://youtube.com/@...")}
+        {field("LinkedIn", "linkedin", "https://linkedin.com/in/...")}
+        {field("X / Twitter", "twitter", "https://x.com/...")}
+      </div>
+
+      <div className="pt-4 border-t border-stone-800 space-y-3">
+        <p className="text-xs text-stone-500">Payout details</p>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          {field("UPI ID", "upiId", "name@bank")}
+          {field("Bank account", "bankAccount", "IFSC + account number")}
+        </div>
+      </div>
+
+      <button
+        type="submit"
+        disabled={saving}
+        className="px-5 py-2.5 rounded-xl bg-amber-500 text-stone-950 font-bold disabled:opacity-50 flex items-center gap-2"
+      >
         <Save className="w-4 h-4" /> {saving ? "Saving…" : "Save profile"}
       </button>
     </form>
@@ -598,18 +728,17 @@ function ProfileTab({ onMessage }: { onMessage: (message: { type: "error" | "suc
 
 /* ═══════════════════ CURRICULUM MODAL ═══════════════════ */
 function CurriculumModal({ courseId, onClose, onChanged }: { courseId: string; onClose: () => void; onChanged: () => void }) {
-  const [modules, setModules] = useState<any[]>([]);
-  const [title, setTitle] = useState("");
+  const [course, setCourse] = useState<CourseDetail | null>(null);
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
+  const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const api = instructorAPI as any;
+  const [view, setView] = useState<"curriculum" | "resources">("curriculum");
+  const [moduleTitle, setModuleTitle] = useState("");
+  const [openModuleId, setOpenModuleId] = useState<string | null>(null);
 
   const load = async () => {
-    setLoading(true);
     try {
-      const result = typeof api.getCurriculum === "function" ? await api.getCurriculum(courseId) : [];
-      setModules(Array.isArray(result) ? result : result?.modules ?? []);
+      setCourse(await instructorAPI.course(courseId));
     } catch (e) {
       setError(errMsg(e, "Could not load the curriculum."));
     } finally {
@@ -617,44 +746,346 @@ function CurriculumModal({ courseId, onClose, onChanged }: { courseId: string; o
     }
   };
 
-  useEffect(() => { void load(); }, [courseId]);
-  const ordered = useMemo(() => [...modules].sort(byOrder), [modules]);
+  useEffect(() => {
+    setLoading(true);
+    void load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [courseId]);
+
+  const modules = useMemo(() => [...(course?.modules ?? [])].sort(byOrder), [course]);
+
+  // Runs a mutation, refreshes the course, and reports errors in the modal. Returns true on success.
+  const run = async (fn: () => Promise<unknown>): Promise<boolean> => {
+    setBusy(true);
+    setError(null);
+    try {
+      await fn();
+      await load();
+      onChanged();
+      return true;
+    } catch (e) {
+      setError(errMsg(e));
+      return false;
+    } finally {
+      setBusy(false);
+    }
+  };
 
   const addModule = async (e: FormEvent) => {
     e.preventDefault();
-    if (!title.trim() || typeof api.createModule !== "function") return;
-    setSaving(true);
-    setError(null);
-    try {
-      await api.createModule(courseId, { title: title.trim(), order_index: nextOrder(modules) });
-      setTitle("");
-      await load();
-      onChanged();
-    } catch (e) {
-      setError(errMsg(e, "Could not add the module."));
-    } finally {
-      setSaving(false);
-    }
+    const title = moduleTitle.trim();
+    if (title.length < 2) return setError("Module title must be at least 2 characters.");
+    const ok = await run(() => instructorAPI.addModule(courseId, { title, order_index: nextOrder(modules) }));
+    if (ok) setModuleTitle("");
+  };
+
+  const removeModule = (m: ModuleOut) => {
+    if (!confirm(`Delete module "${m.title}" and its ${m.lessons.length} lesson(s)?`)) return;
+    void run(() => instructorAPI.deleteModule(m.id));
   };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md px-4 py-6">
-      <div className="bg-[#120F0C] border border-stone-700/80 rounded-3xl p-6 sm:p-8 w-full max-w-2xl max-h-[92vh] overflow-y-auto shadow-2xl">
-        <div className="flex items-center justify-between pb-4 border-b border-stone-800 mb-6">
-          <h3 className="font-kalam text-3xl font-bold">Curriculum &amp; materials</h3>
-          <button onClick={onClose} className="p-2 rounded-xl bg-stone-800/80 hover:bg-stone-700 text-stone-400 hover:text-white"><X className="w-5 h-5" /></button>
-        </div>
-        {error && <div className="mb-4 px-4 py-3 rounded-xl text-sm bg-red-500/10 border border-red-500/20 text-red-300">{error}</div>}
-        {loading ? <p className="text-stone-400">Loading curriculum…</p> : ordered.length === 0 ? <p className="text-stone-400 mb-5">No modules yet.</p> : (
-          <div className="space-y-3 mb-6">
-            {ordered.map((module) => <div key={module.id} className="p-4 rounded-xl bg-stone-900 border border-stone-800"><div className="font-semibold">{module.title}</div><div className="text-xs text-stone-500 mt-1">{module.lessons_count ?? module.lessons?.length ?? 0} lessons</div></div>)}
+      <div className="bg-[#120F0C] border border-stone-700/80 rounded-3xl p-6 sm:p-8 w-full max-w-3xl max-h-[92vh] overflow-y-auto shadow-2xl">
+        <div className="flex items-center justify-between pb-4 border-b border-stone-800 mb-5">
+          <div>
+            <h3 className="font-kalam text-3xl font-bold">Curriculum &amp; materials</h3>
+            {course && <p className="text-xs text-stone-500 mt-0.5">{course.title}</p>}
           </div>
+          <button onClick={onClose} className="p-2 rounded-xl bg-stone-800/80 hover:bg-stone-700 text-stone-400 hover:text-white">
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        <div className="flex items-center gap-2 mb-5">
+          {(
+            [
+              ["curriculum", "Modules & lessons"],
+              ["resources", "Course resources"],
+            ] as const
+          ).map(([key, label]) => (
+            <button
+              key={key}
+              onClick={() => setView(key)}
+              className={`px-4 py-2 rounded-xl text-xs font-semibold ${
+                view === key ? "bg-amber-500/20 text-amber-300 border border-amber-500/40" : "text-stone-400 hover:text-white hover:bg-stone-900"
+              }`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+
+        {error && <div className={`mb-4 ${errBoxCls}`}>{error}</div>}
+
+        {loading ? (
+          <p className="text-stone-400">Loading curriculum…</p>
+        ) : !course ? null : view === "curriculum" ? (
+          <>
+            {modules.length === 0 ? (
+              <p className="text-stone-400 text-sm mb-5">No modules yet. Add your first module below.</p>
+            ) : (
+              <div className="space-y-3 mb-6">
+                {modules.map((m) => {
+                  const open = openModuleId === m.id;
+                  const lessons = [...m.lessons].sort(byOrder);
+                  return (
+                    <div key={m.id} className="rounded-xl bg-stone-900 border border-stone-800">
+                      <div className="flex items-center justify-between gap-3 p-4">
+                        <button
+                          type="button"
+                          onClick={() => setOpenModuleId(open ? null : m.id)}
+                          className="flex items-center gap-2 text-left flex-1 min-w-0"
+                        >
+                          {open ? <ChevronDown className="w-4 h-4 text-amber-400 shrink-0" /> : <ChevronRight className="w-4 h-4 text-stone-500 shrink-0" />}
+                          <span className="min-w-0">
+                            <span className="block font-semibold truncate">{m.title}</span>
+                            <span className="block text-xs text-stone-500 mt-0.5">
+                              {lessons.length} {lessons.length === 1 ? "lesson" : "lessons"}
+                            </span>
+                          </span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => removeModule(m)}
+                          disabled={busy}
+                          title="Delete module"
+                          className="p-2 rounded-lg bg-stone-800/80 hover:bg-rose-500/20 text-stone-400 hover:text-rose-400 disabled:opacity-50"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+
+                      {open && (
+                        <div className="px-4 pb-4 space-y-2 border-t border-stone-800/80 pt-3">
+                          {lessons.length === 0 && <p className="text-xs text-stone-500">No lessons in this module yet.</p>}
+                          {lessons.map((l) => (
+                            <div key={l.id} className="flex items-center justify-between gap-3 p-3 rounded-lg bg-stone-950/60 border border-stone-800/80">
+                              <div className="min-w-0">
+                                <p className="text-sm font-medium truncate">{l.title}</p>
+                                <p className="text-[11px] text-stone-500 mt-0.5">
+                                  {l.youtube_video_id ? "Video added" : "No video"}
+                                  {l.notes_url ? " · Notes added" : ""}
+                                  {l.is_preview ? " · Free preview" : ""}
+                                </p>
+                              </div>
+                              <div className="flex items-center gap-1.5 shrink-0">
+                                <button
+                                  type="button"
+                                  disabled={busy}
+                                  onClick={() => run(() => instructorAPI.updateLesson(l.id, { is_preview: !l.is_preview }))}
+                                  title={l.is_preview ? "Remove free preview" : "Make free preview"}
+                                  className={`p-2 rounded-lg disabled:opacity-50 ${
+                                    l.is_preview ? "bg-amber-500/20 text-amber-300" : "bg-stone-800/80 text-stone-400 hover:text-amber-300"
+                                  }`}
+                                >
+                                  <Eye className="w-3.5 h-3.5" />
+                                </button>
+                                <button
+                                  type="button"
+                                  disabled={busy}
+                                  onClick={() => {
+                                    if (confirm(`Delete lesson "${l.title}"?`)) void run(() => instructorAPI.deleteLesson(l.id));
+                                  }}
+                                  title="Delete lesson"
+                                  className="p-2 rounded-lg bg-stone-800/80 hover:bg-rose-500/20 text-stone-400 hover:text-rose-400 disabled:opacity-50"
+                                >
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                </button>
+                              </div>
+                            </div>
+                          ))}
+
+                          <LessonForm
+                            nextIndex={nextOrder(lessons)}
+                            busy={busy}
+                            onSubmit={(body) => run(() => instructorAPI.addLesson(m.id, body))}
+                          />
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
+            <form onSubmit={addModule} className="flex gap-2 pt-4 border-t border-stone-800">
+              <input
+                required
+                minLength={2}
+                maxLength={150}
+                value={moduleTitle}
+                onChange={(e) => setModuleTitle(e.target.value)}
+                placeholder="New module title"
+                className={inputCls}
+              />
+              <button
+                type="submit"
+                disabled={busy || moduleTitle.trim().length < 2}
+                title="Add module"
+                className="px-4 rounded-xl bg-amber-500 text-stone-950 font-bold disabled:opacity-50"
+              >
+                <Plus className="w-4 h-4" />
+              </button>
+            </form>
+          </>
+        ) : (
+          <ResourcesPanel
+            resources={course.resources ?? []}
+            busy={busy}
+            onAdd={(body) => run(() => instructorAPI.addResource(courseId, body))}
+            onDelete={(id) => run(() => instructorAPI.deleteResource(courseId, id))}
+          />
         )}
-        <form onSubmit={addModule} className="flex gap-2 pt-4 border-t border-stone-800">
-          <input required value={title} onChange={(e) => setTitle(e.target.value)} placeholder="New module title" className={inputCls} />
-          <button type="submit" disabled={saving || !title.trim()} className="px-4 rounded-xl bg-amber-500 text-stone-950 font-bold disabled:opacity-50"><Plus className="w-4 h-4" /></button>
-        </form>
       </div>
+    </div>
+  );
+}
+
+/* ═══════════════════ LESSON FORM ═══════════════════ */
+function LessonForm({
+  nextIndex,
+  busy,
+  onSubmit,
+}: {
+  nextIndex: number;
+  busy: boolean;
+  onSubmit: (body: LessonInput) => Promise<boolean>;
+}) {
+  const [title, setTitle] = useState("");
+  const [video, setVideo] = useState("");
+  const [notes, setNotes] = useState("");
+  const [preview, setPreview] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const submit = async (e: FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    const videoId = video.trim() ? extractYouTubeId(video) : null;
+    if (video.trim() && !videoId) return setError("Enter a valid YouTube link or 11-character video ID.");
+    if (notes.trim() && !isHttpUrl(notes)) return setError("Notes link must start with http:// or https://");
+
+    const ok = await onSubmit({
+      title: title.trim(),
+      youtube_video_id: videoId ?? undefined,
+      notes_url: notes.trim() || undefined,
+      order_index: nextIndex,
+      is_preview: preview,
+    });
+    if (ok) {
+      setTitle("");
+      setVideo("");
+      setNotes("");
+      setPreview(false);
+    }
+  };
+
+  return (
+    <form onSubmit={submit} className="space-y-2 pt-3 border-t border-stone-800/80">
+      <p className="text-xs text-stone-400">Add a lesson</p>
+      {error && <div className={errBoxCls}>{error}</div>}
+      <input required minLength={2} maxLength={150} value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Lesson title" className={inputCls} />
+      <input value={video} onChange={(e) => setVideo(e.target.value)} placeholder="YouTube link or video ID (optional)" className={inputCls} />
+      <input value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Notes link, e.g. Google Drive (optional)" className={inputCls} />
+      <div className="flex items-center justify-between gap-3">
+        <label className="flex items-center gap-2 text-xs text-stone-400 cursor-pointer">
+          <input type="checkbox" checked={preview} onChange={(e) => setPreview(e.target.checked)} className="accent-amber-500" />
+          Free preview for non-enrolled students
+        </label>
+        <button
+          type="submit"
+          disabled={busy || title.trim().length < 2}
+          className="px-4 py-2 rounded-xl bg-amber-500 text-stone-950 font-bold text-xs disabled:opacity-50 flex items-center gap-1.5"
+        >
+          <Plus className="w-3.5 h-3.5" /> Add lesson
+        </button>
+      </div>
+    </form>
+  );
+}
+
+/* ═══════════════════ RESOURCES PANEL ═══════════════════ */
+function ResourcesPanel({
+  resources,
+  busy,
+  onAdd,
+  onDelete,
+}: {
+  resources: { id: string; type: string; title: string; url: string }[];
+  busy: boolean;
+  onAdd: (body: { type: string; title: string; url: string }) => Promise<boolean>;
+  onDelete: (id: string) => Promise<boolean>;
+}) {
+  const [type, setType] = useState("video");
+  const [title, setTitle] = useState("");
+  const [url, setUrl] = useState("");
+  const [error, setError] = useState<string | null>(null);
+
+  const submit = async (e: FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    if (!isHttpUrl(url)) return setError("Link must start with http:// or https://");
+    const ok = await onAdd({ type, title: title.trim(), url: url.trim() });
+    if (ok) {
+      setTitle("");
+      setUrl("");
+    }
+  };
+
+  return (
+    <div>
+      {resources.length === 0 ? (
+        <p className="text-stone-400 text-sm mb-5">No resources yet. Add PDFs, articles, audio or extra videos for the whole course.</p>
+      ) : (
+        <div className="space-y-2 mb-6">
+          {resources.map((r) => (
+            <div key={r.id} className="flex items-center justify-between gap-3 p-3 rounded-xl bg-stone-900 border border-stone-800">
+              <div className="min-w-0">
+                <p className="text-sm font-medium truncate">{r.title}</p>
+                <a href={r.url} target="_blank" rel="noopener noreferrer" className="text-[11px] text-amber-400 hover:text-amber-300 truncate block">
+                  {r.type} · {r.url}
+                </a>
+              </div>
+              <button
+                type="button"
+                disabled={busy}
+                onClick={() => {
+                  if (confirm(`Delete resource "${r.title}"?`)) void onDelete(r.id);
+                }}
+                title="Delete resource"
+                className="p-2 rounded-lg bg-stone-800/80 hover:bg-rose-500/20 text-stone-400 hover:text-rose-400 disabled:opacity-50 shrink-0"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+
+      <form onSubmit={submit} className="space-y-2 pt-4 border-t border-stone-800">
+        {error && <div className={errBoxCls}>{error}</div>}
+        <div className="grid grid-cols-1 sm:grid-cols-4 gap-2">
+          <select value={type} onChange={(e) => setType(e.target.value)} className={`${inputCls} capitalize`}>
+            {RESOURCE_TYPES.map((t) => (
+              <option key={t} value={t}>
+                {t}
+              </option>
+            ))}
+          </select>
+          <input required minLength={2} value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Title" className={`${inputCls} sm:col-span-3`} />
+        </div>
+        <div className="flex gap-2">
+          <input required value={url} onChange={(e) => setUrl(e.target.value)} placeholder="https://..." className={inputCls} />
+          <button
+            type="submit"
+            disabled={busy || !title.trim() || !url.trim()}
+            title="Add resource"
+            className="px-4 rounded-xl bg-amber-500 text-stone-950 font-bold disabled:opacity-50"
+          >
+            <Plus className="w-4 h-4" />
+          </button>
+        </div>
+      </form>
     </div>
   );
 }

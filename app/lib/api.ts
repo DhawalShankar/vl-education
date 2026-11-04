@@ -428,7 +428,7 @@ export const instructorAPI = {
 
   // New courses are created as drafts; the instructor publishes explicitly
   createCourse: (body: CourseInput) =>
-    getJSON<CourseDetail>("/courses", send("POST", { ...body, isPublished: false })),
+    getJSON<CourseDetail>("/courses", send("POST", { ...body, isPublished: false, modules: 0 })),
   updateCourse: (id: string, body: Partial<CourseInput>) =>
     getJSON<CourseDetail>("/courses/" + id, send("PUT", body)),
   setStatus: (id: string, status: "draft" | "published" | "archived") =>
