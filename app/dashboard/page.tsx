@@ -38,6 +38,11 @@ interface EnrolledCourse {
   completed_lessons?: number;
 }
 
+/* ── Recommended Tracks & Languages (Placeholder Directory) ─────
+ * TODO: Connect to backend API:
+ * - GET /api/v1/courses?featured=true (personalized recommended tracks)
+ * - GET /api/v1/courses/languages (live language list with module counts)
+ */
 const RECOMMENDED_COURSES = [
   {
     id: "rec-hindi",
@@ -75,12 +80,12 @@ const RECOMMENDED_COURSES = [
 ];
 
 const POPULAR_LANGUAGES = [
-  { name: "Hindi", slug: "hindi", icon: "📚", count: "245+ lessons" },
-  { name: "Tamil", slug: "tamil", icon: "🌴", count: "198+ lessons" },
-  { name: "Telugu", slug: "telugu", icon: "🎭", count: "176+ lessons" },
-  { name: "Bengali", slug: "bengali", icon: "📝", count: "160+ lessons" },
-  { name: "Marathi", slug: "marathi", icon: "🏛️", count: "140+ lessons" },
-  { name: "English", slug: "english", icon: "🌍", count: "310+ lessons" },
+  { name: "Hindi", slug: "hindi", icon: "📚", count: "Active Track" },
+  { name: "Tamil", slug: "tamil", icon: "🌴", count: "Active Track" },
+  { name: "Telugu", slug: "telugu", icon: "🎭", count: "Active Track" },
+  { name: "Bengali", slug: "bengali", icon: "📝", count: "Active Track" },
+  { name: "Marathi", slug: "marathi", icon: "🏛️", count: "Active Track" },
+  { name: "English", slug: "english", icon: "🌍", count: "Active Track" },
 ];
 
 export default function StudentDashboard() {

@@ -17,6 +17,11 @@ import {
   Zap
 } from "lucide-react";
 
+/* ── Practice Labs Suite (Placeholder Modules) ─────────────────
+ * TODO: Connect to backend API: GET /api/v1/practice/labs
+ * Connect voice recording evaluation endpoints (POST /api/v1/practice/evaluate)
+ * to stream audio to speech models and receive phoneme scoring in real time.
+ */
 const labs = [
   {
     icon: Headphones,

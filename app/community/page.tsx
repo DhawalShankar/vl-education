@@ -1,4 +1,5 @@
 "use client";
+
 import { useState } from "react";
 import Link from "next/link";
 import Navbar from "@/components/Navbar";
@@ -32,22 +33,24 @@ const stats = [
   { value: "2026", label: "Founded", icon: Award },
 ];
 
+/* ── Articles & Publications (Placeholder Data) ─────────────────
+ * TODO: Connect to backend API: GET /api/v1/articles
+ * Replace static placeholders with database articles.
+ */
 const posts = [
-  { title: "Why Learning Hindi Opens Doors Across India", excerpt: "With over 500 million speakers, Hindi is not just a language — it's a bridge to opportunities in government, media, and culture.", date: "Sep 10, 2026", readTime: "5 min", tag: "Hindi", color: "from-orange-500 to-red-500", emoji: "📚" },
-  { title: "Tamil: The Language That Never Stopped Evolving", excerpt: "Tamil is one of the oldest living classical languages. Discover its rich literary history and why learning it is deeply rewarding.", date: "Sep 5, 2026", readTime: "6 min", tag: "Tamil", color: "from-red-500 to-pink-500", emoji: "🌴" },
-  { title: "5 Proven Tips to Accelerate Your Language Learning", excerpt: "Expert strategies from polyglots and linguists — from spaced repetition to active immersion.", date: "Aug 28, 2026", readTime: "8 min", tag: "Learning Tips", color: "from-blue-500 to-cyan-500", emoji: "🧠" },
-  { title: "How to Crack the IELTS Writing Section", excerpt: "A comprehensive breakdown of Task 1 and Task 2, common mistakes, and a structured approach to scoring Band 7+.", date: "Aug 20, 2026", readTime: "10 min", tag: "Exam Prep", color: "from-green-500 to-emerald-500", emoji: "✍️" },
-  { title: "Bengali Literature: Reading Between the Lines", excerpt: "From Rabindranath Tagore to modern writers, Bengali literature offers a window into the soul of a civilization.", date: "Aug 12, 2026", readTime: "7 min", tag: "Bengali", color: "from-purple-500 to-pink-500", emoji: "📝" },
-  { title: "The Rise of Regional Language Careers in India", excerpt: "Government services, media, education, and tech are all increasingly valuing regional language proficiency.", date: "Aug 5, 2026", readTime: "6 min", tag: "Career", color: "from-amber-500 to-orange-500", emoji: "💼" },
+  { title: "Why Learning Hindi Opens Doors Across India", excerpt: "With over 500 million speakers, Hindi is a bridge to opportunities in government, media, and culture.", date: "Sep 2026", readTime: "5 min", tag: "Hindi", color: "from-orange-500 to-red-500", emoji: "📚" },
+  { title: "Tamil: The Language That Never Stopped Evolving", excerpt: "One of the oldest classical languages with a rich literary history and contemporary relevance.", date: "Sep 2026", readTime: "6 min", tag: "Tamil", color: "from-red-500 to-pink-500", emoji: "🌴" },
+  { title: "5 Proven Tips to Accelerate Your Language Learning", excerpt: "Expert strategies from polyglots — from spaced repetition to daily conversational immersion.", date: "Aug 2026", readTime: "8 min", tag: "Learning Tips", color: "from-blue-500 to-cyan-500", emoji: "🧠" },
 ];
 
+/* ── Career Openings (Placeholder Data) ─────────────────────────
+ * TODO: Connect to backend API: GET /api/v1/careers/jobs
+ * Replace static placeholders with dynamic job openings loaded from the database.
+ */
 const openings = [
-  { title: "Senior Frontend Engineer", team: "Engineering", type: "Full-time", location: "Remote / Mumbai", emoji: "💻" },
-  { title: "Curriculum Designer — Hindi", team: "Education", type: "Full-time", location: "Remote", emoji: "📚" },
-  { title: "Curriculum Designer — Tamil", team: "Education", type: "Full-time", location: "Remote", emoji: "🌴" },
-  { title: "AI/ML Engineer", team: "Engineering", type: "Full-time", location: "Bangalore / Remote", emoji: "🤖" },
-  { title: "Community Manager", team: "Growth", type: "Full-time", location: "Remote", emoji: "🤝" },
-  { title: "Language Expert (Freelance)", team: "Education", type: "Freelance", location: "Remote", emoji: "✍️" },
+  { title: "Curriculum Designer (Vernacular Languages)", team: "Education", type: "Full-time", location: "Remote", emoji: "📚" },
+  { title: "AI/ML Speech Engineer", team: "Engineering", type: "Full-time", location: "Remote / Bengaluru", emoji: "🤖" },
+  { title: "Language Expert & Reviewer", team: "Linguistics", type: "Contract", location: "Pan-India Remote", emoji: "✍️" },
 ];
 
 /* ─── COMPONENT ──────────────────────────────────────────────────── */
@@ -56,7 +59,7 @@ export default function CommunityPage() {
   const [activeTab, setActiveTab] = useState<Tab>("About");
 
   return (
-    <div className="min-h-screen bg-[#0a0908] relative overflow-hidden">
+    <div className="min-h-screen bg-[#0a0908] relative overflow-hidden flex flex-col justify-between">
       <Navbar />
 
       {/* Background */}
@@ -71,8 +74,7 @@ export default function CommunityPage() {
       />
       <div className="fixed inset-0 bg-gradient-to-b from-amber-900/10 via-transparent to-orange-900/10 pointer-events-none" />
 
-      <div className="relative z-10 max-w-6xl mx-auto px-6 pt-36 pb-20">
-
+      <div className="relative z-10 max-w-6xl mx-auto px-6 pt-36 pb-20 w-full">
         {/* Page Header */}
         <div className="text-center mb-12">
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-amber-500/20 border border-amber-400/30 mb-6">
@@ -125,9 +127,8 @@ export default function CommunityPage() {
                   flexibility of modern technology.
                 </p>
                 <p>
-                  Today, VartaLang serves learners across 6 languages with plans to expand to all
-                  22 official Indian languages, along with specialized exam preparation programs
-                  for IELTS, teacher certifications, and government competitive examinations.
+                  Today, VartaLang serves 60+ learners across 22+ languages, along with specialized
+                  exam preparation programs for IELTS, teacher certifications, and government competitive examinations.
                 </p>
               </div>
             </div>
@@ -205,20 +206,22 @@ export default function CommunityPage() {
               {posts.map((post, i) => (
                 <article
                   key={i}
-                  className="group p-6 rounded-2xl bg-stone-900/60 border border-stone-700/50 hover:border-amber-500/40 transition-all hover:-translate-y-1 flex flex-col cursor-pointer"
+                  className="group p-6 rounded-2xl bg-stone-900/60 border border-stone-700/50 hover:border-amber-500/40 transition-all hover:-translate-y-1 flex flex-col justify-between"
                 >
-                  <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${post.color} flex items-center justify-center text-2xl mb-5 group-hover:scale-110 transition-transform shadow-lg`}>
-                    {post.emoji}
+                  <div>
+                    <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${post.color} flex items-center justify-center text-2xl mb-5 group-hover:scale-105 transition-transform shadow-lg`}>
+                      {post.emoji}
+                    </div>
+                    <div className="flex items-center gap-2 mb-3">
+                      <span className="text-xs px-2.5 py-0.5 rounded-full bg-amber-500/20 border border-amber-500/30 text-amber-300 font-semibold">
+                        {post.tag}
+                      </span>
+                    </div>
+                    <h3 className="font-kalam text-xl font-bold text-white mb-3 leading-snug group-hover:text-amber-200 transition-colors">
+                      {post.title}
+                    </h3>
+                    <p className="text-stone-400 text-sm leading-relaxed mb-4">{post.excerpt}</p>
                   </div>
-                  <div className="flex items-center gap-2 mb-3">
-                    <span className="text-xs px-2 py-1 rounded-full bg-amber-500/20 border border-amber-500/30 text-amber-300 font-semibold">
-                      {post.tag}
-                    </span>
-                  </div>
-                  <h3 className="font-kalam text-xl font-bold text-white mb-3 leading-snug group-hover:text-amber-200 transition-colors">
-                    {post.title}
-                  </h3>
-                  <p className="text-stone-400 text-sm leading-relaxed flex-1 mb-4">{post.excerpt}</p>
                   <div className="flex items-center justify-between pt-4 border-t border-stone-700/50">
                     <div className="flex items-center gap-3 text-xs text-stone-500">
                       <span>{post.date}</span>
@@ -234,16 +237,16 @@ export default function CommunityPage() {
             </div>
 
             {/* Newsletter */}
-            <div className="text-center p-10 rounded-3xl bg-stone-900/60 border border-stone-700/50">
+            <div className="text-center p-10 rounded-3xl bg-stone-900/60 border border-stone-700/50 max-w-3xl mx-auto">
               <h2 className="font-kalam text-3xl font-bold text-white mb-3">Stay Updated</h2>
-              <p className="text-stone-400 mb-6">Get new articles delivered to your inbox every week</p>
+              <p className="text-stone-400 text-sm mb-6">Get new articles delivered to your inbox every week</p>
               <div className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto">
                 <input
                   type="email"
                   placeholder="Your email address"
-                  className="flex-1 px-5 py-3 rounded-full bg-stone-900/60 border border-stone-700/50 text-white placeholder-stone-500 focus:outline-none focus:border-amber-500/50 transition-colors"
+                  className="flex-1 px-5 py-3 rounded-xl bg-stone-950/80 border border-stone-700/50 text-white placeholder-stone-500 focus:outline-none focus:border-amber-500 transition-colors text-sm"
                 />
-                <button className="px-6 py-3 bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-400 hover:to-orange-500 text-white font-bold rounded-full transition-all font-kalam">
+                <button className="px-6 py-3 bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-400 hover:to-orange-500 text-stone-950 font-bold rounded-xl transition-all font-kalam text-sm">
                   Subscribe
                 </button>
               </div>
@@ -260,8 +263,8 @@ export default function CommunityPage() {
                 <span className="text-sm font-bold text-amber-200">We&apos;re Hiring</span>
               </div>
               <h2 className="font-kalam text-5xl font-bold text-white mb-4">Join Our Team</h2>
-              <p className="text-xl text-stone-400 max-w-2xl mx-auto">
-                Help us preserve India's linguistic heritage. We're a remote-first team passionate
+              <p className="text-lg text-stone-400 max-w-2xl mx-auto">
+                Help us preserve India&apos;s linguistic heritage. We&apos;re a remote-first team passionate
                 about education, technology, and languages.
               </p>
             </div>
@@ -270,47 +273,49 @@ export default function CommunityPage() {
               {openings.map((job, i) => (
                 <div
                   key={i}
-                  className="group p-6 rounded-2xl bg-stone-900/60 border border-stone-700/50 hover:border-amber-500/40 transition-all flex items-center justify-between gap-4"
+                  className="group p-6 rounded-2xl bg-stone-900/60 border border-stone-700/50 hover:border-amber-500/40 transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-4"
                 >
                   <div className="flex items-center gap-4">
-                    <div className="text-3xl w-12 h-12 flex items-center justify-center">{job.emoji}</div>
+                    <div className="text-3xl w-12 h-12 flex items-center justify-center rounded-xl bg-stone-800/80 shrink-0">{job.emoji}</div>
                     <div>
                       <h3 className="font-kalam text-lg font-bold text-white group-hover:text-amber-200 transition-colors">
                         {job.title}
                       </h3>
-                      <div className="flex items-center gap-4 mt-1">
-                        <span className="text-xs text-stone-500 flex items-center gap-1">
-                          <Briefcase className="w-3 h-3" />{job.team}
+                      <div className="flex flex-wrap items-center gap-4 mt-1 text-xs text-stone-500">
+                        <span className="flex items-center gap-1">
+                          <Briefcase className="w-3.5 h-3.5 text-stone-400" />{job.team}
                         </span>
-                        <span className="text-xs text-stone-500 flex items-center gap-1">
-                          <MapPin className="w-3 h-3" />{job.location}
+                        <span className="flex items-center gap-1">
+                          <MapPin className="w-3.5 h-3.5 text-stone-400" />{job.location}
                         </span>
-                        <span className="text-xs text-stone-500 flex items-center gap-1">
-                          <Clock className="w-3 h-3" />{job.type}
+                        <span className="flex items-center gap-1">
+                          <Clock className="w-3.5 h-3.5 text-stone-400" />{job.type}
                         </span>
                       </div>
                     </div>
                   </div>
                   <a
                     href="mailto:support@cosmoindiaprakashan.in"
-                    className="shrink-0 flex items-center gap-2 px-5 py-2.5 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/30 text-amber-300 text-sm font-semibold font-kalam transition-all"
+                    className="shrink-0 flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/30 text-amber-300 text-xs font-semibold font-kalam transition-all"
                   >
-                    Apply <ArrowRight className="w-4 h-4" />
+                    <span>Apply via Email</span>
+                    <ArrowRight className="w-4 h-4" />
                   </a>
                 </div>
               ))}
             </div>
 
-            <div className="text-center p-10 rounded-3xl bg-stone-900/60 border border-stone-700/50">
-              <h2 className="font-kalam text-3xl font-bold text-white mb-3">Don&apos;t See Your Role?</h2>
-              <p className="text-stone-400 mb-6">
-                We're always looking for talented people. Send us your CV and tell us how you'd contribute.
+            <div className="text-center p-10 rounded-3xl bg-stone-900/60 border border-stone-700/50 max-w-3xl mx-auto">
+              <h2 className="font-kalam text-3xl font-bold text-white mb-2">Don&apos;t See Your Role?</h2>
+              <p className="text-stone-400 text-sm mb-6 max-w-xl mx-auto">
+                We&apos;re always looking for talented people. Send us your CV and tell us how you&apos;d contribute.
               </p>
               <a
                 href="mailto:support@cosmoindiaprakashan.in"
-                className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-amber-500 to-orange-600 text-white font-bold rounded-xl font-kalam transition-all hover:scale-105"
+                className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-400 hover:to-orange-500 text-stone-950 font-bold rounded-xl font-kalam transition-all hover:scale-105 text-sm"
               >
-                Send Open Application <ArrowRight className="w-4 h-4" />
+                <span>Send Open Application</span>
+                <ArrowRight className="w-4 h-4" />
               </a>
             </div>
           </div>

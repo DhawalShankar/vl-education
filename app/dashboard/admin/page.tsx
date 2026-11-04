@@ -152,6 +152,7 @@ export default function AdminDashboard() {
   };
 
   // ── Fetch data ─────────────────────────────────────────────────────────────
+  // TODO: Connect to backend API: GET /api/v1/admin/users & GET /api/v1/admin/stats
   const loadData = useCallback(async () => {
     setDataLoading(true);
     try {

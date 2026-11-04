@@ -2,6 +2,13 @@
 
 import { useEffect, useState, useCallback } from "react";
 
+/**
+ * ── Client-side Streak Tracker ──────────────────────────────────────────
+ * TODO: Connect to backend API: POST /api/v1/users/streak/heartbeat
+ * Currently, streak history is maintained in browser localStorage as a fallback.
+ * When the backend streak service is ready, replace/hydrate localStorage with
+ * the database-backed user activity record so streaks persist across devices.
+ */
 export interface UserStreak {
   currentStreak: number;
   longestStreak: number;

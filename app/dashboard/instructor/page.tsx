@@ -89,12 +89,16 @@ interface InstructorProfile {
   bankAccount?: string;
 }
 
+/* ── Course Resources (Placeholder Data) ────────────────────────
+ * TODO: Connect to backend API: GET /api/v1/courses/:courseId/resources
+ * Replace local placeholders with database-persisted curriculum items.
+ */
 const DEFAULT_RESOURCES: CourseResource[] = [
   {
     id: "res-1",
     type: "video",
     title: "Lesson 1: Introduction to Alphabet & Phonemes",
-    url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+    url: "",
     duration: "18 mins",
     description: "Foundational breakdown of vowel and consonant pronunciations.",
   },
@@ -102,7 +106,7 @@ const DEFAULT_RESOURCES: CourseResource[] = [
     id: "res-2",
     type: "pdf",
     title: "Vowel Practice Workbook & Character Sheets",
-    url: "https://example.com/workbook.pdf",
+    url: "",
     duration: "12 pages",
     description: "Printable drills for native script stroke order.",
   },
@@ -222,6 +226,10 @@ export default function InstructorStudioPage() {
     }
   };
 
+  /* ── Initial Course Placeholder Fallback ────────────────────────
+   * TODO: Connect to backend API: GET /api/v1/courses/instructor/mine
+   * When the educator has created courses in the database, those will be loaded.
+   */
   const loadSampleCourses = () => {
     const localSaved = localStorage.getItem(`vl-instructor-courses-${user?.email || "default"}`);
     if (localSaved) {

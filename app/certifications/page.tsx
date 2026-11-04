@@ -4,6 +4,10 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { ArrowRight, Award, ScrollText, BadgeCheck, Star, Clock, Sparkles, GraduationCap } from "lucide-react";
 
+/* ── Certification Tracks (Placeholder Data) ───────────────────
+ * TODO: Connect to backend API: GET /api/v1/certifications and POST /api/v1/certifications/verify
+ * Fetch available credential paths and digital certificate validation signatures from database.
+ */
 const certs = [
   {
     icon: ScrollText,

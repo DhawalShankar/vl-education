@@ -28,16 +28,20 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { useAuth } from "@/app/context/AuthContext";
 
+/* ── Multilingual Directory (Placeholder Tracks) ─────────────────
+ * TODO: Connect to backend API: GET /api/v1/courses/languages
+ * Fetch live language list and course counts directly from the backend database.
+ */
 const languages = [
-  { id: "hindi", name: "Hindi", native: "हिंदी", count: "18 Courses", region: "Northern & Central India" },
-  { id: "english", name: "English", native: "English", count: "24 Courses", region: "Global & Professional" },
-  { id: "tamil", name: "Tamil", native: "தமிழ்", count: "14 Courses", region: "Tamil Nadu & Diaspora" },
-  { id: "telugu", name: "Telugu", native: "తెలుగు", count: "12 Courses", region: "Andhra & Telangana" },
-  { id: "bengali", name: "Bengali", native: "বাংলা", count: "15 Courses", region: "West Bengal & Tripura" },
-  { id: "marathi", name: "Marathi", native: "मराठी", count: "11 Courses", region: "Maharashtra" },
-  { id: "gujarati", name: "Gujarati", native: "ગુજરાતી", count: "9 Courses", region: "Gujarat" },
-  { id: "kannada", name: "Kannada", native: "ಕನ್ನಡ", count: "10 Courses", region: "Karnataka" },
-  { id: "malayalam", name: "Malayalam", native: "മലയാളം", count: "8 Courses", region: "Kerala" },
+  { id: "hindi", name: "Hindi", native: "हिंदी", count: "Curated Track", region: "Northern & Central India" },
+  { id: "english", name: "English", native: "English", count: "Curated Track", region: "Global & Professional" },
+  { id: "tamil", name: "Tamil", native: "தமிழ்", count: "Curated Track", region: "Tamil Nadu & Diaspora" },
+  { id: "telugu", name: "Telugu", native: "తెలుగు", count: "Curated Track", region: "Andhra & Telangana" },
+  { id: "bengali", name: "Bengali", native: "বাংলা", count: "Curated Track", region: "West Bengal & Tripura" },
+  { id: "marathi", name: "Marathi", native: "मराठी", count: "Curated Track", region: "Maharashtra" },
+  { id: "gujarati", name: "Gujarati", native: "ગુજરાતી", count: "Curated Track", region: "Gujarat" },
+  { id: "kannada", name: "Kannada", native: "ಕನ್ನಡ", count: "Curated Track", region: "Karnataka" },
+  { id: "malayalam", name: "Malayalam", native: "മലയാളം", count: "Curated Track", region: "Kerala" },
 ];
 
 const learnerFeatures = [

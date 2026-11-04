@@ -4,6 +4,10 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { ArrowRight, Trophy, Sword, Target, Zap, Clock, Medal, Sparkles } from "lucide-react";
 
+/* ── Challenge Formats (Placeholder Data) ───────────────────────
+ * TODO: Connect to backend API: GET /api/v1/challenges and WebSocket /api/v1/challenges/live-duel
+ * Replace static placeholders with real-time multiplayer duels and XP leaderboard from database.
+ */
 const challengeTypes = [
   {
     icon: Sword,
