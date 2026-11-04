@@ -528,4 +528,133 @@ function CourseFormModal({
           </div>
 
           <div className="pt-4 border-t border-stone-800 flex items-center justify-end gap-3">
-            <button type="button" onClick={onClose} className="px-5 py-2.5 rounded-xl border border-stone-700 text-stone-300
+            <button type="button" onClick={onClose} className="px-5 py-2.5 rounded-xl border border-stone-700 text-stone-300 hover:bg-stone-800">
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={saving}
+              className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-orange-600 text-stone-950 font-bold disabled:opacity-50 flex items-center gap-2"
+            >
+              <Save className="w-4 h-4" /> {saving ? "Saving…" : editing ? "Save changes" : "Create course"}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+/* ═══════════════════ PROFILE ═══════════════════ */
+function ProfileTab({ onMessage }: { onMessage: (message: { type: "error" | "success"; text: string }) => void }) {
+  const [profile, setProfile] = useState<Partial<InstructorProfile>>({});
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const api = instructorAPI as any;
+    if (typeof api.getProfile !== "function") return;
+    api.getProfile().then((value: InstructorProfile) => setProfile(value ?? {})).catch((e: unknown) => setError(errMsg(e)));
+  }, []);
+
+  const save = async (e: FormEvent) => {
+    e.preventDefault();
+    setSaving(true);
+    setError(null);
+    try {
+      const api = instructorAPI as any;
+      if (typeof api.updateProfile === "function") await api.updateProfile(profile);
+      onMessage({ type: "success", text: "Profile updated." });
+    } catch (e) {
+      setError(errMsg(e, "Could not save your profile."));
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <form onSubmit={save} className="max-w-2xl p-6 sm:p-8 rounded-2xl bg-stone-900/60 border border-stone-800 space-y-5">
+      <div>
+        <h2 className="font-kalam text-3xl font-bold">Public profile</h2>
+        <p className="text-sm text-stone-400 mt-1">Tell learners a little about you.</p>
+      </div>
+      {error && <div className="px-4 py-3 rounded-xl text-sm bg-red-500/10 border border-red-500/20 text-red-300">{error}</div>}
+      <div>
+        <label className="block text-xs text-stone-400 mb-1">Bio</label>
+        <textarea
+          rows={6}
+          value={String((profile as any).bio ?? "")}
+          onChange={(e) => setProfile((current) => ({ ...current, bio: e.target.value }))}
+          className={inputCls}
+          placeholder="Share your teaching experience and interests."
+        />
+      </div>
+      <button disabled={saving} className="px-5 py-2.5 rounded-xl bg-amber-500 text-stone-950 font-bold disabled:opacity-50 flex items-center gap-2">
+        <Save className="w-4 h-4" /> {saving ? "Saving…" : "Save profile"}
+      </button>
+    </form>
+  );
+}
+
+/* ═══════════════════ CURRICULUM MODAL ═══════════════════ */
+function CurriculumModal({ courseId, onClose, onChanged }: { courseId: string; onClose: () => void; onChanged: () => void }) {
+  const [modules, setModules] = useState<any[]>([]);
+  const [title, setTitle] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const api = instructorAPI as any;
+
+  const load = async () => {
+    setLoading(true);
+    try {
+      const result = typeof api.getCurriculum === "function" ? await api.getCurriculum(courseId) : [];
+      setModules(Array.isArray(result) ? result : result?.modules ?? []);
+    } catch (e) {
+      setError(errMsg(e, "Could not load the curriculum."));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => { void load(); }, [courseId]);
+  const ordered = useMemo(() => [...modules].sort(byOrder), [modules]);
+
+  const addModule = async (e: FormEvent) => {
+    e.preventDefault();
+    if (!title.trim() || typeof api.createModule !== "function") return;
+    setSaving(true);
+    setError(null);
+    try {
+      await api.createModule(courseId, { title: title.trim(), order_index: nextOrder(modules) });
+      setTitle("");
+      await load();
+      onChanged();
+    } catch (e) {
+      setError(errMsg(e, "Could not add the module."));
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md px-4 py-6">
+      <div className="bg-[#120F0C] border border-stone-700/80 rounded-3xl p-6 sm:p-8 w-full max-w-2xl max-h-[92vh] overflow-y-auto shadow-2xl">
+        <div className="flex items-center justify-between pb-4 border-b border-stone-800 mb-6">
+          <h3 className="font-kalam text-3xl font-bold">Curriculum &amp; materials</h3>
+          <button onClick={onClose} className="p-2 rounded-xl bg-stone-800/80 hover:bg-stone-700 text-stone-400 hover:text-white"><X className="w-5 h-5" /></button>
+        </div>
+        {error && <div className="mb-4 px-4 py-3 rounded-xl text-sm bg-red-500/10 border border-red-500/20 text-red-300">{error}</div>}
+        {loading ? <p className="text-stone-400">Loading curriculum…</p> : ordered.length === 0 ? <p className="text-stone-400 mb-5">No modules yet.</p> : (
+          <div className="space-y-3 mb-6">
+            {ordered.map((module) => <div key={module.id} className="p-4 rounded-xl bg-stone-900 border border-stone-800"><div className="font-semibold">{module.title}</div><div className="text-xs text-stone-500 mt-1">{module.lessons_count ?? module.lessons?.length ?? 0} lessons</div></div>)}
+          </div>
+        )}
+        <form onSubmit={addModule} className="flex gap-2 pt-4 border-t border-stone-800">
+          <input required value={title} onChange={(e) => setTitle(e.target.value)} placeholder="New module title" className={inputCls} />
+          <button type="submit" disabled={saving || !title.trim()} className="px-4 rounded-xl bg-amber-500 text-stone-950 font-bold disabled:opacity-50"><Plus className="w-4 h-4" /></button>
+        </form>
+      </div>
+    </div>
+  );
+}
