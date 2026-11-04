@@ -49,6 +49,7 @@ interface Course {
 const LANGUAGE_NAMES: Record<string, string> = {
   hindi: "Hindi", tamil: "Tamil", telugu: "Telugu",
   bengali: "Bengali", marathi: "Marathi", english: "English",
+  gujarati: "Gujarati", kannada: "Kannada", malayalam: "Malayalam"
 };
 
 const RESOURCE_META: Record<string, { label: string; color: string; bg: string; border: string; icon: React.ElementType }> = {
@@ -66,17 +67,15 @@ const LEVEL_COLOR: Record<string, string> = {
 
 function toEmbedUrl(url: string): string | null {
   try {
+    if (!url) return null;
     const u = new URL(url);
-    // youtu.be short links
     if (u.hostname === "youtu.be") {
       const id = u.pathname.slice(1);
       return `https://www.youtube.com/embed/${id}`;
     }
-    // youtube.com/watch?v=
     if (u.hostname.includes("youtube.com") && u.searchParams.get("v")) {
       return `https://www.youtube.com/embed/${u.searchParams.get("v")}`;
     }
-    // already embed
     if (u.hostname.includes("youtube.com") && u.pathname.startsWith("/embed/")) {
       return url;
     }
@@ -84,26 +83,48 @@ function toEmbedUrl(url: string): string | null {
   return null;
 }
 
-/* ── Mock course fallback ───────────────────────── */
+/* ── Course placeholder fallback ───────────────────
+ * TODO: Connect to backend API: GET /api/v1/courses/:courseId
+ * Real course curriculum, video links, and study resources must be fetched from the database.
+ * This placeholder preserves the layout while the backend endpoint is being connected.
+ */
 function mockCourse(courseId: string, language: string): Course {
-  const lang = LANGUAGE_NAMES[language] || language;
+  const lang = LANGUAGE_NAMES[language] || (language ? language.charAt(0).toUpperCase() + language.slice(1) : "Language");
   return {
     _id: courseId,
-    title: `${lang} for Beginners`,
-    description: `A comprehensive introduction to ${lang}. This course covers the script, pronunciation, grammar fundamentals, and everyday vocabulary — everything you need to start communicating confidently.`,
+    title: `${lang} Curriculum Track`,
+    description: `Structured curriculum and resources for ${lang}. Modules include script fundamentals, phonetics, and dialogue practice.`,
     language: lang,
     level: "foundation",
     duration: "8 weeks",
-    modules: 24,
+    modules: 12,
     resources: [
-      { type: "video", title: "Introduction to the Script", url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ", description: "Learn the alphabet and script from scratch with a native speaker guide.", duration: "22 min" },
-      { type: "video", title: "Basic Greetings & Phrases", url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ", description: "Master 50 essential phrases you'll use every single day.", duration: "18 min" },
-      { type: "video", title: "Numbers & Time Expressions", url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ", description: "Count to 100 and tell the time in your new language.", duration: "15 min" },
-      { type: "pdf",   title: "Grammar Reference Sheet", url: "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf", description: "A handy cheat-sheet covering verb conjugation, noun gender, and sentence structure." },
-      { type: "pdf",   title: "Vocabulary Flash Cards", url: "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf", description: "200 most common words — print and use anywhere." },
-      { type: "blog",  title: "Top 10 Tips for Beginners", url: "https://medium.com", description: "Practical advice from polyglots on how to make progress fast." },
-      { type: "blog",  title: "Cultural Etiquette Guide", url: "https://medium.com", description: "Understand the culture behind the language to communicate more naturally." },
-      { type: "audio", title: "Pronunciation Drill Pack", url: "#", description: "30 audio clips focusing on tricky sounds and tones.", duration: "45 min total" },
+      {
+        type: "video",
+        title: "Module 1: Introduction to Script & Sounds",
+        url: "",
+        description: "Core phonetic breakdown and letter stroke guidance.",
+        duration: "15 min",
+      },
+      {
+        type: "pdf",
+        title: "Module 1 Study Guide & Practice Notes",
+        url: "",
+        description: "Downloadable PDF reference with character drills and exercises.",
+      },
+      {
+        type: "audio",
+        title: "Native Pronunciation & Listening Drill",
+        url: "",
+        description: "Audio clips demonstrating correct syllable stress and intonation.",
+        duration: "10 min",
+      },
+      {
+        type: "blog",
+        title: "Grammar Summary & Key Sentence Patterns",
+        url: "",
+        description: "Essential rules for word order, verb forms, and everyday greetings.",
+      },
     ],
   };
 }
@@ -129,9 +150,9 @@ export default function CourseViewer() {
     if (!authLoading && !isAuthenticated) {
       router.push(`/auth/login?redirect=/learn/${language}/${courseId}`);
     }
-  }, [authLoading, isAuthenticated]);
+  }, [authLoading, isAuthenticated, language, courseId, router]);
 
-  /* ── Load completion from localStorage ── */
+  /* ── Load completion from localStorage (TODO: sync to backend user_progress API) ── */
   useEffect(() => {
     const key = `vl-done-${courseId}`;
     const saved = localStorage.getItem(key);
@@ -140,33 +161,31 @@ export default function CourseViewer() {
     }
   }, [courseId]);
 
-  /* ── Fetch course ── */
+  /* ── Fetch course data from Backend API ── */
   useEffect(() => {
-    if (!isAuthenticated) return;
+    let isMounted = true;
     const load = async () => {
       try {
-        const res = await courseAPI.getOne(courseId);
-        if (res) {
-          const data = await res.json();
-          if (data.success && data.data.course) {
-            const c = data.data.course;
-            // Ensure resources array exists
-            if (!c.resources) c.resources = [];
-            setCourse(c);
-          } else {
-            setCourse(mockCourse(courseId, language));
-          }
-        } else {
-          setCourse(mockCourse(courseId, language));
+        setLoadingCourse(true);
+        // TODO: Connect to backend API: GET /api/v1/courses/:courseId
+        const data = await courseAPI.getOne(courseId);
+        if (data && isMounted) {
+          const resCourse: Course = data.data?.course || data;
+          setCourse(resCourse);
         }
       } catch {
-        setCourse(mockCourse(courseId, language));
+        if (isMounted) {
+          setCourse(mockCourse(courseId, language));
+        }
       } finally {
-        setLoadingCourse(false);
+        if (isMounted) setLoadingCourse(false);
       }
     };
-    load();
-  }, [courseId, isAuthenticated]);
+    if (courseId) load();
+    return () => {
+      isMounted = false;
+    };
+  }, [courseId, language]);
 
   const toggleDone = (index: number) => {
     setCompletedSet((prev) => {
@@ -181,52 +200,45 @@ export default function CourseViewer() {
   if (authLoading || loadingCourse) {
     return (
       <div className="min-h-screen bg-[#0a0908] flex items-center justify-center">
-        <div className="text-amber-400 font-kalam text-2xl animate-pulse">Loading course...</div>
+        <div className="text-amber-400 font-kalam text-2xl animate-pulse">Loading course resources…</div>
       </div>
     );
   }
 
-  if (!isAuthenticated) {
+  if (!course) {
     return (
-      <div className="min-h-screen bg-[#0a0908] flex items-center justify-center px-4">
-        <div className="text-center">
-          <Lock className="w-16 h-16 text-amber-400/40 mx-auto mb-4" />
-          <h2 className="font-kalam text-3xl text-white mb-2">Login Required</h2>
-          <p className="text-stone-400 mb-6">You need to be logged in to access course content.</p>
-          <Link href="/auth/login" className="px-6 py-3 bg-amber-500 hover:bg-amber-400 text-white font-bold rounded-xl transition-all">
-            Sign In
-          </Link>
-        </div>
+      <div className="min-h-screen bg-[#0a0908] text-white flex flex-col items-center justify-center gap-4">
+        <BookOpen className="w-12 h-12 text-stone-600" />
+        <h2 className="font-kalam text-2xl font-bold">Course Not Found</h2>
+        <Link href={`/learn/${language}`} className="text-amber-400 hover:underline text-sm">
+          Return to {LANGUAGE_NAMES[language] || language} courses
+        </Link>
       </div>
     );
   }
-
-  if (!course) return null;
 
   const resources = course.resources || [];
-  const tabs = ["all", ...Array.from(new Set(resources.map((r) => r.type)))];
   const filtered = activeTab === "all" ? resources : resources.filter((r) => r.type === activeTab);
   const progress = resources.length ? Math.round((completedSet.size / resources.length) * 100) : 0;
+  const tabs = ["all", ...new Set(resources.map((r) => r.type))];
 
   return (
     <div className="min-h-screen bg-[#0a0908] text-white">
-
-      {/* ── Top bar ─────────────────────────────── */}
-      <div className="sticky top-0 z-50 border-b border-stone-800/50 bg-stone-950/80 backdrop-blur-md px-6 py-4">
+      {/* ── Top Bar ── */}
+      <div className="border-b border-stone-800/80 bg-stone-900/60 backdrop-blur-md sticky top-0 z-40 px-6 py-4">
         <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
           <div className="flex items-center gap-4 min-w-0">
             <Link
               href={`/learn/${language}`}
-              className="text-stone-400 hover:text-amber-400 transition-colors shrink-0"
+              className="flex items-center gap-1.5 text-stone-400 hover:text-white transition-colors text-xs font-semibold shrink-0"
             >
-              <ArrowLeft className="w-5 h-5" />
+              <ArrowLeft className="w-4 h-4" />
+              <span>Back to Courses</span>
             </Link>
-            {/* Breadcrumb */}
-            <div className="hidden md:flex items-center gap-2 text-sm text-stone-500">
-              <Link href="/learn" className="hover:text-amber-400 transition-colors">Learn</Link>
-              <ChevronRight className="w-3.5 h-3.5" />
-              <Link href={`/learn/${language}`} className="hover:text-amber-400 transition-colors capitalize">{language}</Link>
-              <ChevronRight className="w-3.5 h-3.5" />
+            <span className="text-stone-700 hidden sm:inline">|</span>
+            <div className="hidden sm:flex items-center gap-2 min-w-0 text-xs">
+              <span className="text-stone-400 capitalize">{LANGUAGE_NAMES[language] || language}</span>
+              <ChevronRight className="w-3 h-3 text-stone-600 shrink-0" />
               <span className="text-stone-300 truncate max-w-[200px]">{course.title}</span>
             </div>
           </div>
@@ -243,7 +255,7 @@ export default function CourseViewer() {
               <span className="text-xs text-stone-400 font-semibold">{progress}%</span>
             </div>
             <span className="text-xs px-2.5 py-1 rounded-full bg-stone-800 text-stone-400">
-              Hi, {user?.name?.split(" ")[0]}
+              Hi, {user?.name?.split(" ")[0] || "Learner"}
             </span>
           </div>
         </div>
@@ -251,7 +263,6 @@ export default function CourseViewer() {
 
       <div className="max-w-7xl mx-auto px-6 py-10">
         <div className="grid lg:grid-cols-[1fr_320px] gap-8">
-
           {/* ── Main content ─────────────────────── */}
           <div>
             {/* Course header */}
@@ -327,7 +338,7 @@ export default function CourseViewer() {
             {filtered.length === 0 ? (
               <div className="text-center py-16 rounded-2xl bg-stone-900/40 border border-stone-700/50">
                 <BookOpen className="w-10 h-10 mx-auto mb-3 text-amber-400/30" />
-                <p className="text-stone-400">No resources of this type yet.</p>
+                <p className="text-stone-400 text-sm">No resources available for this category yet.</p>
               </div>
             ) : (
               <div className="space-y-4">
@@ -341,10 +352,10 @@ export default function CourseViewer() {
                   return (
                     <div
                       key={idx}
-                      className={`group relative rounded-2xl border transition-all ${
+                      className={`rounded-2xl border transition-all ${
                         done
-                          ? "bg-stone-900/30 border-stone-700/30 opacity-80"
-                          : "bg-stone-900/60 border-stone-700/50 hover:border-amber-500/30 hover:shadow-lg hover:shadow-amber-500/5"
+                          ? "bg-stone-900/30 border-stone-800/50 opacity-75"
+                          : "bg-stone-900/60 border-stone-700/50 hover:border-amber-500/30"
                       }`}
                     >
                       <div className="p-5 flex items-start gap-4">
@@ -376,16 +387,16 @@ export default function CourseViewer() {
                               className="shrink-0 mt-0.5 transition-transform hover:scale-110"
                               title={done ? "Mark as incomplete" : "Mark as done"}
                             >
-                              {done
-                                ? <CheckCircle className="w-6 h-6 text-amber-400" />
-                                : <Circle className="w-6 h-6 text-stone-600 hover:text-amber-400 transition-colors" />
-                              }
+                              {done ? (
+                                <CheckCircle className="w-6 h-6 text-amber-400" />
+                              ) : (
+                                <Circle className="w-6 h-6 text-stone-600 hover:text-amber-400 transition-colors" />
+                              )}
                             </button>
                           </div>
 
                           {/* Action buttons */}
                           <div className="flex flex-wrap items-center gap-2 mt-4">
-                            {/* Video: play inline */}
                             {resource.type === "video" && embedUrl && (
                               <button
                                 onClick={() => setActiveVideo(embedUrl)}
@@ -395,7 +406,6 @@ export default function CourseViewer() {
                               </button>
                             )}
 
-                            {/* External link for all types */}
                             {resource.url && resource.url !== "#" && (
                               <a
                                 href={resource.url}
@@ -419,7 +429,6 @@ export default function CourseViewer() {
 
           {/* ── Sidebar ──────────────────────────── */}
           <div className="space-y-5">
-
             {/* Progress card */}
             <div className="rounded-2xl bg-stone-900/60 border border-stone-700/50 p-6">
               <h3 className="font-kalam text-lg font-bold text-white mb-4">Your Progress</h3>
