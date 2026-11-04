@@ -1,5 +1,7 @@
-// app/lib/api.ts
+﻿// app/lib/api.ts
 const BASE = (process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000") + "/api/v1";
+
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 const authFetch = async (endpoint: string, options: RequestInit = {}) => {
   const token = typeof window !== "undefined" ? localStorage.getItem("accessToken") : null;
@@ -12,17 +14,110 @@ const authFetch = async (endpoint: string, options: RequestInit = {}) => {
     headers["Authorization"] = "Bearer " + token;
   }
 
-  const res = await fetch(BASE + endpoint, {
-    ...options,
-    headers,
-  });
+  const doFetch = () => fetch(BASE + endpoint, { ...options, headers });
 
-  return res;
+  try {
+    return await doFetch();
+  } catch {
+    // Render free tier may be asleep: wait and retry once on network failure
+    await sleep(4000);
+    return doFetch();
+  }
 };
 
-/* ── Auth API ──────────────────────────────────────────────────────────
- * Handles SSO token exchange with main VartaLang backend and user verification.
- */
+// Throws on non-2xx so pages can show a real error state
+async function getJSON<T>(endpoint: string, options?: RequestInit): Promise<T> {
+  const res = await authFetch(endpoint, options);
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(typeof err.detail === "string" ? err.detail : `Request failed (${res.status})`);
+  }
+  if (res.status === 204) return undefined as T;
+  return res.json();
+}
+
+/* ── Types (match the live openapi.json) ── */
+export interface EnrollmentOut {
+  id: string;
+  course_id: string;
+  course_title: string;
+  course_thumbnail_url?: string | null;
+  course_language: string;
+  course_level: string;
+  status: string;
+  progress_percentage: number;
+  total_lessons: number;
+  completed_lessons: number;
+  enrolled_at: string;
+  completed_at?: string | null;
+}
+
+export interface ArticleOut {
+  id: string;
+  title: string;
+  slug?: string | null;
+  excerpt: string;
+  content?: string | null;
+  date: string;
+  readTime: string;
+  tag: string;
+  color: string;
+  emoji: string;
+  author_name: string;
+}
+
+export interface JobPostingOut {
+  id: string;
+  title: string;
+  team: string;
+  type: string;
+  location: string;
+  emoji: string;
+  description?: string | null;
+  requirements: string[];
+  apply_email: string;
+  is_active: boolean;
+}
+
+export interface ChallengeOut {
+  id: string;
+  title: string;
+  desc: string;
+  type: string;
+  color: string;
+  eta: string;
+  xp_reward: number;
+}
+
+export interface LeaderboardEntryOut {
+  rank: number;
+  user_name: string;
+  avatar_url?: string | null;
+  language: string;
+  xp: number;
+}
+
+export interface CertificationOut {
+  id: string;
+  title: string;
+  desc: string;
+  color: string;
+  eta: string;
+  levels: string[];
+}
+
+export interface CertificationVerifyResponse {
+  valid: boolean;
+  certificate_id: string;
+  recipient_name?: string | null;
+  certification_title?: string | null;
+  language?: string | null;
+  proficiency_level?: string | null;
+  issue_date?: string | null;
+  issuer: string;
+}
+
+/* ── APIs ── */
 export const authAPI = {
   ssoExchange: async (code: string) => {
     const res = await authFetch("/auth/sso/exchange", {
@@ -49,17 +144,12 @@ export const authAPI = {
   },
 };
 
-/* ── Course API ────────────────────────────────────────────────────────
- * Connects to LMS courses catalog, language taxonomy, and instructor course builder.
- */
 export const courseAPI = {
-  // TODO: Connect to backend API: GET /api/v1/courses/languages (fetch supported vernacular languages)
   getLanguages: async () => {
     const res = await authFetch("/courses/languages");
     if (!res.ok) return [];
     return res.json();
   },
-  // TODO: Connect to backend API: GET /api/v1/courses/instructors (fetch verified educators)
   getInstructors: async (language?: string) => {
     const url = language
       ? "/courses/instructors?language=" + encodeURIComponent(language)
@@ -68,7 +158,6 @@ export const courseAPI = {
     if (!res.ok) return [];
     return res.json();
   },
-  // TODO: Connect to backend API: GET /api/v1/courses (filter courses by language, level, instructor)
   getAll: async (filters: any = "") => {
     if (typeof filters === "string") {
       return authFetch("/courses" + (filters ? "?" + filters : ""));
@@ -77,52 +166,42 @@ export const courseAPI = {
     if (filters?.language) params.append("language", filters.language);
     if (filters?.instructor_id) params.append("instructor_id", filters.instructor_id);
     if (filters?.level) params.append("level", filters.level);
+    if (filters?.category) params.append("category", filters.category);
+    if (filters?.featured !== undefined) params.append("featured", String(filters.featured));
     const queryString = params.toString() ? "?" + params.toString() : "";
     const res = await authFetch("/courses" + queryString);
     if (!res.ok) return [];
     return res.json();
   },
-  // TODO: Connect to backend API: GET /api/v1/courses/:id (course curriculum details and resources)
   getOne: async (courseId: string) => {
     const res = await authFetch("/courses/" + courseId);
     if (!res.ok) throw new Error("Course not found");
     return res.json();
   },
-  // TODO: Connect to backend API: GET /api/v1/courses?language=:language
   getByLanguage: async (language: string) => {
     return authFetch("/courses?language=" + encodeURIComponent(language));
   },
-  // TODO: Connect to backend API: GET /api/v1/courses/instructor/mine (fetch current instructor's courses)
   getInstructorCourses: async () => {
     return authFetch("/courses/instructor/mine");
   },
-  // TODO: Connect to backend API: GET /api/v1/enrollments/mine (fetch logged-in learner's enrolled courses)
   getMyCourses: async () => {
     return authFetch("/enrollments/mine");
   },
-  // TODO: Connect to backend API: POST /api/v1/enrollments/:courseId/enroll
   enroll: async (courseId: string) => {
     return authFetch("/enrollments/" + courseId + "/enroll", { method: "POST" });
   },
-  // TODO: Connect to backend API: POST /api/v1/courses (create new course)
   create: async (body: object) => {
     return authFetch("/courses", { method: "POST", body: JSON.stringify(body) });
   },
-  // TODO: Connect to backend API: PUT /api/v1/courses/:id (update course details & resources)
   update: async (id: string, body: object) => {
     return authFetch("/courses/" + id, { method: "PUT", body: JSON.stringify(body) });
   },
-  // TODO: Connect to backend API: DELETE /api/v1/courses/:id (delete course)
   delete: async (id: string) => {
     return authFetch("/courses/" + id, { method: "DELETE" });
   },
 };
 
-/* ── Enrollment & Progress API ─────────────────────────────────────────
- * Tracks student enrollment, lesson completion, and practice progress.
- */
 export const enrollmentAPI = {
-  // TODO: Connect to backend API: POST /api/v1/enrollments/:courseId/enroll
   enroll: async (courseId: string, demoBypass = false) => {
     const res = await authFetch(
       "/enrollments/" + courseId + "/enroll" + (demoBypass ? "?demo_bypass=true" : ""),
@@ -134,13 +213,13 @@ export const enrollmentAPI = {
     }
     return res.json();
   },
-  // TODO: Connect to backend API: GET /api/v1/enrollments/mine
   getMyCourses: async () => {
     const res = await authFetch("/enrollments/mine");
     if (!res.ok) return [];
     return res.json();
   },
-  // TODO: Connect to backend API: POST /api/v1/enrollments/:courseId/lessons/:lessonId/toggle
+  // Same as getMyCourses but throws on failure (for real error states)
+  mine: () => getJSON<EnrollmentOut[]>("/enrollments/mine"),
   toggleLesson: async (courseId: string, lessonId: string) => {
     const res = await authFetch("/enrollments/" + courseId + "/lessons/" + lessonId + "/toggle", {
       method: "POST",
@@ -148,7 +227,6 @@ export const enrollmentAPI = {
     if (!res.ok) throw new Error("Failed to update progress");
     return res.json();
   },
-  // TODO: Connect to backend API: GET /api/v1/enrollments/:courseId/progress
   getProgress: async (courseId: string) => {
     const res = await authFetch("/enrollments/" + courseId + "/progress");
     if (!res.ok) return null;
@@ -156,24 +234,41 @@ export const enrollmentAPI = {
   },
 };
 
-/* ── Admin API ──────────────────────────────────────────────────────────
- * TODO: Backend Implementation Needed:
- * - GET /api/v1/admin/stats (platform-wide metrics from database)
- * - GET /api/v1/admin/users (paginated user management with role filtering)
- * - PATCH /api/v1/admin/users/:id/role (promote/demote user roles)
- * - PATCH /api/v1/admin/users/:id/status (suspend/activate accounts)
- * - DELETE /api/v1/admin/users/:id (permanent account deletion)
- * These stub placeholders prevent client-side build errors until the backend is connected.
- */
-const notImplemented = (): Promise<Response> =>
-  Promise.reject(new Error("Admin API not implemented yet in backend"));
+export const articleAPI = {
+  list: (tag?: string) =>
+    getJSON<ArticleOut[]>("/articles" + (tag ? "?tag=" + encodeURIComponent(tag) : "")),
+  get: (slugOrId: string) => getJSON<ArticleOut>("/articles/" + encodeURIComponent(slugOrId)),
+};
 
+export const careerAPI = {
+  jobs: () => getJSON<JobPostingOut[]>("/careers/jobs"),
+};
+
+export const challengeAPI = {
+  list: () => getJSON<ChallengeOut[]>("/challenges"),
+  leaderboard: () => getJSON<LeaderboardEntryOut[]>("/challenges/leaderboard"),
+};
+
+export const certificationAPI = {
+  list: () => getJSON<CertificationOut[]>("/certifications"),
+  verify: (certificateId: string) =>
+    getJSON<CertificationVerifyResponse>("/certifications/verify/" + encodeURIComponent(certificateId)),
+};
+
+// Admin endpoints now exist in the backend. They return Response, as before.
+// Note: roles are synced from the main VartaLang platform on every login,
+// so a role changed here is overwritten at that user's next login.
 export const adminAPI = {
-  getStats: () => authFetch("/courses/languages"),
-  getUsers: () => authFetch("/auth/me"),
-  updateRole: (_id: string, _role: string) => notImplemented(),
-  toggleStatus: (_id: string) => notImplemented(),
-  deleteUser: (_id: string) => notImplemented(),
+  getStats: () => authFetch("/admin/stats"),
+  getUsers: (params = "") => authFetch("/admin/users" + (params ? "?" + params : "")),
+  updateRole: (id: string, role: string) =>
+    authFetch("/admin/users/" + id + "/role", { method: "PATCH", body: JSON.stringify({ role }) }),
+  toggleStatus: (id: string, isActive?: boolean) =>
+    authFetch("/admin/users/" + id + "/status", {
+      method: "PATCH",
+      body: JSON.stringify(isActive !== undefined ? { is_active: isActive } : {}),
+    }),
+  deleteUser: (id: string) => authFetch("/admin/users/" + id, { method: "DELETE" }),
 };
 
 export default authFetch;
