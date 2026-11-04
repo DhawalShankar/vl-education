@@ -202,18 +202,27 @@ export default function StudentDashboard() {
         {/* Hero Welcome Header */}
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
           <div>
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/15 border border-amber-500/30 mb-3">
-              <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-              <span className="text-xs font-semibold text-amber-200 capitalize">
-                {user.role} Dashboard
-              </span>
-            </div>
-            <h1 className="font-kalam text-4xl sm:text-5xl font-bold text-white mb-2 tracking-tight">
-              Welcome back, {user.full_name || "Learner"} 👋
-            </h1>
-            <p className="text-stone-400 text-base max-w-xl">
-              Track your daily progress, jump into practice labs, and master Indian languages.
-            </p>
+            {(() => {
+              const displayName = user.full_name?.trim() || user.name?.trim() || "";
+              const firstName = displayName ? displayName.split(" ")[0] : "";
+              const personalizedTitle = firstName ? `${firstName}'s Dashboard` : "My Dashboard";
+              return (
+                <>
+                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/15 border border-amber-500/30 mb-3">
+                    <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+                    <span className="text-xs font-semibold text-amber-200">
+                      {personalizedTitle}
+                    </span>
+                  </div>
+                  <h1 className="font-kalam text-4xl sm:text-5xl font-bold text-white mb-2 tracking-tight">
+                    {personalizedTitle}
+                  </h1>
+                  <p className="text-stone-400 text-base max-w-xl">
+                    Welcome back, {displayName || "Learner"}! Track your daily progress, jump into practice labs, and master Indian languages.
+                  </p>
+                </>
+              );
+            })()}
           </div>
 
           {/* Quick Action Buttons */}

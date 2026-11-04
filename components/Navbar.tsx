@@ -250,7 +250,9 @@ export default function Navbar() {
                       <span>Admin Portal</span>
                     </Link>
                   )}
-                  {user.role === "instructor" && (
+                  {(user.role === "instructor" ||
+                    user.role === "admin" ||
+                    user.email?.toLowerCase() === "cosmoindiaprakashan@gmail.com") && (
                     <Link
                       href="/dashboard/instructor"
                       onClick={() => setShowMenu(false)}

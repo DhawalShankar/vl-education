@@ -101,7 +101,7 @@ export default function HomePage() {
 
   const goLearn = () => router.push(isAuthenticated ? "/dashboard" : "/learn");
   const goTeach = () =>
-    router.push(isAuthenticated && isInstructor ? "/instructor-dashboard" : "/auth/login");
+    router.push(isAuthenticated && isInstructor ? "/dashboard/instructor" : "/auth/login");
 
   return (
     <div className="min-h-screen bg-[#090807] text-white selection:bg-[#FF5500] selection:text-black">
