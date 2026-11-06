@@ -7,6 +7,11 @@ export const metadata: Metadata = {
   title: "VartaLang | Premium Language Education Platform",
   description:
     "Master Indian languages through expert-led instruction, structured curriculum, and immersive practice. Professional certification available.",
+  icons: {
+    icon: "/logo.png",
+    shortcut: "/logo.png",
+    apple: "/logo.png",
+  },
 };
 
 export default function RootLayout({
