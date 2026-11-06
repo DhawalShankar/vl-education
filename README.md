@@ -1,6 +1,6 @@
 # VartaLang
 
-**VartaLang** is a language-education platform for learning Indian and foreign languages through structured courses, practice labs, challenges, and certification tracks. This repository contains the frontend web app, built with Next.js.
+**VartaLang** is a language-education platform for learning Indian and foreign languages through structured courses, practice labs, challenges, and certification tracks. This private repository contains the frontend web app, built with Next.js, and is owned by **Dhrupad Research Labs Pvt Ltd**.
 
 > This app talks to separate backend services (see [Environment Variables](#environment-variables)) for authentication, courses, enrollments, and administration. Those backends are not included in this repository.
 
@@ -36,7 +36,7 @@
 ### Installation
 
 ```bash
-git clone https://github.com/DhawalShankar/vl-education.git
+git clone <private-repository-url>
 cd vl-education
 npm install
 ```
@@ -134,6 +134,6 @@ Daily streaks are currently stored per user in browser `localStorage` by `app/li
 
 The app can be deployed on any Next.js-compatible host (e.g. [Vercel](https://vercel.com/new)). Make sure `NEXT_PUBLIC_API_URL` is set to your production backend URL in the hosting platform's environment settings.
 
-## License
+## Ownership & License
 
-No license file is currently included in this repository. Add one (e.g. MIT) if you intend for this project to be reused by others.
+This is a private repository owned by **Dhrupad Research Labs Pvt Ltd**. The source code and associated materials are proprietary and must not be copied, redistributed, or reused without written permission. No open-source license is granted.
