@@ -4,7 +4,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, BookOpen, CheckCircle, Circle, ExternalLink, Lock, Play } from "lucide-react";
+import { ArrowLeft, BookOpen, CheckCircle, Circle, ExternalLink, Lock, Play, UserCircle } from "lucide-react";
 import { useAuth } from "@/app/context/AuthContext";
 import { enrollmentAPI, learnAPI, LessonOut } from "@/app/lib/api";
 import { useApi } from "@/app/lib/useApi";
@@ -144,6 +144,10 @@ export default function CourseViewer() {
   const embed = selected ? toYouTubeEmbed(selected.youtube_video_id) : null;
   const notes = selected ? safeUrl(selected.notes_url) : null;
 
+  // Public instructor profile (/instructors/[id])
+  const instructorId = c.instructor?.id ? String(c.instructor.id) : null;
+  const instructorHref = instructorId ? `/instructors/${instructorId}` : null;
+
   const enrollControl = enrolled ? null : c.is_free ? (
     <button
       onClick={handleEnroll}
@@ -185,7 +189,19 @@ export default function CourseViewer() {
             <span className="px-2.5 py-1 rounded-full bg-amber-500/15 text-amber-300 font-semibold capitalize">{c.level}</span>
             <span>{c.language}</span>
             {c.duration && <span>• {c.duration}</span>}
-            <span>• {c.instructor?.full_name}</span>
+            <span>
+              •{" "}
+              {instructorHref ? (
+                <Link
+                  href={instructorHref}
+                  className="text-amber-300/90 hover:text-amber-300 hover:underline underline-offset-2 transition-colors"
+                >
+                  {c.instructor?.full_name}
+                </Link>
+              ) : (
+                c.instructor?.full_name
+              )}
+            </span>
           </div>
           <h1 className="font-kalam text-4xl md:text-5xl font-bold mb-3 leading-tight">{c.title}</h1>
           {c.description && <p className="text-stone-400 max-w-2xl">{c.description}</p>}
@@ -333,6 +349,27 @@ export default function CourseViewer() {
                 </>
               )}
             </div>
+
+            {/* Instructor */}
+            {c.instructor?.full_name && (
+              <div className="rounded-2xl bg-stone-900/60 border border-stone-700/50 p-6">
+                <h3 className="font-kalam text-lg font-bold mb-3">Your instructor</h3>
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-11 h-11 rounded-full bg-gradient-to-br from-amber-500/30 to-orange-600/30 border border-amber-500/30 flex items-center justify-center text-amber-300 font-kalam text-xl font-bold shrink-0">
+                    {c.instructor.full_name.trim()[0]?.toUpperCase() ?? "?"}
+                  </div>
+                  <p className="text-sm font-semibold text-white min-w-0 truncate">{c.instructor.full_name}</p>
+                </div>
+                {instructorHref && (
+                  <Link
+                    href={instructorHref}
+                    className="w-full inline-flex items-center justify-center gap-2 py-2.5 rounded-xl bg-stone-800 hover:bg-stone-700 text-stone-200 text-sm font-semibold border border-stone-700/50 transition-colors"
+                  >
+                    <UserCircle className="w-4 h-4" /> View instructor profile
+                  </Link>
+                )}
+              </div>
+            )}
 
             <div className="rounded-2xl bg-stone-900/60 border border-stone-700/50 p-4">
               <h3 className="font-kalam text-lg font-bold mb-3 px-2">Curriculum</h3>
