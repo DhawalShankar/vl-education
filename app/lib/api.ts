@@ -29,16 +29,36 @@ const authFetch = async (endpoint: string, options: RequestInit = {}) => {
   }
 };
 
+// FastAPI returns `detail` as a string for HTTPException and as a list for 422 validation errors.
+// This turns either into a readable message.
+function errorMessage(err: any, fallback: string): string {
+  const d = err?.detail;
+  if (typeof d === "string") return d;
+  if (Array.isArray(d) && d.length) {
+    return d
+      .map((x) => (typeof x?.msg === "string" ? x.msg.replace(/^Value error,\s*/i, "") : ""))
+      .filter(Boolean)
+      .join(", ") || fallback;
+  }
+  return fallback;
+}
+
 // Throws on non-2xx so pages can show a real error state
 async function getJSON<T>(endpoint: string, options?: RequestInit): Promise<T> {
   const res = await authFetch(endpoint, options);
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
-    throw new Error(typeof err.detail === "string" ? err.detail : `Request failed (${res.status})`);
+    throw new Error(errorMessage(err, `Request failed (${res.status})`));
   }
   if (res.status === 204) return undefined as T;
   return res.json();
 }
+
+// Builds fetch options for a write request
+const send = (method: string, body?: unknown): RequestInit => ({
+  method,
+  ...(body !== undefined ? { body: JSON.stringify(body) } : {}),
+});
 
 /* ── Types (match the live openapi.json) ── */
 export interface EnrollmentOut {
@@ -130,7 +150,7 @@ export const authAPI = {
     });
     if (!res.ok) {
       const errData = await res.json().catch(() => ({}));
-      const msg = typeof errData.detail === "string" ? errData.detail : "Failed to exchange SSO code";
+      const msg = errorMessage(errData, "Failed to exchange SSO code");
       const err = new Error(msg);
       (err as any).status = res.status;
       throw err;
@@ -213,7 +233,7 @@ export const enrollmentAPI = {
     );
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
-      throw new Error(typeof err.detail === "string" ? err.detail : "Enrollment failed");
+      throw new Error(errorMessage(err, "Enrollment failed"));
     }
     return res.json();
   },
@@ -259,22 +279,6 @@ export const certificationAPI = {
     getJSON<CertificationVerifyResponse>("/certifications/verify/" + encodeURIComponent(certificateId)),
 };
 
-// Admin endpoints now exist in the backend. They return Response, as before.
-// Note: roles are synced from the main VartaLang platform on every login,
-// so a role changed here is overwritten at that user's next login.
-export const adminAPI = {
-  getStats: () => authFetch("/admin/stats"),
-  getUsers: (params = "") => authFetch("/admin/users" + (params ? "?" + params : "")),
-  updateRole: (id: string, role: string) =>
-    authFetch("/admin/users/" + id + "/role", { method: "PATCH", body: JSON.stringify({ role }) }),
-  toggleStatus: (id: string, isActive?: boolean) =>
-    authFetch("/admin/users/" + id + "/status", {
-      method: "PATCH",
-      body: JSON.stringify(isActive !== undefined ? { is_active: isActive } : {}),
-    }),
-  deleteUser: (id: string) => authFetch("/admin/users/" + id, { method: "DELETE" }),
-};
-
 /* ── Learning catalog / player (matches live openapi.json) ── */
 export interface LanguageSummary {
   language: string;
@@ -310,12 +314,16 @@ export interface CourseCard {
   resources: CourseResource[];
   instructor_id: string;
   instructor: InstructorPublic;
-  status: string;
+  status: string; // draft | pending_review | published | rejected | archived
   is_free: boolean;
   is_featured: boolean;
   modules_count: number;
   lessons_count: number;
   enrolled_count: number;
+  // Approval workflow
+  rejection_reason?: string | null;
+  submitted_at?: string | null;
+  managed_by_admin: boolean;
 }
 
 export interface LessonOut {
@@ -382,6 +390,7 @@ export const learnAPI = {
 };
 
 /* ── Instructor studio ── */
+// The instructor's OWN profile (includes payout details; the bank account comes back masked)
 export interface InstructorProfile {
   name: string;
   title: string;
@@ -395,6 +404,21 @@ export interface InstructorProfile {
   website?: string | null;
   upiId?: string | null;
   bankAccount?: string | null;
+}
+
+// Public instructor page: no payout details. 404 unless the instructor has a published course.
+export interface InstructorPublicProfile {
+  userId: string;
+  name: string;
+  title: string;
+  bio: string;
+  languages: string[];
+  experienceYears: number;
+  avatarUrl?: string | null;
+  twitter?: string | null;
+  linkedin?: string | null;
+  youtube?: string | null;
+  website?: string | null;
 }
 
 export interface CourseInput {
@@ -417,22 +441,19 @@ export interface LessonInput {
   is_preview: boolean;
 }
 
-const send = (method: string, body?: unknown): RequestInit => ({
-  method,
-  ...(body !== undefined ? { body: JSON.stringify(body) } : {}),
-});
-
 export const instructorAPI = {
   myCourses: () => getJSON<CourseCard[]>("/courses/instructor/mine"),
   course: (id: string) => getJSON<CourseDetail>("/courses/" + id),
 
-  // New courses are created as drafts; the instructor publishes explicitly
+  // New courses are created as drafts. Going live needs submit() + admin approval.
   createCourse: (body: CourseInput) =>
     getJSON<CourseDetail>("/courses", send("POST", { ...body, isPublished: false, modules: 0 })),
   updateCourse: (id: string, body: Partial<CourseInput>) =>
     getJSON<CourseDetail>("/courses/" + id, send("PUT", body)),
-  setStatus: (id: string, status: "draft" | "published" | "archived") =>
+  // Instructors can only move a course back to draft (withdraw / take offline)
+  setStatus: (id: string, status: "draft") =>
     getJSON<CourseCard>("/courses/" + id + "/status", send("PATCH", { status })),
+  submit: (id: string) => getJSON<CourseCard>("/courses/" + id + "/submit", send("POST")),
   deleteCourse: (id: string) => getJSON<void>("/courses/" + id, send("DELETE")),
 
   addModule: (courseId: string, body: { title: string; description?: string; order_index: number }) =>
@@ -458,12 +479,85 @@ export const instructorAPI = {
     if (res.status === 404) return null;
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
-      throw new Error(typeof err.detail === "string" ? err.detail : `Request failed (${res.status})`);
+      throw new Error(errorMessage(err, `Request failed (${res.status})`));
     }
     return res.json();
   },
   saveProfile: (body: Partial<InstructorProfile> & { name: string }) =>
     getJSON<InstructorProfile>("/instructor/profile", send("POST", body)),
+
+  // Public page for any instructor. Throws (404) unless they have a published course.
+  publicProfile: (userId: string) =>
+    getJSON<InstructorPublicProfile>("/instructor/profile?user_id=" + encodeURIComponent(userId)),
+};
+
+/* ── Admin ──
+   Roles are synced from the main VartaLang platform on every login, so there is no role/status
+   editing here. Every /admin endpoint enforces admin access on the server. */
+export interface AdminStats {
+  total_users: number; // everyone who has logged in via SSO at least once
+  new_users_7d: number;
+  active_users_7d: number;
+  active_users_30d: number;
+  students: number;
+  instructors: number;
+  admins: number;
+  courses_by_status: Record<string, number>; // draft | pending_review | published | rejected | archived
+}
+
+export interface AdminUser {
+  id: string;
+  full_name: string;
+  email: string;
+  role: "student" | "instructor" | "admin";
+  is_active: boolean;
+  created_at: string;
+  first_login_at: string | null;
+  last_login_at: string | null;
+  login_count: number;
+}
+
+export interface AdminCourse {
+  id: string;
+  title: string;
+  language: string;
+  level: string;
+  status: string;
+  enrolled_count: number;
+  instructor_name: string | null;
+  created_at: string;
+  price: string | number;
+  lessons_count: number;
+  submitted_at: string | null;
+  managed_by_admin: boolean;
+}
+
+export interface AdminInstructor {
+  id: string;
+  full_name: string;
+  email: string;
+  avatar_url?: string | null;
+}
+
+export const adminAPI = {
+  stats: () => getJSON<AdminStats>("/admin/stats"),
+  users: () => getJSON<AdminUser[]>("/admin/users"),
+  courses: () => getJSON<AdminCourse[]>("/admin/courses"),
+  instructors: () => getJSON<AdminInstructor[]>("/admin/instructors"),
+  deleteUser: (id: string) => getJSON<{ ok: boolean }>("/admin/users/" + id, send("DELETE")),
+  deleteCourse: (id: string) => getJSON<{ archived: boolean }>("/admin/courses/" + id, send("DELETE")),
+
+  // Approval workflow
+  approveCourse: (id: string) => getJSON<unknown>("/admin/courses/" + id + "/approve", send("POST")),
+  rejectCourse: (id: string, reason: string) =>
+    getJSON<unknown>("/admin/courses/" + id + "/reject", send("POST", { reason })),
+  unpublishCourse: (id: string) => getJSON<unknown>("/admin/courses/" + id + "/unpublish", send("POST")),
+  // Admin can publish a draft / archived course directly (no review step)
+  publishCourse: (id: string) =>
+    getJSON<unknown>("/courses/" + id + "/status", send("PATCH", { status: "published" })),
+  // Create a course on behalf of an instructor (admin-managed)
+  createCourse: (body: CourseInput & { instructor_id: string; publish: boolean }) =>
+    getJSON<CourseDetail>("/admin/courses", send("POST", { ...body, isPublished: body.publish })),
 };
 
 export default authFetch;

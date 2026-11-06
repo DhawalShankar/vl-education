@@ -1,45 +1,42 @@
+// app/dashboard/admin/page.tsx
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useEffect, useMemo, useState, FormEvent } from "react";
 import { useRouter } from "next/navigation";
-import { useAuth } from "@/app/context/AuthContext";
-import { adminAPI, courseAPI } from "@/app/lib/api";
+import {
+  Activity,
+  Check,
+  CheckCircle,
+  Clock,
+  EyeOff,
+  GraduationCap,
+  ListOrdered,
+  LogIn,
+  Pencil,
+  Plus,
+  Rocket,
+  Trash2,
+  UserPlus,
+  Users,
+  X,
+  XCircle,
+  type LucideIcon,
+} from "lucide-react";
+import Navbar from "@/components/Navbar";
+import Footer from "@/components/Footer";
+import { CourseFormModal, CurriculumModal, StatusBadge, errBoxCls, errMsg, inputCls } from "@/components/CourseStudio";
+import { useAuth } from "@/app/context/AuthContext";
+import { adminAPI, instructorAPI } from "@/app/lib/api";
+import type { AdminCourse, AdminUser, CourseCard } from "@/app/lib/api";
+import { useApi } from "@/app/lib/useApi";
 
-// ── Types ──────────────────────────────────────────────────────────────────────
-interface User {
-  _id: string;
-  name: string;
-  email: string;
-  role: "student" | "instructor" | "admin";
-  isActive: boolean;
-  createdAt: string;
-  lastLogin?: string;
-  enrolledCourses?: string[];
-}
+type Tab = "overview" | "review" | "courses" | "users";
 
-interface Course {
-  _id: string;
-  title: string;
-  language: string;
-  level: string;
-  isPublished: boolean;
-  enrolledCount: number;
-  instructor: { name: string; email: string };
-  createdAt: string;
-}
+/* ── helpers ── */
+const fmt = (d?: string | null) =>
+  d ? new Date(d).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" }) : "—";
 
-interface Stats {
-  totalUsers?: number;
-  totalCourses?: number;
-  totalStudents?: number;
-  totalInstructors?: number;
-}
-
-type Tab = "overview" | "users" | "courses";
-
-// ── Helpers ────────────────────────────────────────────────────────────────────
-const fmt = (d: string) =>
-  new Date(d).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
+const priceLabel = (p: string | number) => (Number(p) > 0 ? `₹${p}` : "Free");
 
 const roleColor = (role: string) => {
   if (role === "admin") return "text-amber-400 bg-amber-400/10 border-amber-400/30";
@@ -50,68 +47,40 @@ const roleColor = (role: string) => {
 const levelColor = (level: string) => {
   if (level === "mastery") return "text-purple-400 bg-purple-400/10 border-purple-400/30";
   if (level === "professional") return "text-sky-400 bg-sky-400/10 border-sky-400/30";
+  if (level === "intermediate") return "text-amber-400 bg-amber-400/10 border-amber-400/30";
   return "text-emerald-400 bg-emerald-400/10 border-emerald-400/30";
 };
 
-// ── Icons ──────────────────────────────────────────────────────────────────────
-const Icon = {
-  users: (
-    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
-        d="M17 20h5v-2a4 4 0 00-5-3.87M9 20H4v-2a4 4 0 015-3.87m6-4.13a4 4 0 10-8 0 4 4 0 008 0zm6 0a3 3 0 10-6 0 3 3 0 006 0z" />
-    </svg>
-  ),
-  courses: (
-    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
-        d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" />
-    </svg>
-  ),
-  students: (
-    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
-        d="M4.26 10.147a60.436 60.436 0 00-.491 6.347A48.627 48.627 0 0112 20.904a48.627 48.627 0 018.232-4.41 60.46 60.46 0 00-.491-6.347m-15.482 0a50.57 50.57 0 00-2.658-.813A59.905 59.905 0 0112 3.493a59.902 59.902 0 0110.399 5.84c-.896.248-1.783.52-2.658.814m-15.482 0A50.697 50.697 0 0112 13.489a50.702 50.702 0 017.74-3.342M6.75 15a.75.75 0 100-1.5.75.75 0 000 1.5zm0 0v-3.675A55.378 55.378 0 0112 8.443m-7.007 11.55A5.981 5.981 0 006.75 15.75v-1.5" />
-    </svg>
-  ),
-  instructors: (
-    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
-        d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z" />
-    </svg>
-  ),
-  logout: (
-    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
-        d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15M12 9l-3 3m0 0l3 3m-3-3h12.75" />
-    </svg>
-  ),
-  trash: (
-    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
-        d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
-    </svg>
-  ),
-};
+const searchCls =
+  "w-full max-w-sm bg-stone-900/60 border border-stone-700/50 rounded-xl px-4 py-2.5 text-sm text-stone-100 placeholder-stone-600 outline-none focus:border-amber-500/50 focus:ring-2 focus:ring-amber-500/10 transition-all";
 
-// ── Stat Card ──────────────────────────────────────────────────────────────────
-function StatCard({ label, value, icon, accent }: {
-  label: string; value: number | string; icon: React.ReactNode; accent: string;
+/* ── small components ── */
+function StatCard({
+  label,
+  value,
+  icon: Icon,
+  color,
+  loading,
+}: {
+  label: string;
+  value: number;
+  icon: LucideIcon;
+  color: string;
+  loading: boolean;
 }) {
   return (
-    <div className="relative overflow-hidden rounded-2xl bg-stone-900/60 border border-stone-700/50 p-6 backdrop-blur-sm">
-      <div className={`absolute top-0 right-0 w-24 h-24 rounded-full blur-2xl opacity-20 ${accent}`} />
-      <div className="relative">
-        <div className={`inline-flex p-2.5 rounded-xl mb-4 ${accent} bg-opacity-10 border border-white/5`}>
-          {icon}
-        </div>
-        <p className="text-3xl font-bold text-white tracking-tight">{value ?? "—"}</p>
-        <p className="text-sm text-stone-500 mt-1 font-medium">{label}</p>
+    <div className="p-5 rounded-2xl bg-stone-900/60 border border-stone-700/50 flex items-center gap-4">
+      <div className="w-10 h-10 rounded-xl bg-stone-800/70 flex items-center justify-center shrink-0">
+        <Icon className={`w-5 h-5 ${color}`} />
+      </div>
+      <div>
+        <p className="text-3xl font-bold tabular-nums tracking-tight">{loading ? "–" : value}</p>
+        <p className="text-xs text-stone-500 mt-0.5">{label}</p>
       </div>
     </div>
   );
 }
 
-// ── Badge ──────────────────────────────────────────────────────────────────────
 function Badge({ label, colorClass }: { label: string; colorClass: string }) {
   return (
     <span className={`inline-flex px-2 py-0.5 text-xs font-semibold rounded-md border capitalize ${colorClass}`}>
@@ -120,206 +89,321 @@ function Badge({ label, colorClass }: { label: string; colorClass: string }) {
   );
 }
 
-// ── Loading Screen ─────────────────────────────────────────────────────────────
-function LoadingScreen() {
+const TONES = {
+  stone: "hover:text-amber-400 hover:bg-amber-400/10",
+  green: "hover:text-emerald-400 hover:bg-emerald-400/10",
+  red: "hover:text-red-400 hover:bg-red-400/10",
+};
+
+function IconBtn({
+  title,
+  onClick,
+  disabled,
+  tone = "stone",
+  children,
+}: {
+  title: string;
+  onClick: () => void;
+  disabled?: boolean;
+  tone?: keyof typeof TONES;
+  children: React.ReactNode;
+}) {
   return (
-    <div className="min-h-screen bg-[#0a0908] flex items-center justify-center">
-      <div className="flex flex-col items-center gap-4">
-        <div className="w-12 h-12 rounded-2xl bg-linear-to-br from-amber-500 to-orange-600 animate-pulse" />
-        <p className="text-stone-500 text-sm">Loading dashboard…</p>
-      </div>
+    <button
+      onClick={onClick}
+      disabled={disabled}
+      title={title}
+      aria-label={title}
+      className={`p-2 text-stone-500 rounded-lg transition-all disabled:opacity-40 ${TONES[tone]}`}
+    >
+      {children}
+    </button>
+  );
+}
+
+/* ── reject dialog: a reason is required so the instructor knows what to fix ── */
+function RejectModal({ course, onClose, onDone }: { course: AdminCourse; onClose: () => void; onDone: () => void }) {
+  const [reason, setReason] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const submit = async (e: FormEvent) => {
+    e.preventDefault();
+    const r = reason.trim();
+    if (r.length < 5) return setError("Write a short reason so the instructor knows what to fix.");
+    setSaving(true);
+    setError(null);
+    try {
+      await adminAPI.rejectCourse(course.id, r);
+      onDone();
+    } catch (err) {
+      setError(errMsg(err, "Could not reject the course."));
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md px-4 py-6">
+      <form onSubmit={submit} className="bg-[#120F0C] border border-stone-700/80 rounded-3xl p-6 sm:p-8 w-full max-w-lg shadow-2xl space-y-4">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <h3 className="font-kalam text-3xl font-bold">Request changes</h3>
+            <p className="text-xs text-stone-500 mt-0.5">{course.title}</p>
+          </div>
+          <button type="button" onClick={onClose} className="p-2 rounded-xl bg-stone-800/80 hover:bg-stone-700 text-stone-400 hover:text-white">
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+        {error && <div className={errBoxCls}>{error}</div>}
+        <div>
+          <label className="block text-xs text-stone-400 mb-1">What should the instructor fix? *</label>
+          <textarea
+            required
+            rows={5}
+            autoFocus
+            value={reason}
+            onChange={(e) => setReason(e.target.value)}
+            placeholder="e.g. Lesson 3 has no video, and the description does not say who the course is for."
+            className={inputCls}
+          />
+          <p className="text-[11px] text-stone-500 mt-1">The instructor sees this on their course card and can resubmit after editing.</p>
+        </div>
+        <div className="flex items-center justify-end gap-3 pt-2">
+          <button type="button" onClick={onClose} className="px-5 py-2.5 rounded-xl border border-stone-700 text-stone-300 hover:bg-stone-800">
+            Cancel
+          </button>
+          <button
+            type="submit"
+            disabled={saving}
+            className="px-5 py-2.5 rounded-xl bg-red-500/90 hover:bg-red-500 text-white font-bold disabled:opacity-50"
+          >
+            {saving ? "Sending…" : "Reject course"}
+          </button>
+        </div>
+      </form>
     </div>
   );
 }
 
-// ── Main Dashboard ─────────────────────────────────────────────────────────────
+/* ═══════════════════════════ PAGE ═══════════════════════════ */
 export default function AdminDashboard() {
-  const auth = useAuth();
+  const { user, loading, isAdmin } = useAuth();
   const router = useRouter();
+  const allowed = !!user && !!isAdmin; // UX only; every /admin endpoint enforces admin on the server
 
   const [tab, setTab] = useState<Tab>("overview");
-  const [users, setUsers] = useState<User[]>([]);
-  const [courses, setCourses] = useState<Course[]>([]);
-  const [stats, setStats] = useState<Stats>({});
-  const [dataLoading, setDataLoading] = useState(false);
   const [search, setSearch] = useState("");
-  const [toast, setToast] = useState<{ msg: string; ok: boolean } | null>(null);
+  const [reloadKey, setReloadKey] = useState(0);
+  const [busyId, setBusyId] = useState<string | null>(null);
+  const [message, setMessage] = useState<{ type: "error" | "success"; text: string } | null>(null);
+  const [courseForm, setCourseForm] = useState<{ mode: "create" } | { mode: "edit"; course: CourseCard } | null>(null);
+  const [curriculum, setCurriculum] = useState<{ id: string; readOnly: boolean; note?: string } | null>(null);
+  const [rejecting, setRejecting] = useState<AdminCourse | null>(null);
 
-  // ── Toast ──────────────────────────────────────────────────────────────────
-  const showToast = (msg: string, ok: boolean) => {
-    setToast({ msg, ok });
-    setTimeout(() => setToast(null), 3000);
-  };
-
-  // ── Fetch data ─────────────────────────────────────────────────────────────
-  // TODO: Connect to backend API: GET /api/v1/admin/users & GET /api/v1/admin/stats
-  const loadData = useCallback(async () => {
-    setDataLoading(true);
-    try {
-      const [usersRes, coursesRes] = await Promise.all([
-        adminAPI.getUsers(),
-        courseAPI.getAll("limit=100"),
-      ]);
-
-      const usersData = await usersRes?.json();
-      const coursesData = await coursesRes?.json();
-
-      const userList: User[] = usersData?.data?.users ?? usersData?.data ?? [];
-      const courseList: Course[] = coursesData?.data?.courses ?? [];
-
-      setUsers(userList);
-      setCourses(courseList);
-      setStats({
-        totalUsers: userList.length,
-        totalCourses: courseList.length,
-        totalStudents: userList.filter((u) => u.role === "student").length,
-        totalInstructors: userList.filter((u) => u.role === "instructor").length,
-      });
-    } catch {
-      showToast("Failed to load data", false);
-    } finally {
-      setDataLoading(false);
-    }
-  }, []);
-
-  // ── Auth guard — pehle auth settle hone do, tab hi aage badho ──────────────
   useEffect(() => {
-    if (!auth || auth.loading) return; // auth abhi load ho raha hai — wait karo
+    if (loading) return;
+    if (!user) router.replace("/auth/login");
+    else if (!allowed) router.replace("/dashboard");
+  }, [loading, user, allowed, router]);
 
-    const isAllowed =
-      auth.isAdmin ||
-      auth.user?.role === "admin" ||
-      auth.user?.email?.toLowerCase() === "cosmoindiaprakashan@gmail.com";
-    if (!auth.isAuthenticated || !isAllowed) {
-      router.replace("/auth/login"); // admin nahi hai toh login pe bhejo
-      return;
-    }
+  const stats = useApi(() => adminAPI.stats(), [reloadKey, user?.id], allowed);
+  const usersQ = useApi(() => adminAPI.users(), [reloadKey, user?.id], allowed);
+  const coursesQ = useApi(() => adminAPI.courses(), [reloadKey, user?.id], allowed);
+  const instructorsQ = useApi(() => adminAPI.instructors(), [reloadKey, user?.id], allowed);
 
-    // Admin confirm — ab data load karo
-    loadData();
-  }, [auth?.loading, auth?.isAuthenticated, auth?.isAdmin]); // eslint-disable-line
+  const users: AdminUser[] = usersQ.data ?? [];
+  const courses: AdminCourse[] = coursesQ.data ?? [];
+  const s = stats.data;
+  const byStatus = s?.courses_by_status ?? {};
+  const totalCourses = Object.values(byStatus).reduce((a, n) => a + n, 0);
 
-  // ── Show loading while auth is settling ───────────────────────────────────
-  if (!auth || auth.loading) return <LoadingScreen />;
+  const reload = () => setReloadKey((k) => k + 1);
 
-  // ── User actions ───────────────────────────────────────────────────────────
-  const handleRoleChange = async (id: string, role: string) => {
-    try {
-      const res = await adminAPI.updateRole(id, role);
-      if (res?.ok) {
-        setUsers((prev) => prev.map((u) => (u._id === id ? { ...u, role: role as User["role"] } : u)));
-        showToast("Role updated!", true);
-      } else throw new Error();
-    } catch { showToast("Failed to update role", false); }
-  };
-
-  const handleToggle = async (id: string) => {
-    try {
-      const res = await adminAPI.toggleStatus(id);
-      if (res?.ok) {
-        setUsers((prev) => prev.map((u) => (u._id === id ? { ...u, isActive: !u.isActive } : u)));
-        showToast("Status updated!", true);
-      } else throw new Error();
-    } catch { showToast("Failed to toggle status", false); }
-  };
-
-  const handleDeleteUser = async (id: string) => {
-    if (!confirm("Delete this user permanently?")) return;
-    try {
-      const res = await adminAPI.deleteUser(id);
-      if (res?.ok) {
-        setUsers((prev) => prev.filter((u) => u._id !== id));
-        showToast("User deleted", true);
-      } else throw new Error();
-    } catch { showToast("Failed to delete user", false); }
-  };
-
-  const handleDeleteCourse = async (id: string) => {
-    if (!confirm("Delete this course permanently?")) return;
-    try {
-      const res = await courseAPI.delete(id);
-      if (res?.ok) {
-        setCourses((prev) => prev.filter((c) => c._id !== id));
-        showToast("Course deleted", true);
-      } else throw new Error();
-    } catch { showToast("Failed to delete course", false); }
-  };
-
-  // ── Filtered lists ─────────────────────────────────────────────────────────
-  const filteredUsers = users.filter(
-    (u) =>
-      u.name.toLowerCase().includes(search.toLowerCase()) ||
-      u.email.toLowerCase().includes(search.toLowerCase())
+  // Oldest submission first, so nobody waits forever
+  const queue = useMemo(
+    () =>
+      courses
+        .filter((c) => c.status === "pending_review")
+        .sort((a, b) => +new Date(a.submitted_at ?? a.created_at) - +new Date(b.submitted_at ?? b.created_at)),
+    [courses]
   );
 
+  const recentUsers = useMemo(
+    () => [...users].sort((a, b) => +new Date(b.created_at) - +new Date(a.created_at)).slice(0, 5),
+    [users]
+  );
+  const recentCourses = useMemo(
+    () => [...courses].sort((a, b) => +new Date(b.created_at) - +new Date(a.created_at)).slice(0, 5),
+    [courses]
+  );
+
+  const q = search.trim().toLowerCase();
+  const filteredUsers = users.filter(
+    (u) => u.full_name.toLowerCase().includes(q) || u.email.toLowerCase().includes(q)
+  );
   const filteredCourses = courses.filter(
     (c) =>
-      c.title.toLowerCase().includes(search.toLowerCase()) ||
-      c.language.toLowerCase().includes(search.toLowerCase())
+      c.title.toLowerCase().includes(q) ||
+      c.language.toLowerCase().includes(q) ||
+      (c.instructor_name ?? "").toLowerCase().includes(q)
   );
+
+  /* ── actions ── */
+  // fn returns the success text
+  const act = async (id: string, fn: () => Promise<string>, fallback: string) => {
+    setBusyId(id);
+    setMessage(null);
+    try {
+      setMessage({ type: "success", text: await fn() });
+      reload();
+    } catch (e) {
+      setMessage({ type: "error", text: errMsg(e, fallback) });
+    } finally {
+      setBusyId(null);
+    }
+  };
+
+  const deleteUser = (u: AdminUser) => {
+    if (
+      !confirm(
+        `Delete ${u.full_name} (${u.email})?\n\nTheir LMS account will be deactivated and they will not be able to log in again. Payment records are kept.`
+      )
+    )
+      return;
+    return act(
+      u.id,
+      async () => {
+        await adminAPI.deleteUser(u.id);
+        return "User deleted.";
+      },
+      "Failed to delete user."
+    );
+  };
+
+  const deleteCourse = (c: AdminCourse) => {
+    const note =
+      c.enrolled_count > 0
+        ? `\n\n${c.enrolled_count} student(s) are enrolled. The course will be archived and hidden; sales records are kept.`
+        : "";
+    if (!confirm(`Delete "${c.title}"?${note}`)) return;
+    return act(
+      c.id,
+      async () => {
+        const res = await adminAPI.deleteCourse(c.id);
+        return res?.archived ? "Course archived." : "Course deleted.";
+      },
+      "Failed to delete course."
+    );
+  };
+
+  const approve = (c: AdminCourse) =>
+    act(
+      c.id,
+      async () => {
+        await adminAPI.approveCourse(c.id);
+        return `"${c.title}" is now live.`;
+      },
+      "Could not approve the course."
+    );
+
+  // Draft / archived courses have no approval step: the admin publishes them directly
+  const publish = (c: AdminCourse) =>
+    act(
+      c.id,
+      async () => {
+        await adminAPI.publishCourse(c.id);
+        return `"${c.title}" is now live.`;
+      },
+      "Could not publish the course."
+    );
+
+  const unpublish = (c: AdminCourse) => {
+    if (!confirm(`Take "${c.title}" offline? Enrolled students will lose access until it is published again.`)) return;
+    return act(
+      c.id,
+      async () => {
+        await adminAPI.unpublishCourse(c.id);
+        return `"${c.title}" was taken offline.`;
+      },
+      "Could not unpublish the course."
+    );
+  };
+
+  const openEdit = async (c: AdminCourse) => {
+    setBusyId(c.id);
+    setMessage(null);
+    try {
+      setCourseForm({ mode: "edit", course: await instructorAPI.course(c.id) });
+    } catch (e) {
+      setMessage({ type: "error", text: errMsg(e, "Could not load the course.") });
+    } finally {
+      setBusyId(null);
+    }
+  };
+
+  if (loading || !allowed) {
+    return (
+      <div className="min-h-screen bg-[#0a0908] flex items-center justify-center">
+        <div className="text-amber-400 text-2xl animate-pulse">Loading...</div>
+      </div>
+    );
+  }
 
   const tabs: { id: Tab; label: string }[] = [
     { id: "overview", label: "Overview" },
-    { id: "users", label: `Users (${users.length})` },
+    { id: "review", label: `Review queue (${queue.length})` },
     { id: "courses", label: `Courses (${courses.length})` },
+    { id: "users", label: `Users (${users.length})` },
+  ];
+
+  const cards: { label: string; value: number; icon: LucideIcon; color: string }[] = [
+    { label: "Users (logged in via SSO)", value: s?.total_users ?? 0, icon: LogIn, color: "text-amber-400" },
+    { label: "Active, last 7 days", value: s?.active_users_7d ?? 0, icon: Activity, color: "text-emerald-400" },
+    { label: "Active, last 30 days", value: s?.active_users_30d ?? 0, icon: Activity, color: "text-teal-400" },
+    { label: "New, last 7 days", value: s?.new_users_7d ?? 0, icon: UserPlus, color: "text-sky-400" },
+    { label: "Students", value: s?.students ?? 0, icon: GraduationCap, color: "text-emerald-400" },
+    { label: "Instructors", value: s?.instructors ?? 0, icon: Users, color: "text-purple-400" },
+    { label: "Live courses", value: byStatus.published ?? 0, icon: CheckCircle, color: "text-emerald-400" },
+    { label: "Awaiting review", value: byStatus.pending_review ?? 0, icon: Clock, color: "text-amber-400" },
   ];
 
   return (
-    <div className="min-h-screen bg-[#0a0908] text-white">
-      {/* Background blobs */}
-      <div className="fixed inset-0 pointer-events-none">
-        <div className="absolute top-0 left-1/4 w-96 h-96 bg-amber-600/5 rounded-full blur-3xl" />
-        <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-orange-600/5 rounded-full blur-3xl" />
-      </div>
+    <div className="min-h-screen bg-[#0a0908] text-white flex flex-col justify-between">
+      <Navbar />
 
-      {/* Toast */}
-      {toast && (
-        <div className={`fixed top-6 right-6 z-50 px-5 py-3 rounded-xl text-sm font-medium shadow-2xl border transition-all ${
-          toast.ok
-            ? "bg-emerald-500/20 border-emerald-500/30 text-emerald-300"
-            : "bg-red-500/20 border-red-500/30 text-red-300"
-        }`}>
-          {toast.msg}
+      <main className="max-w-7xl mx-auto px-6 pt-32 pb-20 w-full">
+        <div className="mb-8">
+          <h1 className="font-kalam text-4xl sm:text-5xl font-bold tracking-tight">Admin Dashboard</h1>
+          <p className="text-stone-400 text-sm mt-1">Review courses, manage users, and monitor logins.</p>
         </div>
-      )}
 
-      {/* Header */}
-      <header className="sticky top-0 z-40 border-b border-stone-800/60 bg-[#0a0908]/90 backdrop-blur-md">
-        <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <img src="/logo.png" alt="VartaLang" className="h-8 w-auto object-contain drop-shadow-lg" />
-            <span className="text-stone-600 text-sm mx-2">/</span>
-            <span className="text-stone-400 text-sm">Admin</span>
-          </div>
-          <div className="flex items-center gap-4">
-            <span className="text-sm text-stone-500 hidden sm:block">{auth?.user?.email}</span>
-            <button
-              onClick={() => auth?.logout().then(() => router.replace("/auth/login"))}
-              className="flex items-center gap-2 px-3 py-1.5 text-sm text-stone-400 hover:text-white border border-stone-700/50 hover:border-stone-500 rounded-lg transition-all"
-            >
-              {Icon.logout}
-              <span className="hidden sm:block">Logout</span>
+        {message && (
+          <div
+            className={`mb-8 px-5 py-3 rounded-xl text-sm flex items-center justify-between ${
+              message.type === "error"
+                ? "bg-red-500/15 border border-red-500/30 text-red-300"
+                : "bg-emerald-500/15 border border-emerald-500/30 text-emerald-300"
+            }`}
+          >
+            <span>{message.text}</span>
+            <button onClick={() => setMessage(null)} className="text-stone-400 hover:text-white">
+              <X className="w-4 h-4" />
             </button>
           </div>
-        </div>
-      </header>
-
-      <main className="relative max-w-7xl mx-auto px-6 py-8">
-        {/* Page title */}
-        <div className="mb-8">
-          <h1 className="text-2xl font-bold text-white">Admin Dashboard</h1>
-          <p className="text-stone-500 text-sm mt-1">Manage users, courses, and platform activity.</p>
-        </div>
+        )}
 
         {/* Tab nav */}
-        <div className="flex items-center gap-1 mb-8 bg-stone-900/60 border border-stone-700/50 rounded-xl p-1 w-fit">
+        <div className="flex items-center gap-1 mb-8 bg-stone-900/60 border border-stone-700/50 rounded-xl p-1 w-fit max-w-full overflow-x-auto">
           {tabs.map((t) => (
             <button
               key={t.id}
-              onClick={() => { setTab(t.id); setSearch(""); }}
-              className={`px-5 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+              onClick={() => {
+                setTab(t.id);
+                setSearch("");
+              }}
+              className={`px-5 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-all duration-200 ${
                 tab === t.id
-                  ? "bg-linear-to-r from-amber-500/20 to-orange-500/20 text-amber-300 border border-amber-500/20"
+                  ? "bg-gradient-to-r from-amber-500/20 to-orange-500/20 text-amber-300 border border-amber-500/20"
                   : "text-stone-400 hover:text-white"
               }`}
             >
@@ -328,233 +412,377 @@ export default function AdminDashboard() {
           ))}
         </div>
 
-        {/* Data loading spinner inside main */}
-        {dataLoading ? (
-          <div className="flex items-center justify-center py-24">
-            <div className="w-8 h-8 rounded-xl bg-linear-to-br from-amber-500 to-orange-600 animate-pulse" />
+        {/* ── OVERVIEW ── */}
+        {tab === "overview" && (
+          <div className="space-y-8">
+            {stats.error && <div className={errBoxCls}>Could not load stats: {stats.error}</div>}
+
+            {queue.length > 0 && (
+              <div className="px-5 py-4 rounded-2xl bg-amber-500/10 border border-amber-500/25 flex items-center justify-between gap-4">
+                <p className="text-sm text-amber-200">
+                  {queue.length} course{queue.length === 1 ? " is" : "s are"} waiting for your review.
+                </p>
+                <button
+                  onClick={() => setTab("review")}
+                  className="px-4 py-2 rounded-xl bg-amber-500 text-stone-950 font-bold text-xs shrink-0"
+                >
+                  Open review queue
+                </button>
+              </div>
+            )}
+
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+              {cards.map((c) => (
+                <StatCard key={c.label} {...c} loading={stats.loading} />
+              ))}
+            </div>
+            <p className="text-xs text-stone-600 -mt-4">
+              {totalCourses} course{totalCourses === 1 ? "" : "s"} in total. &quot;Users&quot; counts everyone who has
+              logged in to the LMS through SSO at least once.
+            </p>
+
+            {/* Recent users */}
+            <div className="rounded-2xl bg-stone-900/60 border border-stone-700/50 overflow-hidden">
+              <div className="px-6 py-4 border-b border-stone-800/60 flex items-center justify-between">
+                <h2 className="font-semibold">Recent users</h2>
+                <button onClick={() => setTab("users")} className="text-xs text-amber-400 hover:text-amber-300">
+                  View all →
+                </button>
+              </div>
+              <div className="divide-y divide-stone-800/40">
+                {recentUsers.map((u) => (
+                  <div key={u.id} className="px-6 py-4 flex items-center justify-between hover:bg-white/5 transition-colors">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="w-9 h-9 rounded-full bg-gradient-to-br from-amber-500/30 to-orange-600/30 border border-amber-500/20 flex items-center justify-center text-amber-300 font-bold text-sm shrink-0">
+                        {u.full_name?.[0]?.toUpperCase() ?? "?"}
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium truncate">{u.full_name}</p>
+                        <p className="text-xs text-stone-500 truncate">{u.email}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3 shrink-0">
+                      <Badge label={u.role} colorClass={roleColor(u.role)} />
+                      <span className="text-xs text-stone-600 hidden sm:block">{fmt(u.created_at)}</span>
+                    </div>
+                  </div>
+                ))}
+                {!usersQ.loading && users.length === 0 && (
+                  <p className="text-center py-8 text-stone-600 text-sm">No users yet</p>
+                )}
+              </div>
+            </div>
+
+            {/* Recent courses */}
+            <div className="rounded-2xl bg-stone-900/60 border border-stone-700/50 overflow-hidden">
+              <div className="px-6 py-4 border-b border-stone-800/60 flex items-center justify-between">
+                <h2 className="font-semibold">Recent courses</h2>
+                <button onClick={() => setTab("courses")} className="text-xs text-amber-400 hover:text-amber-300">
+                  View all →
+                </button>
+              </div>
+              <div className="divide-y divide-stone-800/40">
+                {recentCourses.map((c) => (
+                  <div key={c.id} className="px-6 py-4 flex items-center justify-between hover:bg-white/5 transition-colors gap-3">
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium truncate">{c.title}</p>
+                      <p className="text-xs text-stone-500 mt-0.5 truncate">
+                        {c.instructor_name ?? "—"} · {c.language}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-3 shrink-0">
+                      <Badge label={c.level} colorClass={levelColor(c.level)} />
+                      <StatusBadge status={c.status} />
+                      <span className="text-xs text-stone-600 hidden sm:block">{c.enrolled_count} enrolled</span>
+                    </div>
+                  </div>
+                ))}
+                {!coursesQ.loading && courses.length === 0 && (
+                  <p className="text-center py-8 text-stone-600 text-sm">No courses yet</p>
+                )}
+              </div>
+            </div>
           </div>
-        ) : (
-          <>
-            {/* ── OVERVIEW ── */}
-            {tab === "overview" && (
-              <div className="space-y-8">
-                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                  <StatCard label="Total Users"   value={stats.totalUsers ?? 0}       icon={Icon.users}       accent="text-amber-400 bg-amber-500" />
-                  <StatCard label="Total Courses"  value={stats.totalCourses ?? 0}     icon={Icon.courses}     accent="text-sky-400 bg-sky-500" />
-                  <StatCard label="Students"       value={stats.totalStudents ?? 0}    icon={Icon.students}    accent="text-emerald-400 bg-emerald-500" />
-                  <StatCard label="Instructors"    value={stats.totalInstructors ?? 0} icon={Icon.instructors} accent="text-purple-400 bg-purple-500" />
-                </div>
+        )}
 
-                {/* Recent users */}
-                <div className="rounded-2xl bg-stone-900/60 border border-stone-700/50 overflow-hidden">
-                  <div className="px-6 py-4 border-b border-stone-800/60 flex items-center justify-between">
-                    <h2 className="font-semibold text-white">Recent Users</h2>
-                    <button onClick={() => setTab("users")} className="text-xs text-amber-400 hover:text-amber-300 transition-colors">
-                      View all →
+        {/* ── REVIEW QUEUE ── */}
+        {tab === "review" && (
+          <div className="space-y-4">
+            {coursesQ.error && <div className={errBoxCls}>Could not load courses: {coursesQ.error}</div>}
+            <p className="text-xs text-stone-500">Oldest submissions first. Preview the curriculum before you approve.</p>
+
+            {coursesQ.loading ? (
+              <p className="text-center py-12 text-stone-600 text-sm">Loading queue…</p>
+            ) : queue.length === 0 ? (
+              <div className="p-14 rounded-2xl bg-stone-900/40 border border-stone-800 text-center">
+                <CheckCircle className="w-9 h-9 mx-auto mb-3 text-emerald-400/50" />
+                <p className="font-semibold">Nothing to review</p>
+                <p className="text-sm text-stone-500 mt-1">New submissions from instructors show up here.</p>
+              </div>
+            ) : (
+              queue.map((c) => (
+                <div
+                  key={c.id}
+                  className="p-5 rounded-2xl bg-stone-900/60 border border-stone-700/50 flex flex-col lg:flex-row lg:items-center justify-between gap-4"
+                >
+                  <div className="min-w-0">
+                    <p className="font-semibold truncate">{c.title}</p>
+                    <p className="text-xs text-stone-500 mt-0.5">
+                      {c.instructor_name ?? "—"} · {c.language}
+                    </p>
+                    <div className="flex flex-wrap items-center gap-2 mt-3 text-[11px]">
+                      <Badge label={c.level} colorClass={levelColor(c.level)} />
+                      <span className="px-2 py-0.5 rounded-md bg-stone-800 text-stone-300">{priceLabel(c.price)}</span>
+                      <span className="px-2 py-0.5 rounded-md bg-stone-800 text-stone-300">
+                        {c.lessons_count} lesson{c.lessons_count === 1 ? "" : "s"}
+                      </span>
+                      <span className="text-stone-500">Submitted {fmt(c.submitted_at ?? c.created_at)}</span>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <button
+                      onClick={() =>
+                        setCurriculum({ id: c.id, readOnly: true, note: "Approve or reject from the review queue." })
+                      }
+                      className="px-4 py-2 rounded-xl bg-stone-800 hover:bg-stone-700 text-stone-200 text-xs font-semibold flex items-center gap-2"
+                    >
+                      <ListOrdered className="w-4 h-4" /> Preview curriculum
+                    </button>
+                    <button
+                      onClick={() => setRejecting(c)}
+                      disabled={busyId === c.id}
+                      className="px-4 py-2 rounded-xl border border-red-500/40 text-red-300 hover:bg-red-500/10 text-xs font-semibold disabled:opacity-50"
+                    >
+                      Reject
+                    </button>
+                    <button
+                      onClick={() => approve(c)}
+                      disabled={busyId === c.id}
+                      className="px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-stone-950 text-xs font-bold disabled:opacity-50"
+                    >
+                      {busyId === c.id ? "Working…" : "Approve & publish"}
                     </button>
                   </div>
-                  <div className="divide-y divide-stone-800/40">
-                    {users.slice(0, 5).map((u) => (
-                      <div key={u._id} className="px-6 py-4 flex items-center justify-between hover:bg-white/2 transition-colors">
-                        <div className="flex items-center gap-3">
-                          <div className="w-9 h-9 rounded-full bg-linear-to-br from-amber-500/30 to-orange-600/30 border border-amber-500/20 flex items-center justify-center text-amber-300 font-bold text-sm">
-                            {u.name[0].toUpperCase()}
+                </div>
+              ))
+            )}
+          </div>
+        )}
+
+        {/* ── COURSES ── */}
+        {tab === "courses" && (
+          <div className="space-y-4">
+            {coursesQ.error && <div className={errBoxCls}>Could not load courses: {coursesQ.error}</div>}
+            {instructorsQ.error && <div className={errBoxCls}>Could not load instructors: {instructorsQ.error}</div>}
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <input
+                type="text"
+                placeholder="Search by title, language or instructor…"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className={searchCls}
+              />
+              <button
+                onClick={() => setCourseForm({ mode: "create" })}
+                disabled={instructorsQ.loading}
+                className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-400 hover:to-orange-500 text-stone-950 font-bold text-xs flex items-center gap-2 disabled:opacity-50"
+              >
+                <Plus className="w-4 h-4" /> New course for an instructor
+              </button>
+            </div>
+
+            <div className="rounded-2xl bg-stone-900/60 border border-stone-700/50 overflow-hidden">
+              <div className="hidden sm:grid grid-cols-12 px-6 py-3 text-xs font-semibold text-stone-500 uppercase tracking-wider border-b border-stone-800/60 bg-stone-950/30">
+                <span className="col-span-3">Course</span>
+                <span className="col-span-2">Status</span>
+                <span className="col-span-1">Price</span>
+                <span className="col-span-1 text-center">Lessons</span>
+                <span className="col-span-1 text-center">Enrolled</span>
+                <span className="col-span-4 text-right">Actions</span>
+              </div>
+              <div className="divide-y divide-stone-800/40">
+                {coursesQ.loading ? (
+                  <p className="text-center py-12 text-stone-600 text-sm">Loading courses…</p>
+                ) : filteredCourses.length === 0 ? (
+                  <p className="text-center py-12 text-stone-600 text-sm">No courses found</p>
+                ) : (
+                  filteredCourses.map((c) => {
+                    const busy = busyId === c.id;
+                    return (
+                      <div key={c.id} className="grid grid-cols-12 items-center px-6 py-4 hover:bg-white/5 transition-colors gap-y-2">
+                        <div className="col-span-12 sm:col-span-3 min-w-0 pr-3">
+                          <p className="text-sm font-medium truncate">{c.title}</p>
+                          <p className="text-xs text-stone-500 mt-0.5 truncate">
+                            {c.instructor_name ?? "—"} · {c.language}
+                            {c.managed_by_admin ? " · admin-managed" : ""}
+                          </p>
+                        </div>
+                        <div className="col-span-4 sm:col-span-2">
+                          <StatusBadge status={c.status} />
+                        </div>
+                        <div className="col-span-2 sm:col-span-1">
+                          <span className="text-xs text-stone-400">{priceLabel(c.price)}</span>
+                        </div>
+                        <div className="col-span-3 sm:col-span-1 sm:text-center">
+                          <span className="text-xs text-stone-400">{c.lessons_count}</span>
+                        </div>
+                        <div className="col-span-3 sm:col-span-1 sm:text-center">
+                          <span className="text-xs font-semibold text-amber-400">{c.enrolled_count}</span>
+                        </div>
+                        <div className="col-span-12 sm:col-span-4 flex justify-end gap-0.5">
+                          {c.status === "pending_review" && (
+                            <IconBtn title="Approve & publish" tone="green" disabled={busy} onClick={() => approve(c)}>
+                              <Check className="w-4 h-4" />
+                            </IconBtn>
+                          )}
+                          {c.status === "pending_review" && (
+                            <IconBtn title="Reject" tone="red" disabled={busy} onClick={() => setRejecting(c)}>
+                              <XCircle className="w-4 h-4" />
+                            </IconBtn>
+                          )}
+                          {(c.status === "draft" || c.status === "archived") && (
+                            <IconBtn title="Publish now" tone="green" disabled={busy} onClick={() => publish(c)}>
+                              <Rocket className="w-4 h-4" />
+                            </IconBtn>
+                          )}
+                          {c.status === "published" && (
+                            <IconBtn title="Unpublish" disabled={busy} onClick={() => unpublish(c)}>
+                              <EyeOff className="w-4 h-4" />
+                            </IconBtn>
+                          )}
+                          <IconBtn title="Curriculum & materials" onClick={() => setCurriculum({ id: c.id, readOnly: false })}>
+                            <ListOrdered className="w-4 h-4" />
+                          </IconBtn>
+                          <IconBtn title="Edit details" disabled={busy} onClick={() => openEdit(c)}>
+                            <Pencil className="w-4 h-4" />
+                          </IconBtn>
+                          <IconBtn title="Delete course" tone="red" disabled={busy} onClick={() => deleteCourse(c)}>
+                            <Trash2 className="w-4 h-4" />
+                          </IconBtn>
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ── USERS ── */}
+        {tab === "users" && (
+          <div className="space-y-4">
+            {usersQ.error && <div className={errBoxCls}>Could not load users: {usersQ.error}</div>}
+            <input
+              type="text"
+              placeholder="Search users by name or email…"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className={searchCls}
+            />
+            <p className="text-xs text-stone-600">Roles are synced from VartaLang on every login and cannot be changed here.</p>
+
+            <div className="rounded-2xl bg-stone-900/60 border border-stone-700/50 overflow-hidden">
+              <div className="hidden sm:grid grid-cols-12 px-6 py-3 text-xs font-semibold text-stone-500 uppercase tracking-wider border-b border-stone-800/60 bg-stone-950/30">
+                <span className="col-span-4">User</span>
+                <span className="col-span-2">Role</span>
+                <span className="col-span-2">Joined</span>
+                <span className="col-span-3">Last login</span>
+                <span className="col-span-1 text-right">Del</span>
+              </div>
+              <div className="divide-y divide-stone-800/40">
+                {usersQ.loading ? (
+                  <p className="text-center py-12 text-stone-600 text-sm">Loading users…</p>
+                ) : filteredUsers.length === 0 ? (
+                  <p className="text-center py-12 text-stone-600 text-sm">No users found</p>
+                ) : (
+                  filteredUsers.map((u) => {
+                    const canDelete = u.role !== "admin" && u.id !== user?.id;
+                    return (
+                      <div key={u.id} className="grid grid-cols-12 items-center px-6 py-4 hover:bg-white/5 transition-colors gap-y-2">
+                        <div className="col-span-12 sm:col-span-4 flex items-center gap-3 min-w-0">
+                          <div className="w-9 h-9 rounded-full bg-gradient-to-br from-amber-500/20 to-orange-600/20 border border-amber-500/15 flex items-center justify-center text-amber-300 font-bold text-sm shrink-0">
+                            {u.full_name?.[0]?.toUpperCase() ?? "?"}
                           </div>
-                          <div>
-                            <p className="text-sm font-medium text-white">{u.name}</p>
-                            <p className="text-xs text-stone-500">{u.email}</p>
+                          <div className="min-w-0">
+                            <p className="text-sm font-medium truncate">{u.full_name}</p>
+                            <p className="text-xs text-stone-500 truncate">{u.email}</p>
                           </div>
                         </div>
-                        <div className="flex items-center gap-3">
+                        <div className="col-span-4 sm:col-span-2">
                           <Badge label={u.role} colorClass={roleColor(u.role)} />
-                          <span className="text-xs text-stone-600 hidden sm:block">{fmt(u.createdAt)}</span>
+                        </div>
+                        <div className="col-span-4 sm:col-span-2">
+                          <span className="text-xs text-stone-500">{fmt(u.created_at)}</span>
+                        </div>
+                        <div className="col-span-4 sm:col-span-3">
+                          <p className="text-xs text-stone-400">{fmt(u.last_login_at)}</p>
+                          <p className="text-[11px] text-stone-600">
+                            {u.login_count ?? 0} login{u.login_count === 1 ? "" : "s"}
+                          </p>
+                        </div>
+                        <div className="col-span-12 sm:col-span-1 flex justify-end">
+                          {canDelete && (
+                            <IconBtn title="Delete user" tone="red" disabled={busyId === u.id} onClick={() => deleteUser(u)}>
+                              <Trash2 className="w-4 h-4" />
+                            </IconBtn>
+                          )}
                         </div>
                       </div>
-                    ))}
-                    {users.length === 0 && (
-                      <p className="text-center py-8 text-stone-600 text-sm">No users yet</p>
-                    )}
-                  </div>
-                </div>
-
-                {/* Recent courses */}
-                <div className="rounded-2xl bg-stone-900/60 border border-stone-700/50 overflow-hidden">
-                  <div className="px-6 py-4 border-b border-stone-800/60 flex items-center justify-between">
-                    <h2 className="font-semibold text-white">Recent Courses</h2>
-                    <button onClick={() => setTab("courses")} className="text-xs text-amber-400 hover:text-amber-300 transition-colors">
-                      View all →
-                    </button>
-                  </div>
-                  <div className="divide-y divide-stone-800/40">
-                    {courses.slice(0, 5).map((c) => (
-                      <div key={c._id} className="px-6 py-4 flex items-center justify-between hover:bg-white/2 transition-colors">
-                        <div>
-                          <p className="text-sm font-medium text-white">{c.title}</p>
-                          <p className="text-xs text-stone-500 mt-0.5">{c.instructor?.name} · {c.language}</p>
-                        </div>
-                        <div className="flex items-center gap-3">
-                          <Badge label={c.level} colorClass={levelColor(c.level)} />
-                          <Badge
-                            label={c.isPublished ? "Published" : "Draft"}
-                            colorClass={c.isPublished
-                              ? "text-emerald-400 bg-emerald-400/10 border-emerald-400/30"
-                              : "text-stone-500 bg-stone-700/30 border-stone-600/30"}
-                          />
-                          <span className="text-xs text-stone-600 hidden sm:block">{c.enrolledCount} enrolled</span>
-                        </div>
-                      </div>
-                    ))}
-                    {courses.length === 0 && (
-                      <p className="text-center py-8 text-stone-600 text-sm">No courses yet</p>
-                    )}
-                  </div>
-                </div>
+                    );
+                  })
+                )}
               </div>
-            )}
-
-            {/* ── USERS ── */}
-            {tab === "users" && (
-              <div className="space-y-4">
-                <input
-                  type="text"
-                  placeholder="Search users by name or email…"
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  className="w-full max-w-sm bg-stone-900/60 border border-stone-700/50 rounded-xl px-4 py-2.5 text-sm text-stone-100 placeholder-stone-600 outline-none focus:border-amber-500/50 focus:ring-2 focus:ring-amber-500/10 transition-all"
-                />
-
-                <div className="rounded-2xl bg-stone-900/60 border border-stone-700/50 overflow-hidden">
-                  <div className="hidden sm:grid grid-cols-12 px-6 py-3 text-xs font-semibold text-stone-500 uppercase tracking-wider border-b border-stone-800/60 bg-stone-950/30">
-                    <span className="col-span-4">User</span>
-                    <span className="col-span-2">Role</span>
-                    <span className="col-span-2">Status</span>
-                    <span className="col-span-2">Joined</span>
-                    <span className="col-span-2 text-right">Actions</span>
-                  </div>
-                  <div className="divide-y divide-stone-800/40">
-                    {filteredUsers.length === 0 ? (
-                      <p className="text-center py-12 text-stone-600 text-sm">No users found</p>
-                    ) : (
-                      filteredUsers.map((u) => (
-                        <div key={u._id} className="grid grid-cols-12 items-center px-6 py-4 hover:bg-white/2 transition-colors gap-y-2">
-                          <div className="col-span-12 sm:col-span-4 flex items-center gap-3">
-                            <div className="w-9 h-9 rounded-full bg-linear-to-br from-amber-500/20 to-orange-600/20 border border-amber-500/15 flex items-center justify-center text-amber-300 font-bold text-sm shrink-0">
-                              {u.name[0].toUpperCase()}
-                            </div>
-                            <div className="min-w-0">
-                              <p className="text-sm font-medium text-white truncate">{u.name}</p>
-                              <p className="text-xs text-stone-500 truncate">{u.email}</p>
-                            </div>
-                          </div>
-                          <div className="col-span-4 sm:col-span-2">
-                            <select
-                              value={u.role}
-                              onChange={(e) => handleRoleChange(u._id, e.target.value)}
-                              className="bg-stone-800/60 border border-stone-700/50 text-xs text-stone-300 rounded-lg px-2 py-1.5 outline-none hover:border-amber-500/40 transition-colors cursor-pointer"
-                            >
-                              <option value="student">Student</option>
-                              <option value="instructor">Instructor</option>
-                              <option value="admin">Admin</option>
-                            </select>
-                          </div>
-                          <div className="col-span-4 sm:col-span-2">
-                            <button
-                              onClick={() => handleToggle(u._id)}
-                              className={`flex items-center gap-2 text-xs font-medium px-3 py-1.5 rounded-lg border transition-all ${
-                                u.isActive
-                                  ? "text-emerald-400 bg-emerald-400/10 border-emerald-400/30 hover:bg-emerald-400/20"
-                                  : "text-red-400 bg-red-400/10 border-red-400/30 hover:bg-red-400/20"
-                              }`}
-                            >
-                              <span className={`w-1.5 h-1.5 rounded-full ${u.isActive ? "bg-emerald-400" : "bg-red-400"}`} />
-                              {u.isActive ? "Active" : "Inactive"}
-                            </button>
-                          </div>
-                          <div className="col-span-4 sm:col-span-2 hidden sm:block">
-                            <span className="text-xs text-stone-500">{fmt(u.createdAt)}</span>
-                          </div>
-                          <div className="col-span-4 sm:col-span-2 flex justify-end">
-                            <button
-                              onClick={() => handleDeleteUser(u._id)}
-                              className="p-2 text-stone-600 hover:text-red-400 hover:bg-red-400/10 rounded-lg transition-all"
-                              title="Delete user"
-                            >
-                              {Icon.trash}
-                            </button>
-                          </div>
-                        </div>
-                      ))
-                    )}
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* ── COURSES ── */}
-            {tab === "courses" && (
-              <div className="space-y-4">
-                <input
-                  type="text"
-                  placeholder="Search courses by title or language…"
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  className="w-full max-w-sm bg-stone-900/60 border border-stone-700/50 rounded-xl px-4 py-2.5 text-sm text-stone-100 placeholder-stone-600 outline-none focus:border-amber-500/50 focus:ring-2 focus:ring-amber-500/10 transition-all"
-                />
-                <div className="rounded-2xl bg-stone-900/60 border border-stone-700/50 overflow-hidden">
-                  <div className="hidden sm:grid grid-cols-12 px-6 py-3 text-xs font-semibold text-stone-500 uppercase tracking-wider border-b border-stone-800/60 bg-stone-950/30">
-                    <span className="col-span-4">Course</span>
-                    <span className="col-span-2">Language</span>
-                    <span className="col-span-2">Level</span>
-                    <span className="col-span-2">Status</span>
-                    <span className="col-span-1 text-center">Enrolled</span>
-                    <span className="col-span-1 text-right">Del</span>
-                  </div>
-                  <div className="divide-y divide-stone-800/40">
-                    {filteredCourses.length === 0 ? (
-                      <p className="text-center py-12 text-stone-600 text-sm">No courses found</p>
-                    ) : (
-                      filteredCourses.map((c) => (
-                        <div key={c._id} className="grid grid-cols-12 items-center px-6 py-4 hover:bg-white/2 transition-colors gap-y-2">
-                          <div className="col-span-12 sm:col-span-4">
-                            <p className="text-sm font-medium text-white truncate">{c.title}</p>
-                            <p className="text-xs text-stone-500 mt-0.5 truncate">{c.instructor?.name}</p>
-                          </div>
-                          <div className="col-span-3 sm:col-span-2">
-                            <span className="text-xs text-stone-400">{c.language}</span>
-                          </div>
-                          <div className="col-span-3 sm:col-span-2">
-                            <Badge label={c.level} colorClass={levelColor(c.level)} />
-                          </div>
-                          <div className="col-span-3 sm:col-span-2">
-                            <Badge
-                              label={c.isPublished ? "Published" : "Draft"}
-                              colorClass={c.isPublished
-                                ? "text-emerald-400 bg-emerald-400/10 border-emerald-400/30"
-                                : "text-stone-500 bg-stone-700/30 border-stone-600/30"}
-                            />
-                          </div>
-                          <div className="col-span-2 sm:col-span-1 text-center">
-                            <span className="text-xs font-semibold text-amber-400">{c.enrolledCount}</span>
-                          </div>
-                          <div className="col-span-1 flex justify-end">
-                            <button
-                              onClick={() => handleDeleteCourse(c._id)}
-                              className="p-2 text-stone-600 hover:text-red-400 hover:bg-red-400/10 rounded-lg transition-all"
-                              title="Delete course"
-                            >
-                              {Icon.trash}
-                            </button>
-                          </div>
-                        </div>
-                      ))
-                    )}
-                  </div>
-                </div>
-              </div>
-            )}
-          </>
+            </div>
+          </div>
         )}
       </main>
+
+      {courseForm && (
+        <CourseFormModal
+          key={courseForm.mode === "edit" ? courseForm.course.id : "new"}
+          state={courseForm}
+          instructors={instructorsQ.data ?? []}
+          onClose={() => setCourseForm(null)}
+          onSaved={(info) => {
+            setCourseForm(null);
+            setMessage({
+              type: "success",
+              text: info.created
+                ? info.published
+                  ? "Course created and published. Add modules and lessons next."
+                  : "Course created as a draft. Add modules and lessons, then publish it."
+                : "Course updated.",
+            });
+            reload();
+            if (info.created) setCurriculum({ id: info.id, readOnly: false });
+          }}
+        />
+      )}
+
+      {curriculum && (
+        <CurriculumModal
+          courseId={curriculum.id}
+          readOnly={curriculum.readOnly}
+          readOnlyNote={curriculum.note}
+          onClose={() => setCurriculum(null)}
+          onChanged={reload}
+        />
+      )}
+
+      {rejecting && (
+        <RejectModal
+          course={rejecting}
+          onClose={() => setRejecting(null)}
+          onDone={() => {
+            setMessage({ type: "success", text: `"${rejecting.title}" was sent back to the instructor.` });
+            setRejecting(null);
+            reload();
+          }}
+        />
+      )}
+
+      <Footer />
     </div>
   );
 }

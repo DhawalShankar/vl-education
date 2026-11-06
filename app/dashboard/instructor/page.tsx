@@ -1,21 +1,22 @@
 // app/dashboard/instructor/page.tsx
 "use client";
 
-import { useEffect, useMemo, useState, FormEvent } from "react";
+import { useEffect, useState, FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
+  AlertTriangle,
   BookOpen,
   CheckCircle,
-  ChevronDown,
-  ChevronRight,
+  Clock,
   ExternalLink,
-  Eye,
   Layers,
   ListOrdered,
+  Lock,
   Pencil,
   Plus,
   Save,
+  Send,
   Trash2,
   User,
   Users,
@@ -23,49 +24,24 @@ import {
 } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import { CourseFormModal, CurriculumModal, StatusBadge, errBoxCls, errMsg, inputCls } from "@/components/CourseStudio";
 import { useAuth } from "@/app/context/AuthContext";
-import {
-  CourseCard,
-  CourseDetail,
-  CourseInput,
-  InstructorProfile,
-  LessonInput,
-  ModuleOut,
-  instructorAPI,
-} from "@/app/lib/api";
+import { CourseCard, InstructorProfile, instructorAPI } from "@/app/lib/api";
 import { useApi } from "@/app/lib/useApi";
-import { LANGUAGE_CATALOG, slugify } from "@/app/lib/languages";
+import { slugify } from "@/app/lib/languages";
 
-const LEVELS = ["foundation", "intermediate", "professional", "mastery"];
-const CATEGORIES = ["grammar", "vocabulary", "pronunciation", "conversation", "exam-prep", "cultural"];
-const RESOURCE_TYPES = ["video", "pdf", "article", "audio"];
+const fmtDate = (d?: string | null) =>
+  d ? new Date(d).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" }) : "";
 
-const inputCls =
-  "w-full bg-stone-950 border border-stone-800 rounded-xl px-4 py-2.5 text-white text-sm outline-none focus:border-amber-500 transition-colors";
-const errBoxCls = "px-4 py-3 rounded-xl text-sm bg-red-500/10 border border-red-500/20 text-red-300";
-
-/* ── helpers ── */
-const errMsg = (e: unknown, fallback = "Something went wrong") => (e instanceof Error ? e.message : fallback);
-const isHttpUrl = (v: string) => /^https?:\/\//i.test(v.trim());
-const byOrder = (a: { order_index: number }, b: { order_index: number }) => a.order_index - b.order_index;
-const nextOrder = (items: { order_index: number }[]) => items.reduce((m, i) => Math.max(m, i.order_index), 0) + 1;
-
-// Accepts an 11-char YouTube id or a youtube.com / youtu.be link
-function extractYouTubeId(input: string): string | null {
-  const v = input.trim();
-  if (/^[\w-]{11}$/.test(v)) return v;
-  try {
-    const u = new URL(v);
-    let id: string | null = null;
-    if (u.hostname === "youtu.be") id = u.pathname.slice(1);
-    else if (u.hostname.endsWith("youtube.com")) {
-      id = u.searchParams.get("v") ?? (u.pathname.startsWith("/embed/") ? u.pathname.split("/")[2] : null);
-    }
-    return id && /^[\w-]{11}$/.test(id) ? id : null;
-  } catch {
-    return null;
-  }
-}
+// Published and in-review courses cannot be edited by the instructor (server returns 409).
+// Admin-managed and archived courses are view-only.
+const lockReason = (c: CourseCard): string | null => {
+  if (c.managed_by_admin) return "This course is managed by an admin, so you can view it but not change it.";
+  if (c.status === "published") return "This course is live. Move it to draft to edit it.";
+  if (c.status === "pending_review") return "This course is in review. Withdraw it to edit it.";
+  if (c.status === "archived") return "This course was archived by an admin.";
+  return null;
+};
 
 /* ═══════════════════════════ PAGE ═══════════════════════════ */
 export default function InstructorStudioPage() {
@@ -77,7 +53,7 @@ export default function InstructorStudioPage() {
   const [reloadKey, setReloadKey] = useState(0);
   const [message, setMessage] = useState<{ type: "error" | "success"; text: string } | null>(null);
   const [courseForm, setCourseForm] = useState<{ mode: "create" } | { mode: "edit"; course: CourseCard } | null>(null);
-  const [curriculumId, setCurriculumId] = useState<string | null>(null);
+  const [curriculum, setCurriculum] = useState<{ id: string; readOnly: boolean; note?: string } | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -89,18 +65,18 @@ export default function InstructorStudioPage() {
   const courses = useApi(() => instructorAPI.myCourses(), [reloadKey, user?.id], allowed);
   const list = courses.data ?? [];
   const live = list.filter((c) => c.status === "published").length;
-  const drafts = list.filter((c) => c.status === "draft").length;
+  const inReview = list.filter((c) => c.status === "pending_review").length;
+  const drafts = list.filter((c) => c.status === "draft" || c.status === "rejected").length;
   const totalEnrolled = list.reduce((a, c) => a + (c.enrolled_count || 0), 0);
 
   const reload = () => setReloadKey((k) => k + 1);
 
-  const togglePublish = async (c: CourseCard) => {
+  const act = async (c: CourseCard, fn: () => Promise<unknown>, successText: string) => {
     setBusyId(c.id);
     setMessage(null);
     try {
-      const publishing = c.status !== "published";
-      await instructorAPI.setStatus(c.id, publishing ? "published" : "draft");
-      setMessage({ type: "success", text: publishing ? "Course is now live." : "Course moved to drafts." });
+      await fn();
+      setMessage({ type: "success", text: successText });
       reload();
     } catch (e) {
       setMessage({ type: "error", text: errMsg(e) });
@@ -109,19 +85,21 @@ export default function InstructorStudioPage() {
     }
   };
 
-  const deleteCourse = async (c: CourseCard) => {
+  const submitForReview = (c: CourseCard) =>
+    act(c, () => instructorAPI.submit(c.id), "Submitted for review. It goes live once an admin approves it.");
+
+  const moveToDraft = (c: CourseCard) => {
+    if (c.status === "published" && !confirm(`Take "${c.title}" offline? It will need admin approval again to go live.`)) return;
+    return act(
+      c,
+      () => instructorAPI.setStatus(c.id, "draft"),
+      c.status === "pending_review" ? "Submission withdrawn. The course is a draft again." : "Course moved to drafts."
+    );
+  };
+
+  const deleteCourse = (c: CourseCard) => {
     if (!confirm(`Delete "${c.title}" and all its modules and lessons? This cannot be undone.`)) return;
-    setBusyId(c.id);
-    setMessage(null);
-    try {
-      await instructorAPI.deleteCourse(c.id);
-      setMessage({ type: "success", text: "Course deleted." });
-      reload();
-    } catch (e) {
-      setMessage({ type: "error", text: errMsg(e) });
-    } finally {
-      setBusyId(null);
-    }
+    return act(c, () => instructorAPI.deleteCourse(c.id), "Course deleted.");
   };
 
   if (loading || !allowed) {
@@ -134,6 +112,7 @@ export default function InstructorStudioPage() {
 
   const metrics = [
     { label: "Courses live", value: live, icon: CheckCircle, color: "text-emerald-400" },
+    { label: "In review", value: inReview, icon: Clock, color: "text-amber-400" },
     { label: "Drafts", value: drafts, icon: Layers, color: "text-stone-400" },
     { label: "Total enrollments", value: totalEnrolled, icon: Users, color: "text-sky-400" },
   ];
@@ -149,7 +128,7 @@ export default function InstructorStudioPage() {
               {user?.full_name ? `${user.full_name.split(" ")[0]}'s Studio` : "Instructor Studio"}
             </h1>
             <p className="text-stone-400 text-sm mt-1">
-              Create courses, build the curriculum (modules and lessons), and publish when you are ready.
+              Create courses, build the curriculum, then submit for review. An admin approves it before it goes live.
             </p>
           </div>
           <div className="flex items-center gap-3">
@@ -183,12 +162,12 @@ export default function InstructorStudioPage() {
           </div>
         )}
 
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-10">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
           {metrics.map((m) => {
             const Icon = m.icon;
             return (
               <div key={m.label} className="p-5 rounded-2xl bg-stone-900/70 border border-stone-800 flex items-center gap-4">
-                <div className="w-10 h-10 rounded-xl bg-stone-800/70 flex items-center justify-center">
+                <div className="w-10 h-10 rounded-xl bg-stone-800/70 flex items-center justify-center shrink-0">
                   <Icon className={`w-5 h-5 ${m.color}`} />
                 </div>
                 <div>
@@ -248,8 +227,10 @@ export default function InstructorStudioPage() {
             ) : (
               <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {list.map((c) => {
-                  const published = c.status === "published";
-                  const canPublish = published || c.lessons_count > 0;
+                  const locked = lockReason(c);
+                  const busy = busyId === c.id;
+                  const canSubmit = !c.managed_by_admin && (c.status === "draft" || c.status === "rejected");
+                  const canDelete = canSubmit; // server also blocks courses that have students or payments
                   return (
                     <div
                       key={c.id}
@@ -257,36 +238,52 @@ export default function InstructorStudioPage() {
                     >
                       <div>
                         <div className="flex items-start justify-between gap-3 mb-4">
-                          <span
-                            className={`text-[10px] uppercase font-bold tracking-wider px-2.5 py-0.5 rounded-full border ${
-                              published
-                                ? "bg-emerald-500/15 text-emerald-300 border-emerald-500/30"
-                                : "bg-stone-800 text-stone-400 border-stone-700"
-                            }`}
-                          >
-                            {c.status}
-                          </span>
+                          <div className="flex flex-wrap items-center gap-2">
+                            <StatusBadge status={c.status} />
+                            {c.managed_by_admin && (
+                              <span className="text-[10px] font-bold tracking-wider px-2.5 py-0.5 rounded-full border border-sky-500/30 bg-sky-500/10 text-sky-300 whitespace-nowrap">
+                                Managed by admin
+                              </span>
+                            )}
+                          </div>
                           <div className="flex items-center gap-1.5">
                             <button
                               onClick={() => setCourseForm({ mode: "edit", course: c })}
-                              title="Edit details"
-                              className="p-2 rounded-lg bg-stone-800/80 hover:bg-amber-500/20 text-stone-400 hover:text-amber-400"
+                              disabled={!!locked}
+                              title={locked ?? "Edit details"}
+                              className="p-2 rounded-lg bg-stone-800/80 hover:bg-amber-500/20 text-stone-400 hover:text-amber-400 disabled:opacity-40 disabled:hover:bg-stone-800/80 disabled:hover:text-stone-400"
                             >
-                              <Pencil className="w-3.5 h-3.5" />
+                              {locked ? <Lock className="w-3.5 h-3.5" /> : <Pencil className="w-3.5 h-3.5" />}
                             </button>
-                            <button
-                              onClick={() => deleteCourse(c)}
-                              disabled={busyId === c.id}
-                              title="Delete course"
-                              className="p-2 rounded-lg bg-stone-800/80 hover:bg-rose-500/20 text-stone-400 hover:text-rose-400 disabled:opacity-50"
-                            >
-                              <Trash2 className="w-3.5 h-3.5" />
-                            </button>
+                            {canDelete && (
+                              <button
+                                onClick={() => deleteCourse(c)}
+                                disabled={busy}
+                                title="Delete course"
+                                className="p-2 rounded-lg bg-stone-800/80 hover:bg-rose-500/20 text-stone-400 hover:text-rose-400 disabled:opacity-50"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            )}
                           </div>
                         </div>
 
                         <h3 className="font-kalam text-2xl font-bold mb-2 leading-snug">{c.title}</h3>
                         <p className="text-xs text-stone-400 line-clamp-2 mb-4">{c.description}</p>
+
+                        {c.status === "rejected" && (
+                          <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-xs text-red-300 mb-4">
+                            <p className="font-semibold mb-1 flex items-center gap-1.5">
+                              <AlertTriangle className="w-3.5 h-3.5" /> Changes requested
+                            </p>
+                            <p className="whitespace-pre-line text-red-200/90">{c.rejection_reason || "No reason was given."}</p>
+                          </div>
+                        )}
+                        {c.status === "pending_review" && (
+                          <p className="text-xs text-amber-300/90 mb-4">
+                            {c.submitted_at ? `Submitted ${fmtDate(c.submitted_at)}. ` : ""}Waiting for admin review.
+                          </p>
+                        )}
 
                         <div className="flex flex-wrap items-center gap-2 mb-4 text-[11px]">
                           <span className="px-2 py-0.5 rounded-md bg-stone-800 text-stone-300">{c.language}</span>
@@ -312,24 +309,40 @@ export default function InstructorStudioPage() {
 
                       <div className="pt-4 border-t border-stone-800/80 space-y-3">
                         <button
-                          onClick={() => setCurriculumId(c.id)}
+                          onClick={() => setCurriculum({ id: c.id, readOnly: !!locked, note: locked ?? undefined })}
                           className="w-full py-2.5 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/30 text-amber-300 text-xs font-bold flex items-center justify-center gap-2"
                         >
-                          <ListOrdered className="w-4 h-4" /> Curriculum &amp; materials
+                          <ListOrdered className="w-4 h-4" /> {locked ? "View curriculum" : "Curriculum & materials"}
                         </button>
                         <div className="flex items-center justify-between gap-2">
-                          <button
-                            onClick={() => togglePublish(c)}
-                            disabled={busyId === c.id || !canPublish}
-                            title={canPublish ? "" : "Add at least one lesson before publishing"}
-                            className={`text-xs font-semibold px-3 py-1.5 rounded-lg border disabled:opacity-40 ${
-                              published
-                                ? "border-stone-700 text-stone-400 hover:text-rose-400 hover:border-rose-500/40"
-                                : "border-emerald-500/40 text-emerald-400 hover:bg-emerald-500/10"
-                            }`}
-                          >
-                            {published ? "Move to draft" : "Publish"}
-                          </button>
+                          {canSubmit ? (
+                            <button
+                              onClick={() => submitForReview(c)}
+                              disabled={busy || c.lessons_count === 0}
+                              title={c.lessons_count === 0 ? "Add at least one lesson before submitting" : ""}
+                              className="text-xs font-semibold px-3 py-1.5 rounded-lg border border-emerald-500/40 text-emerald-400 hover:bg-emerald-500/10 disabled:opacity-40 flex items-center gap-1.5"
+                            >
+                              <Send className="w-3.5 h-3.5" /> {c.status === "rejected" ? "Resubmit for review" : "Submit for review"}
+                            </button>
+                          ) : !c.managed_by_admin && c.status === "pending_review" ? (
+                            <button
+                              onClick={() => moveToDraft(c)}
+                              disabled={busy}
+                              className="text-xs font-semibold px-3 py-1.5 rounded-lg border border-stone-700 text-stone-400 hover:text-white hover:border-stone-500 disabled:opacity-40"
+                            >
+                              Withdraw
+                            </button>
+                          ) : !c.managed_by_admin && c.status === "published" ? (
+                            <button
+                              onClick={() => moveToDraft(c)}
+                              disabled={busy}
+                              className="text-xs font-semibold px-3 py-1.5 rounded-lg border border-stone-700 text-stone-400 hover:text-rose-400 hover:border-rose-500/40 disabled:opacity-40"
+                            >
+                              Move to draft
+                            </button>
+                          ) : (
+                            <span className="text-[11px] text-stone-600">View only</span>
+                          )}
                           <Link
                             href={`/learn/${slugify(c.language)}/${c.id}`}
                             className="inline-flex items-center gap-1.5 text-xs font-semibold text-amber-400 hover:text-amber-300"
@@ -358,192 +371,25 @@ export default function InstructorStudioPage() {
             setCourseForm(null);
             setMessage({
               type: "success",
-              text: info.created ? "Draft created. Add modules and lessons, then publish." : "Course updated.",
+              text: info.created ? "Draft created. Add modules and lessons, then submit it for review." : "Course updated.",
             });
             reload();
-            if (info.created) setCurriculumId(info.id);
+            if (info.created) setCurriculum({ id: info.id, readOnly: false });
           }}
         />
       )}
 
-      {curriculumId && (
-        <CurriculumModal courseId={curriculumId} onClose={() => setCurriculumId(null)} onChanged={reload} />
+      {curriculum && (
+        <CurriculumModal
+          courseId={curriculum.id}
+          readOnly={curriculum.readOnly}
+          readOnlyNote={curriculum.note}
+          onClose={() => setCurriculum(null)}
+          onChanged={reload}
+        />
       )}
 
       <Footer />
-    </div>
-  );
-}
-
-/* ═══════════════════ COURSE DETAILS MODAL ═══════════════════ */
-function CourseFormModal({
-  state,
-  onClose,
-  onSaved,
-}: {
-  state: { mode: "create" } | { mode: "edit"; course: CourseCard };
-  onClose: () => void;
-  onSaved: (info: { id: string; created: boolean }) => void;
-}) {
-  const editing = state.mode === "edit" ? state.course : null;
-
-  const [title, setTitle] = useState(editing?.title ?? "");
-  const [description, setDescription] = useState(editing?.description ?? "");
-  const [language, setLanguage] = useState(editing?.language ?? "Hindi");
-  const [level, setLevel] = useState(editing?.level ?? "foundation");
-  const [category, setCategory] = useState(editing?.category ?? "grammar");
-  const [duration, setDuration] = useState(editing?.duration ?? "");
-  const [price, setPrice] = useState(editing ? Number(editing.price) || 0 : 0);
-  const [tags, setTags] = useState((editing?.tags ?? []).join(", "));
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  const languageOptions = LANGUAGE_CATALOG.map((l) => l.name);
-  if (!languageOptions.includes(language)) languageOptions.unshift(language);
-
-  const submit = async (e: FormEvent) => {
-    e.preventDefault();
-    setError(null);
-    if (price < 0) return setError("Price cannot be negative.");
-    setSaving(true);
-    try {
-      const body: CourseInput = {
-        title: title.trim(),
-        description: description.trim() || undefined,
-        language,
-        level,
-        category,
-        duration: duration.trim() || undefined,
-        price,
-        tags: tags.split(",").map((t) => t.trim()).filter(Boolean),
-      };
-      if (editing) {
-        await instructorAPI.updateCourse(editing.id, body);
-        onSaved({ id: editing.id, created: false });
-      } else {
-        // api.createCourse already sends isPublished: false and modules: 0
-        const created = await instructorAPI.createCourse(body);
-        onSaved({ id: created.id, created: true });
-      }
-    } catch (err) {
-      setError(errMsg(err, "Could not save the course."));
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md px-4 py-6 overflow-y-auto">
-      <div className="bg-[#120F0C] border border-stone-700/80 rounded-3xl p-6 sm:p-8 w-full max-w-2xl max-h-[92vh] overflow-y-auto shadow-2xl">
-        <div className="flex items-center justify-between pb-4 border-b border-stone-800 mb-6">
-          <h3 className="font-kalam text-3xl font-bold">{editing ? "Edit course" : "New course"}</h3>
-          <button onClick={onClose} className="p-2 rounded-xl bg-stone-800/80 hover:bg-stone-700 text-stone-400 hover:text-white">
-            <X className="w-5 h-5" />
-          </button>
-        </div>
-
-        {error && <div className={`mb-4 ${errBoxCls}`}>{error}</div>}
-
-        <form onSubmit={submit} className="space-y-4">
-          <div>
-            <label className="block text-xs text-stone-400 mb-1">Title *</label>
-            <input
-              required
-              minLength={3}
-              maxLength={150}
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder="e.g. Spoken Bengali: Daily Situations"
-              className={inputCls}
-            />
-          </div>
-
-          <div>
-            <label className="block text-xs text-stone-400 mb-1">Description</label>
-            <textarea
-              rows={3}
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="What will learners achieve?"
-              className={inputCls}
-            />
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <div>
-              <label className="block text-xs text-stone-400 mb-1">Language</label>
-              <select value={language} onChange={(e) => setLanguage(e.target.value)} className={inputCls}>
-                {languageOptions.map((l) => (
-                  <option key={l} value={l}>
-                    {l}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className="block text-xs text-stone-400 mb-1">Level</label>
-              <select value={level} onChange={(e) => setLevel(e.target.value)} className={`${inputCls} capitalize`}>
-                {LEVELS.map((l) => (
-                  <option key={l} value={l}>
-                    {l}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className="block text-xs text-stone-400 mb-1">Category</label>
-              <select value={category} onChange={(e) => setCategory(e.target.value)} className={`${inputCls} capitalize`}>
-                {CATEGORIES.map((c) => (
-                  <option key={c} value={c}>
-                    {c}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div>
-              <label className="block text-xs text-stone-400 mb-1">Duration</label>
-              <input value={duration} onChange={(e) => setDuration(e.target.value)} placeholder="e.g. 8 weeks" className={inputCls} />
-            </div>
-            <div>
-              <label className="block text-xs text-stone-400 mb-1">Price (₹, 0 = free)</label>
-              <input
-                type="number"
-                min={0}
-                step={50}
-                value={price}
-                onChange={(e) => setPrice(Number(e.target.value))}
-                className={`${inputCls} font-mono`}
-              />
-            </div>
-          </div>
-          {price > 0 && (
-            <p className="text-xs text-amber-300/80">
-              Payments are not live yet. Students will see &quot;Payment coming soon&quot; and cannot enroll in paid courses.
-            </p>
-          )}
-
-          <div>
-            <label className="block text-xs text-stone-400 mb-1">Tags (comma separated)</label>
-            <input value={tags} onChange={(e) => setTags(e.target.value)} placeholder="Devanagari, Conversation" className={inputCls} />
-          </div>
-
-          <div className="pt-4 border-t border-stone-800 flex items-center justify-end gap-3">
-            <button type="button" onClick={onClose} className="px-5 py-2.5 rounded-xl border border-stone-700 text-stone-300 hover:bg-stone-800">
-              Cancel
-            </button>
-            <button
-              type="submit"
-              disabled={saving}
-              className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-orange-600 text-stone-950 font-bold disabled:opacity-50 flex items-center gap-2"
-            >
-              <Save className="w-4 h-4" /> {saving ? "Saving…" : editing ? "Save changes" : "Create course"}
-            </button>
-          </div>
-        </form>
-      </div>
     </div>
   );
 }
@@ -723,369 +569,5 @@ function ProfileTab({ onMessage }: { onMessage: (message: { type: "error" | "suc
         <Save className="w-4 h-4" /> {saving ? "Saving…" : "Save profile"}
       </button>
     </form>
-  );
-}
-
-/* ═══════════════════ CURRICULUM MODAL ═══════════════════ */
-function CurriculumModal({ courseId, onClose, onChanged }: { courseId: string; onClose: () => void; onChanged: () => void }) {
-  const [course, setCourse] = useState<CourseDetail | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [view, setView] = useState<"curriculum" | "resources">("curriculum");
-  const [moduleTitle, setModuleTitle] = useState("");
-  const [openModuleId, setOpenModuleId] = useState<string | null>(null);
-
-  const load = async () => {
-    try {
-      setCourse(await instructorAPI.course(courseId));
-    } catch (e) {
-      setError(errMsg(e, "Could not load the curriculum."));
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    setLoading(true);
-    void load();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [courseId]);
-
-  const modules = useMemo(() => [...(course?.modules ?? [])].sort(byOrder), [course]);
-
-  // Runs a mutation, refreshes the course, and reports errors in the modal. Returns true on success.
-  const run = async (fn: () => Promise<unknown>): Promise<boolean> => {
-    setBusy(true);
-    setError(null);
-    try {
-      await fn();
-      await load();
-      onChanged();
-      return true;
-    } catch (e) {
-      setError(errMsg(e));
-      return false;
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  const addModule = async (e: FormEvent) => {
-    e.preventDefault();
-    const title = moduleTitle.trim();
-    if (title.length < 2) return setError("Module title must be at least 2 characters.");
-    const ok = await run(() => instructorAPI.addModule(courseId, { title, order_index: nextOrder(modules) }));
-    if (ok) setModuleTitle("");
-  };
-
-  const removeModule = (m: ModuleOut) => {
-    if (!confirm(`Delete module "${m.title}" and its ${m.lessons.length} lesson(s)?`)) return;
-    void run(() => instructorAPI.deleteModule(m.id));
-  };
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md px-4 py-6">
-      <div className="bg-[#120F0C] border border-stone-700/80 rounded-3xl p-6 sm:p-8 w-full max-w-3xl max-h-[92vh] overflow-y-auto shadow-2xl">
-        <div className="flex items-center justify-between pb-4 border-b border-stone-800 mb-5">
-          <div>
-            <h3 className="font-kalam text-3xl font-bold">Curriculum &amp; materials</h3>
-            {course && <p className="text-xs text-stone-500 mt-0.5">{course.title}</p>}
-          </div>
-          <button onClick={onClose} className="p-2 rounded-xl bg-stone-800/80 hover:bg-stone-700 text-stone-400 hover:text-white">
-            <X className="w-5 h-5" />
-          </button>
-        </div>
-
-        <div className="flex items-center gap-2 mb-5">
-          {(
-            [
-              ["curriculum", "Modules & lessons"],
-              ["resources", "Course resources"],
-            ] as const
-          ).map(([key, label]) => (
-            <button
-              key={key}
-              onClick={() => setView(key)}
-              className={`px-4 py-2 rounded-xl text-xs font-semibold ${
-                view === key ? "bg-amber-500/20 text-amber-300 border border-amber-500/40" : "text-stone-400 hover:text-white hover:bg-stone-900"
-              }`}
-            >
-              {label}
-            </button>
-          ))}
-        </div>
-
-        {error && <div className={`mb-4 ${errBoxCls}`}>{error}</div>}
-
-        {loading ? (
-          <p className="text-stone-400">Loading curriculum…</p>
-        ) : !course ? null : view === "curriculum" ? (
-          <>
-            {modules.length === 0 ? (
-              <p className="text-stone-400 text-sm mb-5">No modules yet. Add your first module below.</p>
-            ) : (
-              <div className="space-y-3 mb-6">
-                {modules.map((m) => {
-                  const open = openModuleId === m.id;
-                  const lessons = [...m.lessons].sort(byOrder);
-                  return (
-                    <div key={m.id} className="rounded-xl bg-stone-900 border border-stone-800">
-                      <div className="flex items-center justify-between gap-3 p-4">
-                        <button
-                          type="button"
-                          onClick={() => setOpenModuleId(open ? null : m.id)}
-                          className="flex items-center gap-2 text-left flex-1 min-w-0"
-                        >
-                          {open ? <ChevronDown className="w-4 h-4 text-amber-400 shrink-0" /> : <ChevronRight className="w-4 h-4 text-stone-500 shrink-0" />}
-                          <span className="min-w-0">
-                            <span className="block font-semibold truncate">{m.title}</span>
-                            <span className="block text-xs text-stone-500 mt-0.5">
-                              {lessons.length} {lessons.length === 1 ? "lesson" : "lessons"}
-                            </span>
-                          </span>
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => removeModule(m)}
-                          disabled={busy}
-                          title="Delete module"
-                          className="p-2 rounded-lg bg-stone-800/80 hover:bg-rose-500/20 text-stone-400 hover:text-rose-400 disabled:opacity-50"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
-
-                      {open && (
-                        <div className="px-4 pb-4 space-y-2 border-t border-stone-800/80 pt-3">
-                          {lessons.length === 0 && <p className="text-xs text-stone-500">No lessons in this module yet.</p>}
-                          {lessons.map((l) => (
-                            <div key={l.id} className="flex items-center justify-between gap-3 p-3 rounded-lg bg-stone-950/60 border border-stone-800/80">
-                              <div className="min-w-0">
-                                <p className="text-sm font-medium truncate">{l.title}</p>
-                                <p className="text-[11px] text-stone-500 mt-0.5">
-                                  {l.youtube_video_id ? "Video added" : "No video"}
-                                  {l.notes_url ? " · Notes added" : ""}
-                                  {l.is_preview ? " · Free preview" : ""}
-                                </p>
-                              </div>
-                              <div className="flex items-center gap-1.5 shrink-0">
-                                <button
-                                  type="button"
-                                  disabled={busy}
-                                  onClick={() => run(() => instructorAPI.updateLesson(l.id, { is_preview: !l.is_preview }))}
-                                  title={l.is_preview ? "Remove free preview" : "Make free preview"}
-                                  className={`p-2 rounded-lg disabled:opacity-50 ${
-                                    l.is_preview ? "bg-amber-500/20 text-amber-300" : "bg-stone-800/80 text-stone-400 hover:text-amber-300"
-                                  }`}
-                                >
-                                  <Eye className="w-3.5 h-3.5" />
-                                </button>
-                                <button
-                                  type="button"
-                                  disabled={busy}
-                                  onClick={() => {
-                                    if (confirm(`Delete lesson "${l.title}"?`)) void run(() => instructorAPI.deleteLesson(l.id));
-                                  }}
-                                  title="Delete lesson"
-                                  className="p-2 rounded-lg bg-stone-800/80 hover:bg-rose-500/20 text-stone-400 hover:text-rose-400 disabled:opacity-50"
-                                >
-                                  <Trash2 className="w-3.5 h-3.5" />
-                                </button>
-                              </div>
-                            </div>
-                          ))}
-
-                          <LessonForm
-                            nextIndex={nextOrder(lessons)}
-                            busy={busy}
-                            onSubmit={(body) => run(() => instructorAPI.addLesson(m.id, body))}
-                          />
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-
-            <form onSubmit={addModule} className="flex gap-2 pt-4 border-t border-stone-800">
-              <input
-                required
-                minLength={2}
-                maxLength={150}
-                value={moduleTitle}
-                onChange={(e) => setModuleTitle(e.target.value)}
-                placeholder="New module title"
-                className={inputCls}
-              />
-              <button
-                type="submit"
-                disabled={busy || moduleTitle.trim().length < 2}
-                title="Add module"
-                className="px-4 rounded-xl bg-amber-500 text-stone-950 font-bold disabled:opacity-50"
-              >
-                <Plus className="w-4 h-4" />
-              </button>
-            </form>
-          </>
-        ) : (
-          <ResourcesPanel
-            resources={course.resources ?? []}
-            busy={busy}
-            onAdd={(body) => run(() => instructorAPI.addResource(courseId, body))}
-            onDelete={(id) => run(() => instructorAPI.deleteResource(courseId, id))}
-          />
-        )}
-      </div>
-    </div>
-  );
-}
-
-/* ═══════════════════ LESSON FORM ═══════════════════ */
-function LessonForm({
-  nextIndex,
-  busy,
-  onSubmit,
-}: {
-  nextIndex: number;
-  busy: boolean;
-  onSubmit: (body: LessonInput) => Promise<boolean>;
-}) {
-  const [title, setTitle] = useState("");
-  const [video, setVideo] = useState("");
-  const [notes, setNotes] = useState("");
-  const [preview, setPreview] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  const submit = async (e: FormEvent) => {
-    e.preventDefault();
-    setError(null);
-    const videoId = video.trim() ? extractYouTubeId(video) : null;
-    if (video.trim() && !videoId) return setError("Enter a valid YouTube link or 11-character video ID.");
-    if (notes.trim() && !isHttpUrl(notes)) return setError("Notes link must start with http:// or https://");
-
-    const ok = await onSubmit({
-      title: title.trim(),
-      youtube_video_id: videoId ?? undefined,
-      notes_url: notes.trim() || undefined,
-      order_index: nextIndex,
-      is_preview: preview,
-    });
-    if (ok) {
-      setTitle("");
-      setVideo("");
-      setNotes("");
-      setPreview(false);
-    }
-  };
-
-  return (
-    <form onSubmit={submit} className="space-y-2 pt-3 border-t border-stone-800/80">
-      <p className="text-xs text-stone-400">Add a lesson</p>
-      {error && <div className={errBoxCls}>{error}</div>}
-      <input required minLength={2} maxLength={150} value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Lesson title" className={inputCls} />
-      <input value={video} onChange={(e) => setVideo(e.target.value)} placeholder="YouTube link or video ID (optional)" className={inputCls} />
-      <input value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Notes link, e.g. Google Drive (optional)" className={inputCls} />
-      <div className="flex items-center justify-between gap-3">
-        <label className="flex items-center gap-2 text-xs text-stone-400 cursor-pointer">
-          <input type="checkbox" checked={preview} onChange={(e) => setPreview(e.target.checked)} className="accent-amber-500" />
-          Free preview for non-enrolled students
-        </label>
-        <button
-          type="submit"
-          disabled={busy || title.trim().length < 2}
-          className="px-4 py-2 rounded-xl bg-amber-500 text-stone-950 font-bold text-xs disabled:opacity-50 flex items-center gap-1.5"
-        >
-          <Plus className="w-3.5 h-3.5" /> Add lesson
-        </button>
-      </div>
-    </form>
-  );
-}
-
-/* ═══════════════════ RESOURCES PANEL ═══════════════════ */
-function ResourcesPanel({
-  resources,
-  busy,
-  onAdd,
-  onDelete,
-}: {
-  resources: { id: string; type: string; title: string; url: string }[];
-  busy: boolean;
-  onAdd: (body: { type: string; title: string; url: string }) => Promise<boolean>;
-  onDelete: (id: string) => Promise<boolean>;
-}) {
-  const [type, setType] = useState("video");
-  const [title, setTitle] = useState("");
-  const [url, setUrl] = useState("");
-  const [error, setError] = useState<string | null>(null);
-
-  const submit = async (e: FormEvent) => {
-    e.preventDefault();
-    setError(null);
-    if (!isHttpUrl(url)) return setError("Link must start with http:// or https://");
-    const ok = await onAdd({ type, title: title.trim(), url: url.trim() });
-    if (ok) {
-      setTitle("");
-      setUrl("");
-    }
-  };
-
-  return (
-    <div>
-      {resources.length === 0 ? (
-        <p className="text-stone-400 text-sm mb-5">No resources yet. Add PDFs, articles, audio or extra videos for the whole course.</p>
-      ) : (
-        <div className="space-y-2 mb-6">
-          {resources.map((r) => (
-            <div key={r.id} className="flex items-center justify-between gap-3 p-3 rounded-xl bg-stone-900 border border-stone-800">
-              <div className="min-w-0">
-                <p className="text-sm font-medium truncate">{r.title}</p>
-                <a href={r.url} target="_blank" rel="noopener noreferrer" className="text-[11px] text-amber-400 hover:text-amber-300 truncate block">
-                  {r.type} · {r.url}
-                </a>
-              </div>
-              <button
-                type="button"
-                disabled={busy}
-                onClick={() => {
-                  if (confirm(`Delete resource "${r.title}"?`)) void onDelete(r.id);
-                }}
-                title="Delete resource"
-                className="p-2 rounded-lg bg-stone-800/80 hover:bg-rose-500/20 text-stone-400 hover:text-rose-400 disabled:opacity-50 shrink-0"
-              >
-                <Trash2 className="w-3.5 h-3.5" />
-              </button>
-            </div>
-          ))}
-        </div>
-      )}
-
-      <form onSubmit={submit} className="space-y-2 pt-4 border-t border-stone-800">
-        {error && <div className={errBoxCls}>{error}</div>}
-        <div className="grid grid-cols-1 sm:grid-cols-4 gap-2">
-          <select value={type} onChange={(e) => setType(e.target.value)} className={`${inputCls} capitalize`}>
-            {RESOURCE_TYPES.map((t) => (
-              <option key={t} value={t}>
-                {t}
-              </option>
-            ))}
-          </select>
-          <input required minLength={2} value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Title" className={`${inputCls} sm:col-span-3`} />
-        </div>
-        <div className="flex gap-2">
-          <input required value={url} onChange={(e) => setUrl(e.target.value)} placeholder="https://..." className={inputCls} />
-          <button
-            type="submit"
-            disabled={busy || !title.trim() || !url.trim()}
-            title="Add resource"
-            className="px-4 rounded-xl bg-amber-500 text-stone-950 font-bold disabled:opacity-50"
-          >
-            <Plus className="w-4 h-4" />
-          </button>
-        </div>
-      </form>
-    </div>
   );
 }
