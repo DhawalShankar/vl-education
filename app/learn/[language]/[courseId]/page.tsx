@@ -8,6 +8,7 @@ import { ArrowLeft, BookOpen, CheckCircle, Circle, ExternalLink, Lock, Play, Use
 import { useAuth } from "@/app/context/AuthContext";
 import { enrollmentAPI, learnAPI, LessonOut } from "@/app/lib/api";
 import { useApi } from "@/app/lib/useApi";
+import RazorpayCheckout from "@/components/RazorpayCheckout";
 
 const byOrder = (a: { order_index: number }, b: { order_index: number }) => a.order_index - b.order_index;
 
@@ -49,6 +50,7 @@ export default function CourseViewer() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   useEffect(() => {
     if (!authLoading && !isAuthenticated) router.replace("/auth/login");
@@ -89,14 +91,21 @@ export default function CourseViewer() {
   const handleEnroll = async () => {
     setBusy(true);
     setActionError(null);
+    setSuccessMessage(null);
     try {
       await learnAPI.enroll(courseId);
       setReloadKey((k) => k + 1); // refetch: locked lessons now come unmasked
+      setSuccessMessage("You are enrolled in this course.");
     } catch (e) {
       setActionError(e instanceof Error ? e.message : "Enrollment failed");
     } finally {
       setBusy(false);
     }
+  };
+
+  const handlePaidSuccess = () => {
+    setReloadKey((k) => k + 1);
+    setSuccessMessage("Payment verified. You are enrolled in this course.");
   };
 
   const handleToggle = async (lesson: LessonOut) => {
@@ -157,9 +166,7 @@ export default function CourseViewer() {
       {busy ? "Enrolling…" : "Enroll free"}
     </button>
   ) : (
-    <button disabled className="w-full py-3 rounded-xl font-bold text-sm bg-stone-800 text-stone-500 cursor-not-allowed">
-      Payment coming soon (₹{c.price})
-    </button>
+    <RazorpayCheckout courseId={courseId} onSuccess={handlePaidSuccess} onError={setActionError} />
   );
 
   return (
@@ -210,6 +217,11 @@ export default function CourseViewer() {
         {actionError && (
           <div className="mb-6 px-4 py-3 rounded-xl text-sm bg-red-500/10 border border-red-500/20 text-red-300">
             {actionError}
+          </div>
+        )}
+        {successMessage && (
+          <div className="mb-6 px-4 py-3 rounded-xl text-sm bg-emerald-500/10 border border-emerald-500/20 text-emerald-300">
+            {successMessage}
           </div>
         )}
 

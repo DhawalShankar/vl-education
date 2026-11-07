@@ -73,7 +73,15 @@ Open [http://localhost:3000](http://localhost:3000) to view the app.
 npm run build   # production build
 npm run start   # run the production build
 npm run lint    # run ESLint
+npm test        # run checkout tests
 ```
+
+### Payment checkout tests
+
+The Razorpay checkout flow is covered by the Vitest suite in
+`components/RazorpayCheckout.test.tsx`. The tests mock the Razorpay browser SDK
+and backend client, so they do not create real orders or payments. Run them with
+`npm test`.
 
 ## Project Structure
 

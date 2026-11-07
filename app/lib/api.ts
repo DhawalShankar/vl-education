@@ -76,6 +76,24 @@ export interface EnrollmentOut {
   completed_at?: string | null;
 }
 
+export interface PaymentOrder {
+  order_id: string;
+  amount: number;
+  currency: string;
+  key_id: string;
+}
+
+export interface PaymentVerificationRequest {
+  razorpay_order_id: string;
+  razorpay_payment_id: string;
+  razorpay_signature: string;
+}
+
+export interface PaymentVerificationResponse {
+  success?: boolean;
+  message?: string;
+}
+
 export interface ArticleOut {
   id: string;
   title: string;
@@ -256,6 +274,19 @@ export const enrollmentAPI = {
     if (!res.ok) return null;
     return res.json();
   },
+};
+
+export const paymentsAPI = {
+  createOrder: (courseId: string) =>
+    getJSON<PaymentOrder>("/payments/create-order", {
+      method: "POST",
+      body: JSON.stringify({ course_id: courseId }),
+    }),
+  verifyPayment: (payment: PaymentVerificationRequest) =>
+    getJSON<PaymentVerificationResponse>("/payments/verify-payment", {
+      method: "POST",
+      body: JSON.stringify(payment),
+    }),
 };
 
 export const articleAPI = {
