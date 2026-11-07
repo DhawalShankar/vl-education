@@ -5,66 +5,63 @@ import {
   Mail,
   Phone,
   MapPin,
+  Clock,
   Globe,
-  Heart,
-  Facebook,
+  ArrowUpRight,
+  ShieldCheck,
   Twitter,
   Instagram,
-  Linkedin,
   Youtube,
-  ArrowUpRight,
+  Facebook,
 } from "lucide-react";
+import { CONTACT_DETAILS, SOCIAL_LINKS } from "@/app/lib/constants";
 
 export default function Footer() {
-  const platformLinks = [
-    { label: "Courses", href: "/learn" },
-    { label: "Practice Labs", href: "/practice" },
-    { label: "Challenges", href: "/challenges" },
-    { label: "Certifications", href: "/certifications" },
+  const exploreLinks = [
+    { label: "Courses", href: "/courses" },
+    { label: "Live 1:1 Sessions", href: "/sessions" },
+    { label: "Workshops (Online & Offline)", href: "/workshops" },
+    { label: "Pricing", href: "/pricing" },
+    { label: "About Us", href: "/about" },
+    {
+      label: "Main Website (vartalang.in)",
+      href: CONTACT_DETAILS.MAIN_WEBSITE,
+      external: true,
+    },
   ];
 
-  const companyLinks = [
-    { label: "About Us", href: "/about" },
-    { label: "Community", href: "/community" },
-    { label: "Blog", href: "/blog" },
-    { label: "Careers", href: "/careers" },
-    { label: "Help Center", href: "/help" },
+  const supportLinks = [
+    { label: "Contact Us", href: "/contact" },
+    { label: "FAQ", href: "/faq" },
   ];
 
   const legalLinks = [
+    { label: "Terms & Conditions", href: "/terms" },
     { label: "Privacy Policy", href: "/privacy" },
-    { label: "Terms of Service", href: "/terms" },
+    { label: "Refund & Cancellation Policy", href: "/refund-policy" },
+    { label: "Shipping & Delivery Policy", href: "/shipping-policy" },
+    { label: "Instructor Terms", href: "/instructor-terms" },
   ];
 
-  const socialLinks = [
+  const socialButtons = [
     {
       name: "X (Twitter)",
-      handle: "@vartalang",
-      href: "https://x.com/vartalang",
+      href: SOCIAL_LINKS.TWITTER,
       icon: Twitter,
     },
     {
       name: "Instagram",
-      handle: "@vartalang",
-      href: "https://instagram.com/vartalang",
+      href: SOCIAL_LINKS.INSTAGRAM,
       icon: Instagram,
     },
     {
       name: "YouTube",
-      handle: "@vartalang",
-      href: "https://youtube.com/@vartalang",
+      href: SOCIAL_LINKS.YOUTUBE,
       icon: Youtube,
     },
     {
-      name: "LinkedIn",
-      handle: "@vartalang",
-      href: "https://linkedin.com/company/vartalang",
-      icon: Linkedin,
-    },
-    {
       name: "Facebook",
-      handle: "@vartalang",
-      href: "https://facebook.com/vartalang",
+      href: SOCIAL_LINKS.FACEBOOK,
       icon: Facebook,
     },
   ];
@@ -73,46 +70,42 @@ export default function Footer() {
     <footer className="relative bg-[#070605] border-t border-stone-800/80 text-stone-300">
       <div className="max-w-7xl mx-auto px-6 py-14">
         {/* Main Columns */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-10 lg:gap-8 pb-12 border-b border-stone-800/70">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10 lg:gap-8 pb-12 border-b border-stone-800/70">
           
-          {/* Brand Info (2 cols on lg) */}
-          <div className="lg:col-span-2 space-y-4">
-            <Link href="/home" className="inline-flex items-center gap-3 group">
+          {/* Brand Info */}
+          <div className="space-y-4">
+            <Link href="/" className="inline-flex items-center gap-3 group">
               <img
                 src="/logo.png"
                 alt="VartaLang Logo"
                 className="h-10 w-auto object-contain drop-shadow-md group-hover:scale-105 transition-transform"
               />
               <span className="font-kalam text-2xl font-bold text-white tracking-tight group-hover:text-amber-300 transition-colors">
-                VartaLang
+                {CONTACT_DETAILS.BRAND_NAME}
               </span>
             </Link>
 
-            <p className="text-sm text-stone-400 leading-relaxed max-w-sm">
-              Preserving India&apos;s rich linguistic heritage through modern, AI-powered
-              language education. An initiative by Cosmo India Prakashan.
+            <p className="text-sm text-stone-400 leading-relaxed">
+              Learn Indian languages through courses, live 1:1 sessions and workshops.
             </p>
 
-            {/* Social Handles */}
-            <div className="pt-2">
-              <div className="flex items-center gap-2 mb-3">
-                <span className="text-xs font-medium text-stone-400">Social</span>
-                <span className="text-[11px] font-mono px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-300 border border-amber-500/20">
-                  @vartalang
-                </span>
-              </div>
+            {/* Social Icons */}
+            <div className="pt-1">
+              <span className="text-[11px] font-medium uppercase tracking-wider text-stone-500 block mb-2">
+                Follow Us
+              </span>
               <div className="flex items-center gap-2.5">
-                {socialLinks.map((social) => {
-                  const Icon = social.icon;
+                {socialButtons.map((s) => {
+                  const Icon = s.icon;
                   return (
                     <a
-                      key={social.name}
-                      href={social.href}
+                      key={s.name}
+                      href={s.href}
                       target="_blank"
                       rel="noopener noreferrer"
-                      title={`${social.name}: ${social.handle}`}
-                      aria-label={`${social.name}: ${social.handle}`}
-                      className="w-9 h-9 rounded-xl bg-stone-900/90 border border-stone-800 hover:border-amber-500/50 hover:bg-stone-800/80 text-stone-400 hover:text-amber-400 flex items-center justify-center transition-all hover:scale-105"
+                      title={s.name}
+                      aria-label={s.name}
+                      className="w-8 h-8 rounded-xl bg-stone-900 border border-stone-800 hover:border-amber-500/50 hover:bg-stone-800 text-stone-400 hover:text-amber-400 flex items-center justify-center transition-all hover:scale-105"
                     >
                       <Icon className="w-4 h-4" />
                     </a>
@@ -120,15 +113,67 @@ export default function Footer() {
                 })}
               </div>
             </div>
+
+            <div className="pt-2 flex items-center gap-2 text-xs text-stone-400">
+              <ShieldCheck className="w-4 h-4 text-emerald-400 shrink-0" />
+              <span>{CONTACT_DETAILS.PAYMENT_NOTE}</span>
+            </div>
           </div>
 
-          {/* Platform */}
+          {/* Explore Links */}
           <div>
             <h4 className="font-kalam text-lg font-bold text-white mb-4 tracking-wide">
-              Platform
+              Explore
             </h4>
             <ul className="space-y-2.5 text-sm">
-              {platformLinks.map((link) => (
+              {exploreLinks.map((link) => (
+                <li key={link.label}>
+                  {link.external ? (
+                    <a
+                      href={link.href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-stone-400 hover:text-amber-400 transition-colors inline-flex items-center gap-1 group"
+                    >
+                      <span>{link.label}</span>
+                      <ArrowUpRight className="w-3.5 h-3.5 opacity-60 group-hover:opacity-100 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+                    </a>
+                  ) : (
+                    <Link
+                      href={link.href}
+                      className="text-stone-400 hover:text-amber-400 transition-colors"
+                    >
+                      {link.label}
+                    </Link>
+                  )}
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Support & Legal Links */}
+          <div>
+            <h4 className="font-kalam text-lg font-bold text-white mb-4 tracking-wide">
+              Support
+            </h4>
+            <ul className="space-y-2.5 text-sm mb-6">
+              {supportLinks.map((link) => (
+                <li key={link.href}>
+                  <Link
+                    href={link.href}
+                    className="text-stone-400 hover:text-amber-400 transition-colors"
+                  >
+                    {link.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+
+            <h4 className="font-kalam text-lg font-bold text-white mb-3 tracking-wide">
+              Legal
+            </h4>
+            <ul className="space-y-2 text-xs">
+              {legalLinks.map((link) => (
                 <li key={link.href}>
                   <Link
                     href={link.href}
@@ -141,83 +186,74 @@ export default function Footer() {
             </ul>
           </div>
 
-          {/* Company */}
-          <div>
-            <h4 className="font-kalam text-lg font-bold text-white mb-4 tracking-wide">
-              Company
-            </h4>
-            <ul className="space-y-2.5 text-sm">
-              {companyLinks.map((link) => (
-                <li key={link.href}>
-                  <Link
-                    href={link.href}
-                    className="text-stone-400 hover:text-amber-400 transition-colors"
-                  >
-                    {link.label}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          {/* Contact */}
+          {/* Contact Block */}
           <div>
             <h4 className="font-kalam text-lg font-bold text-white mb-4 tracking-wide">
               Contact
             </h4>
-            <ul className="space-y-3 text-sm">
-              <li>
+            <div className="space-y-3 text-sm">
+              <div className="text-stone-300 font-medium">
+                {CONTACT_DETAILS.BUSINESS_NAME}
+              </div>
+
+              <div className="text-stone-400 flex items-start gap-2.5">
+                <MapPin className="w-4 h-4 mt-0.5 text-amber-400 shrink-0" />
+                <span className="leading-snug">{CONTACT_DETAILS.BUSINESS_ADDRESS}</span>
+              </div>
+
+              <div>
                 <a
-                  href="mailto:support@cosmoindiaprakashan.in"
-                  className="text-stone-400 hover:text-amber-400 transition-colors flex items-start gap-2.5 group"
-                >
-                  <Mail className="w-4 h-4 mt-0.5 text-amber-400 shrink-0" />
-                  <span className="break-all">support@cosmoindiaprakashan.in</span>
-                </a>
-              </li>
-              <li>
-                <a
-                  href="tel:+917388270331"
+                  href={CONTACT_DETAILS.PHONE_TEL}
                   className="text-stone-400 hover:text-amber-400 transition-colors flex items-center gap-2.5"
                 >
                   <Phone className="w-4 h-4 text-amber-400 shrink-0" />
-                  <span>+91 73882 70331</span>
+                  <span>{CONTACT_DETAILS.PHONE}</span>
                 </a>
-              </li>
-              <li className="text-stone-400 flex items-start gap-2.5">
-                <MapPin className="w-4 h-4 mt-0.5 text-amber-400 shrink-0" />
-                <span>Kanpur, Uttar Pradesh, India</span>
-              </li>
-              <li>
+              </div>
+
+              <div>
                 <a
-                  href="https://vartalang.in"
+                  href={CONTACT_DETAILS.SUPPORT_EMAIL_MAILTO}
+                  className="text-stone-400 hover:text-amber-400 transition-colors flex items-start gap-2.5 group"
+                >
+                  <Mail className="w-4 h-4 mt-0.5 text-amber-400 shrink-0" />
+                  <span className="break-all">{CONTACT_DETAILS.SUPPORT_EMAIL}</span>
+                </a>
+              </div>
+
+              <div className="text-stone-400 flex items-start gap-2.5 text-xs">
+                <Clock className="w-4 h-4 mt-0.5 text-amber-400 shrink-0" />
+                <span>{CONTACT_DETAILS.SUPPORT_HOURS}</span>
+              </div>
+
+              <div className="pt-1">
+                <a
+                  href={CONTACT_DETAILS.MAIN_WEBSITE}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-stone-400 hover:text-amber-400 transition-colors flex items-center gap-2.5 group"
+                  className="text-stone-400 hover:text-amber-400 transition-colors flex items-center gap-2.5 group text-xs"
                 >
-                  <Globe className="w-4 h-4 text-amber-400 shrink-0" />
+                  <Globe className="w-3.5 h-3.5 text-amber-400 shrink-0" />
                   <span>vartalang.in</span>
-                  <ArrowUpRight className="w-3.5 h-3.5 opacity-60 group-hover:opacity-100 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+                  <ArrowUpRight className="w-3 h-3 opacity-60 group-hover:opacity-100 transition-transform" />
                 </a>
-              </li>
-            </ul>
+              </div>
+            </div>
           </div>
         </div>
 
         {/* Bottom Bar */}
         <div className="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-stone-500">
-          <div className="flex items-center gap-2">
-            <span>© 2026 VartaLang · Cosmo India Prakashan. Made with</span>
-            <Heart className="w-3.5 h-3.5 text-red-500 fill-red-500" />
-            <span>in India</span>
+          <div>
+            {CONTACT_DETAILS.COPYRIGHT_LINE}
           </div>
 
-          <div className="flex items-center gap-6">
+          <div className="flex flex-wrap items-center gap-4 text-stone-500">
             {legalLinks.map((link) => (
               <Link
                 key={link.href}
                 href={link.href}
-                className="text-stone-500 hover:text-amber-400 transition-colors"
+                className="hover:text-amber-400 transition-colors"
               >
                 {link.label}
               </Link>

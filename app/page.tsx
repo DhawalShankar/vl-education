@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Link from "next/link";
 import {
   Globe,
   Shield,
@@ -16,8 +17,9 @@ import {
   ExternalLink,
   Lock,
   Headphones,
-  Sparkle
+  Sparkle,
 } from "lucide-react";
+import Footer from "@/components/Footer";
 
 // Platform Launch target: December 1, 2026 IST
 const LAUNCH_DATE = new Date("2026-12-01T00:00:00+05:30");
@@ -131,16 +133,14 @@ export default function RootTeaserPage() {
 
   return (
     <div className="cultural-page min-h-screen text-white relative overflow-hidden flex flex-col justify-between selection:bg-amber-500 selection:text-black">
-      {/* ── MINIMAL ROOT HEADER (NO INTERNAL PLATFORM ACCESS) ── */}
+      {/* ── HEADER ── */}
       <header className="fixed top-5 left-0 right-0 z-50 px-4 sm:px-8 max-w-7xl mx-auto">
         <nav className="rounded-full px-5 py-3 flex items-center justify-between shadow-2xl border border-white/10 bg-[#14110E]/85 backdrop-blur-xl">
           {/* External Brand Logo */}
-          <a
-            href="https://vartalang.in"
-            target="_blank"
-            rel="noopener noreferrer"
+          <Link
+            href="/"
             className="flex items-center gap-3 group"
-            title="Go to main website: vartalang.in"
+            title="VartaLang Learn"
           >
             <img
               src="/logo.png"
@@ -150,23 +150,34 @@ export default function RootTeaserPage() {
             <span className="font-kalam text-xl font-bold text-white tracking-tight group-hover:text-amber-300 transition-colors">
               VartaLang
             </span>
-            <span className="hidden sm:inline-flex items-center gap-1 text-[10px] font-semibold tracking-wider uppercase px-2.5 py-0.5 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-300">
-              <Lock className="w-2.5 h-2.5" />
-              LMS Coming Soon
-            </span>
-          </a>
+          </Link>
 
-          {/* External Action Links Only */}
+          {/* Navigation Links */}
           <div className="flex items-center gap-3 sm:gap-5">
-            <a
-              href="https://vartalang.in/challenge"
-              target="_blank"
-              rel="noopener noreferrer"
+            <Link
+              href="/courses"
               className="hidden md:inline-flex items-center gap-1.5 text-xs text-stone-300 hover:text-amber-300 transition-colors"
             >
-              <span>Voice Challenge</span>
-              <ArrowUpRight className="w-3.5 h-3.5 opacity-70" />
-            </a>
+              Courses
+            </Link>
+            <Link
+              href="/sessions"
+              className="hidden md:inline-flex items-center gap-1.5 text-xs text-stone-300 hover:text-amber-300 transition-colors"
+            >
+              1:1 Sessions
+            </Link>
+            <Link
+              href="/workshops"
+              className="hidden md:inline-flex items-center gap-1.5 text-xs text-stone-300 hover:text-amber-300 transition-colors"
+            >
+              Workshops
+            </Link>
+            <Link
+              href="/pricing"
+              className="hidden sm:inline-flex items-center gap-1.5 text-xs text-stone-300 hover:text-amber-300 transition-colors"
+            >
+              Pricing
+            </Link>
 
             <a
               href="https://vartalang.in"
@@ -224,10 +235,10 @@ export default function RootTeaserPage() {
 
           {/* Headline */}
           <h1 className="font-kalam text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-white mb-6 leading-[1.08] drop-shadow-2xl tracking-tight">
-            Something New Is
+            Learn Indian Languages
             <br />
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-200 via-yellow-200 to-amber-400">
-              Being Written
+              Through Courses &amp; Mentorship
             </span>
           </h1>
 
@@ -235,9 +246,8 @@ export default function RootTeaserPage() {
             Preserving India&apos;s rich linguistic heritage through modern, AI-powered education.
           </p>
           <p className="text-sm sm:text-base text-stone-400 max-w-2xl mx-auto mb-10 leading-relaxed">
-            The VartaLang interactive learning platform is in active development. All courses,
-            practice labs, and student certifications will open this December. For current initiatives
-            and rewards, visit our official website below.
+            Learn Indian languages through self-paced courses, live 1:1 sessions and interactive workshops.
+            Curricula and pricing are crafted by experienced native language educators.
           </p>
 
           {/* Countdown Display */}
@@ -260,33 +270,23 @@ export default function RootTeaserPage() {
             ))}
           </div>
 
-          {timeLeft.done && (
-            <p className="text-amber-300 font-semibold mb-8 text-lg">
-              Launch day is here — thank you for being part of the journey.
-            </p>
-          )}
-
-          {/* Strict External CTAs to vartalang.in */}
+          {/* Public Exploration CTAs */}
           <div className="max-w-xl mx-auto flex flex-col sm:flex-row items-center justify-center gap-4 mb-14">
-            <a
-              href="https://vartalang.in"
-              target="_blank"
-              rel="noopener noreferrer"
+            <Link
+              href="/courses"
               className="w-full sm:w-auto px-8 py-4 bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-400 hover:to-orange-500 text-stone-950 rounded-xl font-bold font-kalam text-lg shadow-xl shadow-amber-500/25 transition-all hover:scale-105 flex items-center justify-center gap-2"
             >
-              <span>Visit vartalang.in</span>
-              <ArrowUpRight className="w-5 h-5" />
-            </a>
+              <span>Explore Courses</span>
+              <ArrowRight className="w-5 h-5" />
+            </Link>
 
-            <a
-              href="https://vartalang.in/challenge"
-              target="_blank"
-              rel="noopener noreferrer"
+            <Link
+              href="/sessions"
               className="w-full sm:w-auto px-8 py-4 rounded-xl bg-stone-900/85 hover:bg-stone-800 border border-stone-700/70 text-stone-200 hover:text-white font-bold font-kalam text-lg transition-all hover:scale-105 flex items-center justify-center gap-2"
             >
-              <span>Voice Challenge</span>
+              <span>Live 1:1 Sessions</span>
               <ArrowRight className="w-4 h-4 text-amber-400" />
-            </a>
+            </Link>
           </div>
 
           {/* Trust Indicators */}
@@ -394,14 +394,14 @@ export default function RootTeaserPage() {
             <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-blue-500/10 border border-blue-400/25 mb-4">
               <Clock className="w-3.5 h-3.5 text-blue-400" />
               <span className="text-xs font-semibold text-blue-200 uppercase tracking-wide">
-                Under Active Engineering
+                Educational Offerings
               </span>
             </div>
             <h2 className="font-kalam text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-3">
-              What&apos;s Coming to the Platform
+              What We Offer
             </h2>
             <p className="text-base text-stone-400 max-w-xl mx-auto">
-              A comprehensive language learning suite crafted specifically for Indian vernaculars.
+              A comprehensive language learning suite crafted specifically for Indian languages.
             </p>
           </div>
 
@@ -433,9 +433,9 @@ export default function RootTeaserPage() {
                     </p>
                   </div>
 
-                  <div className="pt-4 border-t border-stone-800/80 flex items-center gap-2 text-xs text-amber-400 font-semibold font-kalam">
-                    <Clock className="w-3.5 h-3.5" />
-                    <span>Unlocking December 2026</span>
+                  <div className="pt-4 border-t border-stone-800/80 flex items-center justify-between text-xs text-amber-400 font-semibold font-kalam">
+                    <span>Explore offerings</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
                   </div>
                 </div>
               );
@@ -444,64 +444,8 @@ export default function RootTeaserPage() {
         </div>
       </section>
 
-      {/* ── DEDICATED ROOT FOOTER (EXTERNAL-ONLY LINKS) ─────────────── */}
-      <footer className="relative bg-[#050403] border-t border-stone-800 text-stone-400 py-12 px-6">
-        <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6 text-center md:text-left">
-          <div className="space-y-1">
-            <a
-              href="https://vartalang.in"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 font-kalam text-xl font-bold text-white hover:text-amber-400 transition-colors"
-            >
-              <span>VartaLang</span>
-              <span className="text-xs text-amber-400 font-sans font-medium px-2 py-0.5 rounded-full bg-amber-500/10 border border-amber-500/20">
-                vartalang.in
-              </span>
-            </a>
-            <p className="text-xs text-stone-500">
-              An initiative by Cosmo India Prakashan • Born in 2026
-            </p>
-          </div>
-
-          <div className="flex flex-wrap items-center justify-center gap-6 text-xs text-stone-300 font-medium">
-            <a
-              href="https://vartalang.in"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="hover:text-amber-400 transition-colors"
-            >
-              Main Website
-            </a>
-            <a
-              href="https://vartalang.in/challenge"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="hover:text-amber-400 transition-colors"
-            >
-              Voice Challenge
-            </a>
-            <a
-              href="https://vartalang.in/auth/signup"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="hover:text-amber-400 transition-colors"
-            >
-              Create Account
-            </a>
-            <a
-              href="mailto:support@cosmoindiaprakashan.in"
-              className="hover:text-amber-400 transition-colors"
-            >
-              support@cosmoindiaprakashan.in
-            </a>
-          </div>
-
-          <p className="text-xs text-stone-500">
-            &copy; 2026 VartaLang. All rights reserved.
-          </p>
-        </div>
-      </footer>
+      {/* Global Responsive Footer */}
+      <Footer />
     </div>
   );
 }

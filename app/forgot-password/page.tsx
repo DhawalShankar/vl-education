@@ -1,10 +1,12 @@
 "use client";
-import { useState } from 'react';
-import Link from 'next/link';
-import { ArrowLeft, Mail, ArrowRight } from 'lucide-react';
+
+import { useState } from "react";
+import Link from "next/link";
+import { Mail, ArrowRight } from "lucide-react";
+import Footer from "@/components/Footer";
 
 export default function ForgotPasswordPage() {
-  const [email, setEmail] = useState('');
+  const [email, setEmail] = useState("");
   const [submitted, setSubmitted] = useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -13,30 +15,32 @@ export default function ForgotPasswordPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0a0908] relative overflow-hidden flex items-center justify-center px-4">
+    <div className="min-h-screen bg-[#0a0908] relative overflow-hidden flex flex-col justify-between">
       {/* Background */}
       <div
         className="fixed inset-0 opacity-20 pointer-events-none"
         style={{
           backgroundImage: `url('https://images.unsplash.com/photo-1580582932707-520aed937b7b?w=1920&q=80')`,
-          backgroundSize: 'cover', backgroundPosition: 'center',
+          backgroundSize: "cover",
+          backgroundPosition: "center",
         }}
       />
       <div className="fixed inset-0 bg-gradient-to-b from-amber-900/10 via-transparent to-orange-900/10 pointer-events-none" />
 
-      <div className="relative z-10 w-full max-w-md">
-        <div className="bg-stone-900/60 backdrop-blur-md border border-stone-700/50 rounded-2xl p-10">
-
+      <div className="relative z-10 flex-1 flex items-center justify-center px-4 py-16">
+        <div className="w-full max-w-md bg-stone-900/60 backdrop-blur-md border border-stone-700/50 rounded-2xl p-10">
           {/* Logo */}
           <div className="flex items-center justify-center mb-8">
-            <img src="/logo.png" alt="VartaLang Logo" className="h-12 w-auto object-contain drop-shadow-lg" />
+            <Link href="/">
+              <img src="/logo.png" alt="VartaLang Logo" className="h-12 w-auto object-contain drop-shadow-lg" />
+            </Link>
           </div>
 
           {!submitted ? (
             <>
               <h2 className="font-kalam text-3xl font-bold text-white text-center mb-2">Forgot Password?</h2>
               <p className="text-stone-400 text-sm text-center mb-8">
-                Enter your email and we'll send you a password reset link
+                Enter your email and we&apos;ll send you a password reset link
               </p>
 
               <form onSubmit={handleSubmit} className="space-y-5">
@@ -47,7 +51,7 @@ export default function ForgotPasswordPage() {
                     <input
                       type="email"
                       value={email}
-                      onChange={e => setEmail(e.target.value)}
+                      onChange={(e) => setEmail(e.target.value)}
                       placeholder="your@email.com"
                       required
                       className="w-full pl-10 pr-4 py-3.5 bg-white/5 border border-stone-700/50 rounded-xl text-stone-100 placeholder-stone-600 text-sm outline-none transition-all focus:border-amber-500/50"
@@ -71,19 +75,21 @@ export default function ForgotPasswordPage() {
               <h2 className="font-kalam text-3xl font-bold text-white mb-3">Check Your Inbox</h2>
               <p className="text-stone-400 text-sm leading-relaxed mb-6">
                 If an account exists for <span className="text-amber-300 font-semibold">{email}</span>, 
-                you'll receive a password reset link shortly.
+                you&apos;ll receive a password reset link shortly.
               </p>
             </div>
           )}
 
           <p className="text-center mt-6 text-sm text-stone-600">
-            Remember your password?{' '}
+            Remember your password?{" "}
             <Link href="/auth/login" className="text-amber-400 hover:text-amber-300 font-semibold transition-colors">
               Sign in
             </Link>
           </p>
         </div>
       </div>
+
+      <Footer />
     </div>
   );
 }

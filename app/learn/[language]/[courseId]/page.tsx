@@ -9,6 +9,7 @@ import { useAuth } from "@/app/context/AuthContext";
 import { enrollmentAPI, learnAPI, LessonOut } from "@/app/lib/api";
 import { useApi } from "@/app/lib/useApi";
 import RazorpayCheckout from "@/components/RazorpayCheckout";
+import Footer from "@/components/Footer";
 
 const byOrder = (a: { order_index: number }, b: { order_index: number }) => a.order_index - b.order_index;
 
@@ -166,7 +167,15 @@ export default function CourseViewer() {
       {busy ? "Enrolling…" : "Enroll free"}
     </button>
   ) : (
-    <RazorpayCheckout courseId={courseId} onSuccess={handlePaidSuccess} onError={setActionError} />
+    <RazorpayCheckout
+      courseId={courseId}
+      onSuccess={handlePaidSuccess}
+      onError={setActionError}
+      itemName={c.title}
+      instructor={c.instructor?.full_name}
+      mode="Online Course"
+      price={c.price}
+    />
   );
 
   return (
@@ -429,6 +438,7 @@ export default function CourseViewer() {
           </div>
         </div>
       </div>
+      <Footer />
     </div>
   );
 }

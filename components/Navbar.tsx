@@ -23,10 +23,10 @@ type NavItem = { label: string; href: string; ready: boolean };
 // Flip to true when the page is built on real data.
 const NAV_ITEMS: NavItem[] = [
   { label: "My Learning", href: "/dashboard", ready: true },
-  { label: "Courses", href: "/learn", ready: true },
-  { label: "Practice Labs", href: "/practice", ready: false },
-  { label: "Challenges", href: "/challenges", ready: false },
-  { label: "Certifications", href: "/certifications", ready: false },
+  { label: "Courses", href: "/courses", ready: true },
+  { label: "1:1 Sessions", href: "/sessions", ready: true },
+  { label: "Workshops", href: "/workshops", ready: true },
+  { label: "Pricing", href: "/pricing", ready: true },
   { label: "Community", href: "/community", ready: true },
 ];
 
