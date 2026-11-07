@@ -101,7 +101,7 @@ export default function PublicInstructorPage() {
         <div className="min-h-screen bg-[#0a0908] text-white flex flex-col justify-between">
             <Navbar />
 
-            <main className="max-w-5xl mx-auto px-6 pt-32 pb-20 w-full">
+            <main className="max-w-5xl mx-auto px-4 sm:px-6 pt-28 sm:pt-32 pb-16 sm:pb-20 w-full">
                 {loading ? (
                     <div className="space-y-6">
                         <div className="h-44 rounded-3xl bg-white/5 border border-white/10 animate-pulse" />

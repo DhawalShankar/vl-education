@@ -24,9 +24,11 @@ type NavItem = { label: string; href: string; ready: boolean };
 const NAV_ITEMS: NavItem[] = [
   { label: "My Learning", href: "/dashboard", ready: true },
   { label: "Courses", href: "/courses", ready: true },
-  { label: "1:1 Sessions", href: "/sessions", ready: true },
-  { label: "Workshops", href: "/workshops", ready: true },
-  { label: "Pricing", href: "/pricing", ready: true },
+  { label: "1:1 Sessions", href: "/sessions", ready: false },
+  { label: "Workshops", href: "/workshops", ready: false },
+  { label: "Challenges", href: "/challenges", ready: false },
+  { label: "Certifications", href: "/certifications", ready: false },
+  { label: "Practice Labs", href: "/practice", ready: false },
   { label: "Community", href: "/community", ready: true },
 ];
 
@@ -57,8 +59,8 @@ export default function Navbar() {
           className={`${base} flex items-center gap-1.5 text-white/30 cursor-not-allowed select-none`}
         >
           {item.label}
-          <span className="text-[9px] uppercase font-bold px-1.5 py-0.5 rounded-full bg-white/10 text-white/40">
-            Soon
+          <span className="text-[9px] uppercase font-bold px-1.5 py-0.5 rounded-full bg-white/10 text-white/40 whitespace-nowrap">
+            Coming soon
           </span>
         </span>
       );

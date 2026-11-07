@@ -178,7 +178,7 @@ function CheckoutContent() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto px-6 pt-32 pb-20 w-full">
+    <div className="max-w-4xl mx-auto px-4 sm:px-6 pt-28 sm:pt-32 pb-16 sm:pb-20 w-full">
       <Link
         href="/courses"
         className="inline-flex items-center gap-2 text-stone-400 hover:text-amber-400 transition-colors mb-10 group text-sm"
@@ -350,7 +350,7 @@ export default function CheckoutPage() {
 
       <Suspense
         fallback={
-          <div className="max-w-4xl mx-auto px-6 pt-36 pb-20 text-center text-stone-500">
+          <div className="max-w-4xl mx-auto px-4 sm:px-6 pt-28 sm:pt-36 pb-16 sm:pb-20 text-center text-stone-500">
             Loading checkout details…
           </div>
         }
@@ -362,4 +362,3 @@ export default function CheckoutPage() {
     </div>
   );
 }
-

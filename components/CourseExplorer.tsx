@@ -159,7 +159,7 @@ export default function CourseExplorer() {
   };
 
   return (
-    <section id="learn" className="py-16 px-4 sm:px-8 max-w-7xl mx-auto space-y-12">
+    <section id="learn" className="py-12 sm:py-16 px-4 sm:px-8 max-w-7xl mx-auto space-y-10 sm:space-y-12">
 
       {/* Section Title */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">

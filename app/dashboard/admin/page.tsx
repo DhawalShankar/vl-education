@@ -371,7 +371,7 @@ export default function AdminDashboard() {
     <div className="min-h-screen bg-[#0a0908] text-white flex flex-col justify-between">
       <Navbar />
 
-      <main className="max-w-7xl mx-auto px-6 pt-32 pb-20 w-full">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 pt-28 sm:pt-32 pb-16 sm:pb-20 w-full">
         <div className="mb-8">
           <h1 className="font-kalam text-4xl sm:text-5xl font-bold tracking-tight">Admin Dashboard</h1>
           <p className="text-stone-400 text-sm mt-1">Review courses, manage users, and monitor logins.</p>

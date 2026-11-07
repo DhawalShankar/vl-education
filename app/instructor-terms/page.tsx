@@ -31,7 +31,7 @@ export default function InstructorTermsPage() {
 
       <div className="fixed inset-0 bg-gradient-to-b from-amber-950/15 via-transparent to-stone-950 pointer-events-none" />
 
-      <main className="relative z-10 max-w-4xl mx-auto px-6 pt-32 pb-20 w-full">
+      <main className="relative z-10 max-w-4xl mx-auto px-4 sm:px-6 pt-28 sm:pt-32 pb-16 sm:pb-20 w-full">
         <Link
           href="/"
           className="inline-flex items-center gap-2 text-stone-400 hover:text-amber-400 transition-colors mb-10 group text-sm"
@@ -169,4 +169,3 @@ export default function InstructorTermsPage() {
     </div>
   );
 }
-

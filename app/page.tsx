@@ -160,24 +160,18 @@ export default function RootTeaserPage() {
             >
               Courses
             </Link>
-            <Link
-              href="/sessions"
-              className="hidden md:inline-flex items-center gap-1.5 text-xs text-stone-300 hover:text-amber-300 transition-colors"
-            >
+            <span className="hidden md:inline-flex items-center gap-1.5 text-xs text-stone-500">
               1:1 Sessions
-            </Link>
-            <Link
-              href="/workshops"
-              className="hidden md:inline-flex items-center gap-1.5 text-xs text-stone-300 hover:text-amber-300 transition-colors"
-            >
+              <span className="text-[9px] uppercase font-bold px-1.5 py-0.5 rounded-full bg-white/10 text-stone-500">
+                Coming soon
+              </span>
+            </span>
+            <span className="hidden md:inline-flex items-center gap-1.5 text-xs text-stone-500">
               Workshops
-            </Link>
-            <Link
-              href="/pricing"
-              className="hidden sm:inline-flex items-center gap-1.5 text-xs text-stone-300 hover:text-amber-300 transition-colors"
-            >
-              Pricing
-            </Link>
+              <span className="text-[9px] uppercase font-bold px-1.5 py-0.5 rounded-full bg-white/10 text-stone-500">
+                Coming soon
+              </span>
+            </span>
 
             <a
               href="https://vartalang.in"

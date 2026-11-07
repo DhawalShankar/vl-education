@@ -45,7 +45,7 @@ export default function StudentDashboard() {
     <div className="min-h-screen bg-[#0a0908] text-white flex flex-col justify-between">
       <Navbar />
 
-      <div className="max-w-6xl mx-auto px-6 pt-32 pb-16 w-full">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 pt-28 sm:pt-32 pb-14 sm:pb-16 w-full">
         <h1 className="text-3xl font-bold mb-1">Welcome, {user.full_name} 👋</h1>
         <p className="text-stone-500 text-sm mb-10">{user.email}</p>
 
