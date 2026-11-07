@@ -12,12 +12,12 @@ export default function BlogPage() {
   const { data: posts, error, loading } = useApi(() => articleAPI.list());
 
   return (
-    <div className="min-h-screen bg-[#0a0908] relative overflow-hidden flex flex-col justify-between">
+    <div className="cultural-page min-h-screen relative overflow-hidden flex flex-col justify-between">
       <Navbar />
 
       <div className="fixed inset-0 bg-gradient-to-b from-amber-900/10 via-transparent to-orange-900/10 pointer-events-none" />
 
-      <div className="relative z-10 max-w-6xl mx-auto px-6 pt-32 pb-16 w-full">
+      <div className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 pt-24 sm:pt-32 pb-16 w-full">
         <Link
           href="/home"
           className="inline-flex items-center gap-2 text-stone-400 hover:text-amber-400 transition-colors mb-12 group"
@@ -31,7 +31,7 @@ export default function BlogPage() {
             <BookOpen className="w-4 h-4 text-amber-400" />
             <span className="text-sm font-bold text-amber-200">VartaLang Articles & Insights</span>
           </div>
-          <h1 className="font-kalam text-5xl md:text-6xl font-bold text-white mb-4">
+          <h1 className="font-kalam text-4xl sm:text-5xl md:text-6xl font-bold text-white mb-4">
             Language, Culture & Learning
           </h1>
           <p className="text-lg text-stone-400 max-w-2xl mx-auto">

@@ -18,7 +18,7 @@ const values = [
 
 export default function AboutPage() {
   return (
-    <div className="min-h-screen bg-[#0a0908] relative overflow-hidden">
+    <div className="cultural-page min-h-screen relative overflow-hidden">
       <Navbar />
 
       {/* Background */}
@@ -31,7 +31,7 @@ export default function AboutPage() {
       />
       <div className="fixed inset-0 bg-gradient-to-b from-amber-900/10 via-transparent to-orange-900/10 pointer-events-none" />
 
-      <div className="relative z-10 max-w-5xl mx-auto px-6 py-12">
+      <div className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 pt-24 sm:pt-32 pb-12">
 
         <Link href="/home" className="inline-flex items-center gap-2 text-stone-400 hover:text-amber-400 transition-colors mb-12 group">
           <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
@@ -44,10 +44,10 @@ export default function AboutPage() {
             <Heart className="w-4 h-4 text-amber-400 fill-amber-400" />
             <span className="text-sm font-bold text-amber-200">Our Mission</span>
           </div>
-          <h1 className="font-kalam text-6xl md:text-7xl font-bold text-white mb-6 leading-tight">
+          <h1 className="font-kalam text-4xl sm:text-5xl md:text-6xl font-bold text-white mb-5 leading-tight">
             About VartaLang
           </h1>
-          <p className="text-xl text-stone-300 max-w-3xl mx-auto leading-relaxed">
+          <p className="text-base sm:text-lg text-stone-300 max-w-3xl mx-auto leading-relaxed">
             We're on a mission to preserve India's linguistic heritage by making world-class language education 
             accessible to everyone — from curious beginners to aspiring language professionals.
           </p>

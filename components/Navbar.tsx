@@ -24,9 +24,9 @@ type NavItem = { label: string; href: string; ready: boolean };
 const NAV_ITEMS: NavItem[] = [
   { label: "My Learning", href: "/dashboard", ready: true },
   { label: "Courses", href: "/learn", ready: true },
-  { label: "Practice Labs", href: "/practice", ready: true },
-  { label: "Challenges", href: "/challenges", ready: true },
-  { label: "Certifications", href: "/certifications", ready: true },
+  { label: "Practice Labs", href: "/practice", ready: false },
+  { label: "Challenges", href: "/challenges", ready: false },
+  { label: "Certifications", href: "/certifications", ready: false },
   { label: "Community", href: "/community", ready: true },
 ];
 
@@ -84,14 +84,14 @@ export default function Navbar() {
   };
 
   return (
-    <header className="fixed top-5 left-0 right-0 z-50 px-4 sm:px-8 max-w-7xl mx-auto">
-      <nav className="glass-panel rounded-full px-5 py-3 flex items-center justify-between shadow-2xl border border-white/10 bg-[#16130F]/85 backdrop-blur-xl">
+    <header className="fixed top-3 sm:top-5 left-0 right-0 z-50 px-3 sm:px-8 max-w-7xl mx-auto">
+      <nav className="glass-panel rounded-full px-3 sm:px-5 py-2.5 sm:py-3 flex items-center justify-between shadow-2xl border border-white/10 bg-[#2a2118]/90 backdrop-blur-xl">
         {/* Brand Logo */}
         <Link href={isAuthenticated ? "/dashboard" : "/home"} className="flex items-center gap-2 group">
           <img
             src="/logo.png"
             alt="VartaLang Logo"
-            className="h-10 w-auto object-contain group-hover:scale-105 transition-transform drop-shadow-lg"
+            className="h-8 sm:h-10 w-auto object-contain group-hover:scale-105 transition-transform drop-shadow-lg"
           />
         </Link>
 

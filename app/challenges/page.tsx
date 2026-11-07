@@ -20,14 +20,18 @@ export default function ChallengesPage() {
   const { data: board, error: boardError, loading: boardLoading } = useApi(() => challengeAPI.leaderboard());
 
   return (
-    <div className="min-h-screen bg-[#0a0908] relative overflow-hidden">
+    <div className="cultural-page min-h-screen relative overflow-hidden">
       <Navbar />
 
       <div className="fixed inset-0 bg-gradient-to-b from-red-900/10 via-transparent to-orange-900/10 pointer-events-none" />
 
-      <div className="relative z-10 max-w-6xl mx-auto px-6 pt-36 pb-20">
+      <div className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 pt-24 sm:pt-32 pb-16 sm:pb-20">
         <div className="text-center mb-16">
-          <h1 className="font-kalam text-5xl md:text-7xl font-bold text-white mb-6 leading-[1.1]">
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-amber-500/15 border border-amber-400/30 mb-5">
+            <Clock className="w-4 h-4 text-amber-300" />
+            <span className="text-sm font-semibold text-amber-200">Coming soon</span>
+          </div>
+          <h1 className="font-kalam text-4xl sm:text-5xl md:text-6xl font-bold text-white mb-5 leading-[1.1]">
             Challenges
             <br />
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-red-300 via-orange-200 to-amber-300">
@@ -35,7 +39,7 @@ export default function ChallengesPage() {
             </span>
           </h1>
           <p className="text-lg text-stone-300 max-w-2xl mx-auto leading-relaxed">
-            Language mastery meets competitive spirit.
+            Language mastery meets competitive spirit. Challenges will be available soon.
           </p>
         </div>
 

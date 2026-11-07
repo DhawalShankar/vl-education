@@ -247,12 +247,6 @@ export function CourseFormModal({
               />
             </div>
           </div>
-          {price > 0 && (
-            <p className="text-xs text-amber-300/80">
-              Payments are not live yet. Students will see &quot;Payment coming soon&quot; and cannot enroll in paid courses.
-            </p>
-          )}
-
           <div>
             <label className="block text-xs text-stone-400 mb-1">Tags (comma separated)</label>
             <input value={tags} onChange={(e) => setTags(e.target.value)} placeholder="Devanagari, Conversation" className={inputCls} />

@@ -26,7 +26,7 @@ export default function HelpPage() {
   );
 
   return (
-    <div className="min-h-screen bg-[#0a0908] relative overflow-hidden">
+    <div className="cultural-page min-h-screen relative overflow-hidden">
       <Navbar />
 
       {/* Background */}
@@ -39,7 +39,7 @@ export default function HelpPage() {
       />
       <div className="fixed inset-0 bg-gradient-to-b from-amber-900/10 via-transparent to-orange-900/10 pointer-events-none" />
 
-      <div className="relative z-10 max-w-4xl mx-auto px-6 py-12">
+      <div className="relative z-10 max-w-4xl mx-auto px-4 sm:px-6 pt-24 sm:pt-32 pb-12">
 
         <Link href="/home" className="inline-flex items-center gap-2 text-stone-400 hover:text-amber-400 transition-colors mb-12 group">
           <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
@@ -51,8 +51,8 @@ export default function HelpPage() {
           <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center mx-auto mb-6 shadow-xl">
             <MessageSquare className="w-8 h-8 text-white" />
           </div>
-          <h1 className="font-kalam text-5xl md:text-6xl font-bold text-white mb-4">Help Center</h1>
-          <p className="text-xl text-stone-400">Find answers to common questions</p>
+          <h1 className="font-kalam text-4xl sm:text-5xl md:text-6xl font-bold text-white mb-4">Help Center</h1>
+          <p className="text-base sm:text-lg text-stone-400">Find answers to common questions</p>
         </div>
 
         {/* Search */}

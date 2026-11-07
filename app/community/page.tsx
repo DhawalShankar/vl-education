@@ -59,7 +59,7 @@ export default function CommunityPage() {
   const [activeTab, setActiveTab] = useState<Tab>("About");
 
   return (
-    <div className="min-h-screen bg-[#0a0908] relative overflow-hidden flex flex-col justify-between">
+    <div className="cultural-page min-h-screen relative overflow-hidden flex flex-col justify-between">
       <Navbar />
 
       {/* Background */}
@@ -74,14 +74,14 @@ export default function CommunityPage() {
       />
       <div className="fixed inset-0 bg-gradient-to-b from-amber-900/10 via-transparent to-orange-900/10 pointer-events-none" />
 
-      <div className="relative z-10 max-w-6xl mx-auto px-6 pt-36 pb-20 w-full">
+      <div className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 pt-24 sm:pt-32 pb-16 sm:pb-20 w-full">
         {/* Page Header */}
         <div className="text-center mb-12">
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-amber-500/20 border border-amber-400/30 mb-6">
             <Heart className="w-4 h-4 text-amber-400 fill-amber-400" />
             <span className="text-sm font-bold text-amber-200">Our Community</span>
           </div>
-          <h1 className="font-kalam text-5xl md:text-6xl font-bold text-white mb-4 leading-tight">
+          <h1 className="font-kalam text-4xl sm:text-5xl md:text-6xl font-bold text-white mb-4 leading-tight">
             VartaLang Community
           </h1>
           <p className="text-xl text-stone-300 max-w-2xl mx-auto leading-relaxed">

@@ -130,7 +130,7 @@ export default function RootTeaserPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-[#070605] text-white relative overflow-hidden flex flex-col justify-between selection:bg-amber-500 selection:text-black">
+    <div className="cultural-page min-h-screen text-white relative overflow-hidden flex flex-col justify-between selection:bg-amber-500 selection:text-black">
       {/* ── MINIMAL ROOT HEADER (NO INTERNAL PLATFORM ACCESS) ── */}
       <header className="fixed top-5 left-0 right-0 z-50 px-4 sm:px-8 max-w-7xl mx-auto">
         <nav className="rounded-full px-5 py-3 flex items-center justify-between shadow-2xl border border-white/10 bg-[#14110E]/85 backdrop-blur-xl">
@@ -182,7 +182,7 @@ export default function RootTeaserPage() {
       </header>
 
       {/* ── SECTION 1: HERO WITH HERITAGE ARCHITECTURE BACKDROP ──────── */}
-      <section className="relative pt-36 pb-20 px-6 min-h-[92vh] flex items-center justify-center overflow-hidden">
+      <section className="relative pt-28 pb-16 sm:pt-36 sm:pb-20 px-4 sm:px-6 min-h-[92vh] flex items-center justify-center overflow-hidden">
         {/* Heritage Backdrop */}
         <div
           className="absolute inset-0 pointer-events-none opacity-40 mix-blend-luminosity scale-105 transition-transform duration-1000"
@@ -200,7 +200,7 @@ export default function RootTeaserPage() {
           style={{
             background: `
               radial-gradient(ellipse 90% 65% at 50% 28%, rgba(217, 119, 6, 0.18), transparent 75%),
-              linear-gradient(180deg, rgba(7, 6, 5, 0.6) 0%, rgba(7, 6, 5, 0.88) 60%, #070605 100%)
+              linear-gradient(180deg, rgba(23, 18, 13, 0.48) 0%, rgba(23, 18, 13, 0.86) 60%, #17120d 100%)
             `,
           }}
         />
@@ -223,7 +223,7 @@ export default function RootTeaserPage() {
           </div>
 
           {/* Headline */}
-          <h1 className="font-kalam text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-bold text-white mb-6 leading-[1.08] drop-shadow-2xl tracking-tight">
+          <h1 className="font-kalam text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-white mb-6 leading-[1.08] drop-shadow-2xl tracking-tight">
             Something New Is
             <br />
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-200 via-yellow-200 to-amber-400">
@@ -231,7 +231,7 @@ export default function RootTeaserPage() {
             </span>
           </h1>
 
-          <p className="text-lg md:text-2xl text-stone-200 max-w-3xl mx-auto leading-relaxed mb-4 font-normal">
+          <p className="text-base sm:text-lg md:text-xl text-stone-200 max-w-3xl mx-auto leading-relaxed mb-4 font-normal">
             Preserving India&apos;s rich linguistic heritage through modern, AI-powered education.
           </p>
           <p className="text-sm sm:text-base text-stone-400 max-w-2xl mx-auto mb-10 leading-relaxed">

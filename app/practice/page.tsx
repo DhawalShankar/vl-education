@@ -75,7 +75,7 @@ const labs = [
 
 export default function PracticePage() {
   return (
-    <div className="min-h-screen bg-[#0a0908] relative overflow-hidden">
+    <div className="cultural-page min-h-screen relative overflow-hidden">
       <Navbar />
 
       {/* Background Ambience */}
@@ -90,7 +90,7 @@ export default function PracticePage() {
       />
       <div className="fixed inset-0 bg-gradient-to-b from-blue-950/20 via-transparent to-amber-950/15 pointer-events-none" />
 
-      <div className="relative z-10 max-w-6xl mx-auto px-6 pt-36 pb-20">
+      <div className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 pt-24 sm:pt-32 pb-16 sm:pb-20">
         {/* Hero Section */}
         <div className="text-center mb-16">
           <div className="inline-flex items-center gap-3 px-5 py-2.5 rounded-full bg-cyan-500/20 border-2 border-cyan-400/30 backdrop-blur-sm mb-8">
